@@ -49,6 +49,9 @@ doesn't become the only kind of satisfaction.
 - Input: mouse and touch both work. Use pointer events; `touch-action: none` on the play canvas.
 - Audio starts only after the first user gesture (pointerdown or keydown unlocks the AudioContext).
 - Respect `prefers-reduced-motion`.
+- Keep the template's `[hidden] { display: none !important; }` rule. Without it, any element
+  with its own `display` (flex, grid) ignores the `hidden` attribute, and the ending or locked
+  upgrades show from the start.
 - Each game picks its own look. The site chrome (top bar, share card) is injected by `daily.js`
   and styles itself; don't restyle `.di-*` classes.
 - Games are released by date in the player's local time zone. Future games are hidden from the

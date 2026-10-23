@@ -10,6 +10,8 @@
   /* Each game picks its own look. Keep the 16px side gutter and the safe-area padding. */
   :root { --bg: #111; --ink: #eee; --accent: #fc6; color-scheme: dark; }
   html, body { background: var(--bg); color: var(--ink); }
+  /* Keep this: any display rule (flex, grid) would otherwise override the hidden attribute. */
+  [hidden] { display: none !important; }
   body {
     margin: 0; font: 15px/1.45 system-ui, sans-serif;
     padding-left: max(16px, env(safe-area-inset-left, 0px));
