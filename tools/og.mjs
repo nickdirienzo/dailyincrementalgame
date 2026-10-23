@@ -5,9 +5,9 @@
 //
 // A game's card is its own canvas art and styled title, captured from a finished save so the scene
 // is at its fullest, saved as public/<slug>/og.png. Game art can be random, so existing cards are
-// left alone unless named. The landing card (public/og.png) lines up the emoji of every game in
-// games.json, so rerun this after adding a game. Each page's og:/twitter: tags are replaced with a fresh set; the
-// image URL carries a content hash so chat apps refetch it when the card changes.
+// left alone unless named. The landing card (public/og.png) is just the site's name and tagline.
+// Each page's og:/twitter: tags are replaced with a fresh set; the image URL carries a content hash
+// so chat apps refetch it when the card changes.
 import { chromium } from 'playwright';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -100,8 +100,7 @@ async function gameCard(browser, base, game) {
   console.log(`  ${path.relative(ROOT, out)}`);
 }
 
-async function siteCard(browser, games) {
-  const emoji = games.map(g => g.emoji).filter(Boolean);
+async function siteCard(browser) {
   const out = path.join(PUBLIC, 'og.png');
   await renderCard(browser, `<!doctype html><html><head>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&display=swap">
@@ -110,11 +109,9 @@ async function siteCard(browser, games) {
          display: flex; flex-direction: column; justify-content: center; padding: 0 84px; box-sizing: border-box; gap: 10px; }
   h1 { margin: 0; font-size: 124px; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
   p { margin: 0; font-size: 40px; color: #5c6080; }
-  .e { margin-top: 44px; font-size: 76px; display: flex; gap: 36px; flex-wrap: nowrap; overflow: hidden; }
 </style></head><body>
   <h1>Daily Incremental</h1>
   <p>Tiny incremental games.</p>
-  <div class="e">${emoji.slice(-8).map(e => `<span>${esc(e)}</span>`).join('')}</div>
 </body></html>`, out);
   writeMeta(path.join(PUBLIC, 'index.html'), {
     title: 'Daily Incremental',
@@ -136,7 +133,7 @@ const base = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch();
 try {
   console.log('social cards');
-  if (!only.length) await siteCard(browser, games);
+  if (!only.length) await siteCard(browser);
   for (const g of targets) await gameCard(browser, base, g);
 } finally {
   await browser.close();

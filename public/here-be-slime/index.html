@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Here Be Slime · Daily Incremental</title>
+<meta name="description" content="A lonely slime brews maps to its swamp. Daily Incremental.">
+<meta property="og:site_name" content="Daily Incremental">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Here Be Slime">
+<meta property="og:description" content="A lonely slime brews maps to its swamp until everyone knows the way.">
+<meta property="og:url" content="https://dailyincrementalgame.com/here-be-slime/">
+<meta property="og:image" content="https://dailyincrementalgame.com/here-be-slime/og.png?v=33682c6a">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Here Be Slime: A lonely slime brews maps to its swamp until everyone knows the way.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Nunito:wght@400;600;800&family=Courier+Prime:wght@400;700&display=swap">
+<style>
+[hidden] { display: none !important; }
+/* Layout: a parchment map on the left with stats under it, upgrades in a column on the right; stacks on phones. Single committed light look. */
+:root {
+  --paper: #f1e4c4;
+  --paper-2: #f8eed6;
+  --edge: #d9c49a;
+  --ink: #3f2c1d;
+  --sepia: #7a5b3e;
+  --faded: #8f7656;
+  --slime: #5fb84a;
+  --slime-ink: #2f6f22;
+  --wax: #b8402f;
+  --display: "IM Fell English SC", "IM Fell English", Georgia, serif;
+  --serif: "IM Fell English", Georgia, serif;
+  --body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Courier Prime", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--paper); color: var(--ink); }
+body {
+  margin: 0;
+  font-family: var(--body); font-size: 15px; line-height: 1.45;
+  background-image: radial-gradient(ellipse at 50% 0%, var(--paper-2), var(--paper) 70%);
+  background-attachment: fixed;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: max(14px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+}
+.wrap { max-width: 1140px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(32px, 6.4vw, 48px); margin: 0; line-height: 1; letter-spacing: .01em; color: var(--ink); }
+h1 span { color: var(--slime-ink); }
+.meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.seed { font-family: var(--mono); font-size: 12px; color: var(--faded); margin: 0; }
+.sound { all: unset; cursor: pointer; font-family: var(--mono); font-size: 12px; color: var(--ink); padding: 4px 11px; border: 1.5px solid var(--sepia); border-radius: 999px; background: var(--paper-2); }
+.sound:hover { border-color: var(--slime-ink); }
+.sound:focus-visible { outline: 2px solid var(--slime-ink); outline-offset: 2px; }
+.sound[aria-pressed="false"] { color: var(--faded); border-style: dashed; }
+
+.game { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 20px; align-items: start; }
+.main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.stage { border-radius: 6px; overflow: hidden; border: 2px solid var(--sepia); box-shadow: 0 0 0 5px var(--paper-2), 0 0 0 6.5px var(--edge), 0 10px 28px rgba(80,55,25,.18); background: var(--paper); }
+canvas { display: block; width: 100%; height: auto; aspect-ratio: 8 / 5; touch-action: none; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+.log { min-height: 1.5em; margin: 4px 0 0; text-align: center; font-family: var(--serif); font-style: italic; font-size: 17px; text-wrap: balance; }
+.log.dim { color: var(--faded); }
+.ledger { display: flex; gap: 12px 26px; flex-wrap: wrap; align-items: flex-end; }
+.stat .k, .mood .k { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--faded); }
+.stat .v { font-family: var(--mono); font-weight: 700; font-size: 21px; font-variant-numeric: tabular-nums; }
+.stat .v.big { color: var(--slime-ink); }
+.mood { flex: 1; min-width: 190px; }
+.mood .k b { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 14px; color: var(--ink); letter-spacing: 0; text-transform: none; }
+.bar { height: 9px; border-radius: 5px; background: var(--edge); overflow: hidden; margin-top: 6px; box-shadow: inset 0 1px 2px rgba(60,40,20,.25); }
+.bar i { display: block; height: 100%; background: linear-gradient(90deg, #8fd66f, var(--slime)); transition: width .8s ease; }
+.hint { color: var(--faded); font-size: 13px; margin: 0; }
+
+.side { display: flex; flex-direction: column; gap: 10px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow-y: auto; min-width: 0; padding: 2px; }
+.side-h { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 0; display: flex; align-items: baseline; gap: 8px; }
+.side-h span { font-family: var(--body); font-size: 12px; font-weight: 800; color: var(--paper-2); background: var(--slime-ink); border-radius: 999px; padding: 1px 9px; }
+.side-h span:empty { display: none; }
+.shop { display: grid; grid-template-columns: 1fr; gap: 9px; }
+.item {
+  all: unset; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px;
+  padding: 10px 13px; border: 1.5px solid var(--edge); border-radius: 8px; background: var(--paper-2);
+  cursor: pointer; transition: border-color .15s, transform .08s, opacity .2s;
+}
+.item:hover:not([aria-disabled="true"]) { border-color: var(--slime-ink); }
+.item:active:not([aria-disabled="true"]) { transform: translateY(1px); }
+.item:focus-visible { outline: 2px solid var(--slime-ink); outline-offset: 2px; }
+.item[aria-disabled="true"] { opacity: .5; cursor: default; }
+.item.owned { opacity: .38; }
+.item.silly .name { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 16px; }
+.item.final { border-color: var(--wax); border-width: 2px; }
+.item .row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.item .name { font-weight: 800; }
+.item .lv { font-family: var(--mono); font-size: 12px; color: var(--faded); white-space: nowrap; }
+.item .lv.new { color: var(--wax); font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
+.item .desc { color: var(--sepia); font-size: 13px; }
+.item .cost { font-family: var(--mono); font-weight: 700; color: var(--slime-ink); font-size: 13px; }
+.item.fresh { border-color: var(--wax); animation: fresh 1.1s ease-in-out 4; }
+@keyframes fresh { 50% { box-shadow: 0 0 0 4px rgba(184,64,47,.18); } }
+
+.ending { border: 2px solid var(--slime-ink); border-radius: 8px; background: var(--paper-2); padding: 22px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.ending h2 { font-family: var(--display); font-weight: 400; font-size: 30px; margin: 0; text-wrap: balance; line-height: 1.1; }
+.ending p { margin: 0; max-width: 60ch; }
+.ending .facts { font-family: var(--mono); color: var(--sepia); font-size: 13px; font-variant-numeric: tabular-nums; }
+.end-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.ending button { all: unset; cursor: pointer; padding: 9px 16px; border-radius: 8px; background: var(--slime-ink); color: var(--paper-2); font-weight: 800; }
+.ending button.quiet { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--sepia); }
+.ending button:focus-visible { outline: 2px solid var(--wax); outline-offset: 2px; }
+
+@media (max-width: 760px) {
+  .game { grid-template-columns: 1fr; }
+  .side { position: static; max-height: none; overflow: visible; }
+  .shop { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { .item.fresh { animation: none; } .bar i { transition: none; } }
+</style>
+<script src="/shared/daily.js" data-day="3"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Here Be <span>Slime</span></h1>
+    <div class="meta">
+      <p class="seed">seed 3508230676 · a slime who wants friends · brewing · maps</p>
+      <button class="sound" id="sound" type="button" aria-pressed="true">♪ Sound on</button>
+    </div>
+  </header>
+
+  <div class="game">
+    <div class="main">
+      <div class="stage"><canvas id="c" width="1600" height="1000" aria-label="An old parchment map with a slime and its cauldron in a swamp at the middle"></canvas></div>
+      <p class="log dim" id="log">Tap the cauldron to stir up a map.</p>
+      <div class="ledger">
+        <div class="stat"><span class="k">Maps</span><span class="v big" id="maps">0</span></div>
+        <div class="stat"><span class="k">Per stir</span><span class="v" id="perTap">1</span></div>
+        <div class="stat"><span class="k">Per second</span><span class="v" id="perSec">0</span></div>
+        <div class="mood"><span class="k">Friends who know the way <b id="moodTxt">nobody, yet</b></span><div class="bar"><i id="moodBar" style="width:0%"></i></div></div>
+      </div>
+      <p class="hint" id="hint">Tap anywhere on the map to stir. Tap while the ring glows on the rim for a perfect stir (×3).</p>
+      <div class="ending" id="ending" hidden>
+        <h2>Everyone knows the way now.</h2>
+        <p>Eight billion maps went out on the wind, one for every person on Earth, and every one of them leads to the same small puddle. They came. The snail came first, because the snail had been walking since the first map. Gloop has more friends than the swamp can hold, and it is going to need a much bigger cauldron for soup.</p>
+        <p class="facts" id="facts"></p>
+        <div class="end-actions">
+          <button id="shareBtn" type="button">Share result</button>
+          <button id="again" type="button" class="quiet">Start over</button>
+        </div>
+      </div>
+    </div>
+    <aside class="side" id="side">
+      <h2 class="side-h">Upgrades <span id="afford"></span></h2>
+      <div class="shop" id="shop"></div>
+      <p class="hint" id="shopEmpty">Stir up a few maps. Ways to send them out will show up here.</p>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+// ECON-BEGIN (pure numbers and rules; tools read this block to simulate pacing)
+const PERIOD = 1.5;          // seconds per stirring beat
+const GLOW = 0.18;           // fraction of the beat where the ring glows on the rim (perfect window)
+const PERFECT_X = 3;
+const GOLD_FIRST = 45, GOLD_GAP = [35, 55], GOLD_LIFE = 7;
+const ECHO = [0, 0.5, 1];          // seconds of helper work added to each stir, by Stirring Song level
+const UP = [
+  { id: 'ladle',   kind: 'tap',    name: 'Bigger Ladle', base: 12, grow: 3.5, max: 4, desc: 'Each stir brews twice as many maps.' },
+  { id: 'eyes',    kind: 'silly',  name: 'Googly Eyes for the Cauldron', base: 40, desc: 'Now it looks back at you. That counts as company.' },
+  { id: 'tadpole', kind: 'helper', name: 'Tadpole Stirrers', base: 260, grow: 2.5, rate: 18, max: 3, desc: 'They swim in circles. That is basically stirring.' },
+  { id: 'wave',    kind: 'silly',  name: 'Practice Waving', base: 900, desc: 'For when someone shows up. Stirs +10%, somehow.' },
+  { id: 'song',    kind: 'echo',   name: 'Stirring Song', base: 1500, grow: 25, max: 2, desc: 'Every stir also brews some of your helpers’ work.' },
+  { id: 'newt',    kind: 'helper', name: 'Newt Cartographers', base: 3200, grow: 2.5, rate: 170, max: 3, desc: 'Tiny quills. Very serious about compass roses.' },
+  { id: 'vintage', kind: 'mult',   name: 'Bog Vintage', base: 28000, mult: 2, desc: 'Older swamp water, richer ink. All helpers ×2.' },
+  { id: 'still',   kind: 'helper', name: 'Toadstool Still', base: 60000, grow: 2.5, rate: 1000, max: 3, desc: 'Drips a map every time a mushroom sneezes.' },
+  { id: 'hat',     kind: 'silly',  name: 'A Tiny Hat', base: 1.6e5, desc: 'Gloop tries it on. It is perfect. Does nothing.' },
+  { id: 'press',   kind: 'helper', name: 'Beetle Press', base: 9e5, grow: 2.5, rate: 15000, max: 3, desc: 'Beetles stomp the ink in. Maps come out flat.' },
+  { id: 'inkcap',  kind: 'mult',   name: 'Inkcap Ink', base: 8e6, mult: 3, desc: 'Brewed from a mushroom that turns into ink. All helpers ×3.' },
+  { id: 'heron',   kind: 'helper', name: 'Heron Post', base: 1.4e7, grow: 2.5, rate: 80000, max: 3, desc: 'Carries maps past the edge of the map.' },
+  { id: 'moon',    kind: 'silly',  name: 'Postcard to the Moon', base: 3e8, desc: 'Just to say hi. Someone up there might be lonely too.' },
+  { id: 'kettle',  kind: 'helper', name: 'Cloud Kettle', base: 2e8, grow: 2.5, rate: 2.4e6, max: 3, desc: 'A raincloud on a low simmer. It rains maps.' },
+  { id: 'final',   kind: 'final',  name: 'A Map for Everyone', base: 8e9, desc: 'One for every person on Earth. All roads lead to the puddle.', show: 0.03 },
+];
+// One friend arrives each time the maps you've sent out grow tenfold.
+const FRIENDS = [
+  { at: 100,  e: '\u{1F40C}', name: 'a snail' },
+  { at: 1e3,  e: '\u{1F438}', name: 'a frog' },
+  { at: 1e4,  e: '\u{1F994}', name: 'a hedgehog' },
+  { at: 1e5,  e: '\u{1F989}', name: 'an owl' },
+  { at: 1e6,  e: '\u{1F980}', name: 'a crab' },
+  { at: 1e7,  e: '\u{1F422}', name: 'a turtle' },
+  { at: 1e8,  e: '\u{1F98A}', name: 'a fox' },
+  { at: 1e9,  e: '\u{1F419}', name: 'an octopus' },
+];
+const lvl = (S, u) => S.owned[u.id] || 0;
+const once = u => u.kind === 'silly' || u.kind === 'mult' || u.kind === 'final';
+const maxed = (S, u) => once(u) ? lvl(S, u) >= 1 : (u.max != null && lvl(S, u) >= u.max);
+const price = (S, u) => once(u) ? u.base : Math.ceil(u.base * Math.pow(u.grow, lvl(S, u)));
+function helperMult(S) { let m = 1; for (const u of UP) if (u.kind === 'mult' && lvl(S, u)) m *= u.mult; return m; }
+// Each helper level doubles that helper's output: 1, 3, 7 times its base rate.
+function rate(S) { let r = 0; for (const u of UP) if (u.kind === 'helper') r += (2 ** lvl(S, u) - 1) * u.rate; return r * helperMult(S); }
+function perTap(S) {
+  const song = UP.find(u => u.id === 'song'), ladle = UP.find(u => u.id === 'ladle');
+  return Math.pow(2, lvl(S, ladle)) * (S.owned.wave ? 1.1 : 1) + ECHO[lvl(S, song)] * rate(S);
+}
+const goldValue = S => Math.max(25 * perTap(S), 30 * rate(S));
+const visible = (S, u) => lvl(S, u) > 0 || S.total >= price(S, u) * (u.show || 0.4);
+const friendsFor = sent => FRIENDS.filter(f => sent >= f.at).length;
+// ECON-END
+
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const W = 800, H = 500;
+ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// ---------- Numbers ----------
+function fmt(n) {
+  n = Math.floor(n);
+  if (n < 1e6) return n.toLocaleString('en-US');
+  if (n < 1e9) { const v = n / 1e6; return (v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : v.toFixed(0)) + ' million'; }
+  const v = n / 1e9; return (v < 10 ? v.toFixed(2) : v.toFixed(1)) + ' billion';
+}
+function short(n) {
+  if (n < 1000) return n < 10 && n % 1 ? n.toFixed(1) : String(Math.floor(n));
+  const units = [[1e9, 'B'], [1e6, 'M'], [1e3, 'k']];
+  for (const [d, s] of units) if (n >= d) { const v = n / d; return (v < 10 ? v.toFixed(1) : Math.floor(v)) + s; }
+  return String(Math.floor(n));
+}
+const rateTxt = r => r < 10 && r % 1 ? r.toFixed(1) : fmt(r);
+
+// ---------- Sound (synthesized with Web Audio) ----------
+const Snd = (() => {
+  let ac = null, master = null, noise = null, muted = false;
+  try { muted = localStorage.getItem('di:sound-muted') === '1'; } catch (e) {}
+  const SCALE = [0, 2, 4, 7, 9];
+  const note = (i, base) => base * 2 ** ((SCALE[((i % 5) + 5) % 5] + 12 * Math.floor(i / 5)) / 12);
+  function unlock() {
+    if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    try {
+      ac = new C(); master = ac.createGain(); master.gain.value = muted ? 0 : .5; master.connect(ac.destination);
+      const len = ac.sampleRate * .5; noise = ac.createBuffer(1, len, ac.sampleRate);
+      const d = noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    } catch (e) { ac = null; }
+  }
+  const ok = () => ac && !muted && ac.state === 'running';
+  function tone(f, t0, dur, type, vol, glide) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t0);
+    if (glide) o.frequency.exponentialRampToValueAtTime(glide, t0 + dur);
+    g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .012); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    o.connect(g).connect(master); o.start(t0); o.stop(t0 + dur + .05);
+  }
+  function rustle(t0, dur, freq, vol) {
+    const s = ac.createBufferSource(); s.buffer = noise;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.4;
+    const g = ac.createGain(); g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .01); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    s.connect(f).connect(g).connect(master); s.start(t0, Math.random() * .3, dur + .05);
+  }
+  let walk = 0, lastStir = 0;
+  return {
+    unlock,
+    get muted() { return muted; },
+    setMuted(v) { muted = v; try { localStorage.setItem('di:sound-muted', v ? '1' : '0'); } catch (e) {} if (master) master.gain.value = v ? 0 : .5; },
+    // A soft bloop for each stir; the pitch walks up a pentatonic scale while you keep stirring.
+    stir(perfect) {
+      if (!ok()) return; const t = ac.currentTime;
+      walk = t - lastStir < 2 ? (walk + 1) % 10 : 0; lastStir = t;
+      const f = note(walk, 196);
+      tone(f * 1.6, t, .16, 'sine', .14, f * .9);
+      rustle(t + .03, .07, 2600, .025);
+      tone(note(walk + 5, 392), t + .05, .1, 'triangle', .035);
+      if (perfect) { tone(note(walk + 7, 523), t + .04, .55, 'sine', .07); tone(note(walk + 7, 523) * 2, t + .04, .3, 'sine', .025); }
+    },
+    gold() { if (!ok()) return; const t = ac.currentTime; for (let i = 0; i < 6; i++) tone(note(5 + i, 392), t + i * .055, .35, 'sine', .07); rustle(t, .2, 4000, .03); },
+    unlocked() { if (!ok()) return; const t = ac.currentTime; tone(1046, t, .35, 'triangle', .06); tone(1568, t + .09, .45, 'triangle', .05); },
+    buy(i) { if (!ok()) return; const t = ac.currentTime; const b = 262 * (1 + (i % 3) * .125);
+      [0, 2, 4].forEach((k, j) => tone(note(k + 5, b), t + j * .07, .3, 'triangle', .085)); rustle(t, .12, 1800, .04); },
+    silly() { if (!ok()) return; const t = ac.currentTime; tone(330, t, .3, 'sine', .1, 660); tone(495, t + .14, .25, 'sine', .06, 330); },
+    friend() { if (!ok()) return; const t = ac.currentTime;
+      [0, 2, 3, 4, 7].forEach((k, j) => tone(note(k + 5, 262), t + j * .12, .5, 'sine', .07));
+      tone(131, t, 1.4, 'triangle', .05); tone(196, t + .1, 1.3, 'triangle', .035); },
+    finale() { if (!ok()) return; const t = ac.currentTime;
+      const chords = [[0, 2, 4], [1, 3, 5], [2, 4, 7], [5, 7, 10]];
+      chords.forEach((c, j) => c.forEach(k => tone(note(k + 3, 196), t + j * .45, 1.6, 'triangle', .05)));
+      for (let i = 0; i < 16; i++) tone(note(i, 392), t + 1.8 + i * .07, .5, 'sine', .05);
+      tone(98, t, 3.6, 'sine', .07); },
+  };
+})();
+const soundBtn = document.getElementById('sound');
+function paintSound() { soundBtn.setAttribute('aria-pressed', String(!Snd.muted)); soundBtn.textContent = Snd.muted ? '♪ Sound off' : '♪ Sound on'; }
+paintSound();
+soundBtn.addEventListener('click', () => { Snd.unlock(); Snd.setMuted(!Snd.muted); paintSound(); });
+addEventListener('pointerdown', Snd.unlock, { capture: true });
+addEventListener('keydown', Snd.unlock, { capture: true });
+
+// ---------- State ----------
+const KEY = window.DailyGame ? DailyGame.storageKey('save') : 'di:3:save';
+const fresh = () => ({ maps: 0, total: 0, sent: 0, owned: {}, seen: {}, stirs: 0, perfects: 0, golds: 0, time: 0, ended: false });
+let S = fresh();
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch (e) {}
+S.owned = S.owned || {}; S.seen = S.seen || {};
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+const logEl = document.getElementById('log');
+let logT = 0;
+function say(t, dim) { logEl.textContent = t; logEl.classList.toggle('dim', !!dim); logT = 0; }
+
+// ---------- Map scenery (fixed layout, revealed as friends come) ----------
+// Seeded so the map looks the same every visit.
+let seed = 3508230676 >>> 0;
+const srand = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+const COAST = []; for (let i = 0; i < 72; i++) {
+  const a = i / 72 * Math.PI * 2;
+  const r = 1 + .06 * Math.sin(a * 3 + 1) + .05 * Math.sin(a * 7 + 2) + .03 * Math.sin(a * 13) + (srand() - .5) * .03;
+  COAST.push([400 + Math.cos(a) * 372 * r, 262 + Math.sin(a) * 232 * r]);
+}
+const MARKS = [];
+{ // mountains, trees and little huts scattered away from the middle and the top shelf
+  const kinds = ['mtn', 'mtn', 'tree', 'tree', 'tree', 'hut', 'mtn', 'tree'];
+  let tries = 0;
+  while (MARKS.length < 46 && tries++ < 3000) {
+    const x = 70 + srand() * 660, y = 60 + srand() * 380;
+    const dx = (x - 400) / 230, dy = (y - 320) / 120;
+    if (dx * dx + dy * dy < 1) continue;                       // keep the swamp clear
+    if (y > 405 && x < 250) continue;                          // cartouche
+    if (x > 650 && y > 360) continue;                          // compass
+    if (y < 150 && x > 90 && x < 640) continue;                // helper shelf
+    if (MARKS.some(m => Math.hypot(m.x - x, m.y - y) < 34)) continue;
+    MARKS.push({ x, y, k: kinds[MARKS.length % kinds.length], s: .8 + srand() * .5, o: srand() });
+  }
+  MARKS.sort((a, b) => a.o - b.o);
+}
+const ORIGINS = [[70, 120], [740, 110], [80, 380], [735, 300], [210, 60], [600, 455], [330, 470], [700, 200]];
+const SEATS = [[214, 345], [588, 352], [236, 268], [566, 262], [300, 226], [500, 218], [270, 420], [528, 420]];
+const PUDDLE = { x: 395, y: 338, rx: 150, ry: 44 };
+const POT = { x: 452, y: 300 };       // cauldron centre
+const RIM = { x: 452, y: 268, rx: 46, ry: 12 };
+const GLOOP = { x: 345, y: 318 };
+
+// Paper grain, drawn once.
+const grain = document.createElement('canvas'); grain.width = W; grain.height = H;
+{
+  const g = grain.getContext('2d');
+  for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(110,80,40,${Math.random() * .06})`; g.fillRect(Math.random() * W, Math.random() * H, 1 + Math.random() * 1.5, 1); }
+  for (let i = 0; i < 10; i++) { const x = Math.random() * W, y = Math.random() * H, r = 20 + Math.random() * 60;
+    const rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, 'rgba(150,110,50,.07)'); rg.addColorStop(1, 'rgba(150,110,50,0)');
+    g.fillStyle = rg; g.fillRect(x - r, y - r, r * 2, r * 2); }
+}
+
+// ---------- Runtime bits ----------
+const bubbles = [], flying = [], floats = [], sparks = [];
+let gold = null, goldNext = GOLD_FIRST, beat = 0, bounce = 0, lookX = 0, lookY = 0, wave = 0, finaleT = -1;
+const arrivals = [];   // { i, t } friends walking in this session
+let shownFriends = S.ended ? FRIENDS.length : friendsFor(S.sent);
+const crowd = [];      // the finale crowd
+
+function phase() { return (beat % PERIOD) / PERIOD; }
+const glowing = () => phase() >= 1 - GLOW;
+
+// ---------- Actions ----------
+function canvasPoint(e) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; }
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (S.ended || finaleT >= 0) { if (S.ended) cheer(); return; }
+  const [x, y] = canvasPoint(e);
+  lookX = clamp((x - GLOOP.x) / 200, -1, 1); lookY = clamp((y - GLOOP.y) / 200, -1, 1);
+  if (gold && Math.hypot(x - gold.x, y - gold.y) < 34) return popGold();
+  stir();
+});
+cv.addEventListener('contextmenu', e => e.preventDefault());
+addEventListener('keydown', e => {
+  if ((e.code === 'Space' || e.key === 'Enter') && document.activeElement === document.body && !S.ended && finaleT < 0) { e.preventDefault(); stir(); }
+});
+
+function stir() {
+  const perfect = glowing();
+  const v = perTap(S) * (perfect ? PERFECT_X : 1);
+  S.maps += v; S.total += v; S.stirs++; if (perfect) S.perfects++;
+  bounce = 1;
+  Snd.stir(perfect);
+  const n = reduceMotion ? 1 : perfect ? 5 : 3;
+  for (let i = 0; i < n; i++) bubbles.push({ x: RIM.x + rand(-30, 30), y: RIM.y + rand(-3, 4), r: rand(4, 9), vy: rand(-40, -20), life: rand(.5, .9), t: 0 });
+  launchMap(perfect ? 2 : 1);
+  floats.push({ x: RIM.x + rand(-12, 12), y: RIM.y - 22, text: '+' + short(v), t: 0, perfect });
+  if (perfect) for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; sparks.push({ x: RIM.x + Math.cos(a) * RIM.rx, y: RIM.y + Math.sin(a) * RIM.ry, vx: Math.cos(a) * 60, vy: Math.sin(a) * 30 - 20, t: 0, c: '#5fb84a' }); }
+  if (S.stirs === 1) say('A map bubbles up out of the brew and flutters away. Somebody might find it.');
+  else if (S.stirs === 12 && !S.perfects) say('Psst: stir right when the ring glows on the rim. Gloop likes the rhythm.', true);
+  else if (perfect && S.perfects === 1) say('Perfect stir! Three maps for the price of one swirl.');
+}
+function launchMap(k) {
+  if (flying.length > 26) return;
+  for (let i = 0; i < k; i++) {
+    const a = rand(-Math.PI * .95, -Math.PI * .05), d = rand(330, 460);
+    flying.push({ x0: RIM.x, y0: RIM.y - 6, x1: RIM.x + Math.cos(a) * d, y1: RIM.y + Math.sin(a) * d * .7, t: 0, dur: rand(1.1, 1.6), rot: rand(-3, 3) });
+  }
+}
+function popGold() {
+  const v = goldValue(S);
+  S.maps += v; S.total += v; S.golds++;
+  Snd.gold();
+  for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2, s = rand(40, 130); sparks.push({ x: gold.x, y: gold.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0, c: '#d9a53a' }); }
+  floats.push({ x: gold.x, y: gold.y - 10, text: '+' + short(v), t: 0, perfect: true, gold: true });
+  launchMap(4);
+  say(S.golds === 1 ? 'A compass bubble! It pointed at Gloop the whole time. Lots of maps.' : 'Compass bubble! It still points at Gloop.');
+  gold = null; goldNext = rand(...GOLD_GAP);
+}
+function cheer() { bounce = 1; Snd.stir(true); for (let i = 0; i < 4; i++) bubbles.push({ x: RIM.x + rand(-30, 30), y: RIM.y, r: rand(4, 9), vy: rand(-40, -20), life: .8, t: 0 }); }
+
+// ---------- Shop ----------
+const shopEl = document.getElementById('shop');
+const BUY_LINES = {
+  ladle: ['A bigger ladle. More brew per swirl.', 'An even bigger ladle. Gloop has to use both blobs.', 'This ladle used to be a canoe.', 'The ladle has its own ladle now.', 'A ladle so big it has weather.', 'Nobody is sure where the ladle ends.', 'The ladle is technically a lake.', 'It is all ladle now.'],
+  eyes: 'Googly eyes on the cauldron. It stares lovingly at Gloop. Gloop stares back. A start.',
+  tadpole: ['A tadpole joins in. It swims in circles, which stirs the brew.', 'More tadpoles. The puddle hums.', 'The tadpoles have formed a little whirlpool union.'],
+  wave: 'Gloop practices waving at nobody. Wave, wave. Ready for anyone.',
+  song: ['Gloop hums while stirring. The helpers hum along, and the brew remembers their work.', 'The song has a second verse now.', 'The song has a bridge. The newts cried.', 'It is an opera.'],
+  newt: ['A newt cartographer arrives with a very small quill.', 'Another newt. They argue about which way is north.', 'The newts have opened a tiny map school.'],
+  vintage: 'Bog Vintage: older, murkier swamp water. Every helper brews twice as fast.',
+  still: ['A toadstool still, dripping maps.', 'More toadstools. The sneezing is constant.'],
+  hat: 'Gloop puts on a tiny hat. It is perfect. Nothing else changes, but everything feels different.',
+  press: ['A beetle press. Thump, thump, map.', 'More beetles stomping. The maps come out very flat.'],
+  inkcap: 'Inkcap ink: a mushroom that melts into ink on purpose. Helpers ×3.',
+  heron: ['A heron takes a bundle of maps past the edge of the map.', 'More herons. The sky is full of mail.'],
+  moon: 'Gloop sends a postcard to the Moon. A few days later, a reply: “me too. try polishing mushrooms.”',
+  kettle: ['A cloud on a low simmer. It rains maps.', 'Another kettle cloud. Forecast: maps, then more maps.'],
+};
+const IDLE_LINES = [
+  'Gloop wonders if the snail is still on its way.',
+  'Somewhere far away, someone unfolds a map and squints.',
+  'The cauldron gurgles. It might be a word.',
+  'Every map has the same X on it. The X is Gloop.',
+  'The swamp is quiet, but it is a hopeful kind of quiet.',
+  'Gloop practices saying “oh, hi! I didn’t see you there.”',
+  'The newts insist the swamp is drawn to scale. It is not.',
+  'A gust of wind takes three maps east. Good luck, maps.',
+];
+function lineFor(u) { const l = BUY_LINES[u.id]; return Array.isArray(l) ? l[Math.min(lvl(S, u) - 1, l.length - 1)] : l; }
+
+const buttons = {};
+for (const u of UP) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'item' + (u.kind === 'silly' ? ' silly' : '') + (u.kind === 'final' ? ' final' : '');
+  b.hidden = true;
+  b.innerHTML = `<span class="row"><span class="name"></span><span class="lv"></span></span><span class="desc"></span><span class="cost"></span>`;
+  b.querySelector('.name').textContent = u.name;
+  b.querySelector('.desc').textContent = u.desc;
+  b.addEventListener('click', () => buy(u));
+  b.addEventListener('pointerenter', () => { if (b.dataset.fresh) b.classList.remove('fresh'); });
+  shopEl.appendChild(b); buttons[u.id] = b;
+}
+function buy(u) {
+  if (S.ended || finaleT >= 0 || maxed(S, u)) return;
+  const c = price(S, u); if (S.maps < c) return;
+  S.maps -= c; S.sent += c; S.owned[u.id] = lvl(S, u) + 1;
+  const b = buttons[u.id]; b.classList.remove('fresh'); delete b.dataset.fresh;
+  if (u.kind === 'final') { startFinale(); refreshShop(); return; }
+  if (u.kind === 'silly') Snd.silly(); else Snd.buy(lvl(S, u));
+  say(lineFor(u));
+  launchMap(Math.min(8, 2 + Math.floor(Math.log10(c))));
+  checkFriends();
+  refreshShop(); save();
+}
+function refreshShop() {
+  let any = false, affordable = 0;
+  for (const u of UP) {
+    const b = buttons[u.id];
+    if (!S.seen[u.id] && visible(S, u) && !S.ended) {
+      S.seen[u.id] = true;
+      if (!lvl(S, u)) {
+        b.classList.add('fresh'); b.dataset.fresh = '1'; Snd.unlocked();
+        setTimeout(() => { b.classList.remove('fresh'); delete b.dataset.fresh; }, 12000);
+      }
+    }
+    b.hidden = !S.seen[u.id] || S.ended;
+    if (b.hidden) continue;
+    any = true;
+    const done = maxed(S, u), c = price(S, u), can = !done && S.maps >= c;
+    if (can) affordable++;
+    b.setAttribute('aria-disabled', String(!can));
+    b.classList.toggle('owned', done);
+    const lv = b.querySelector('.lv');
+    lv.textContent = b.dataset.fresh ? 'new' : once(u) ? (done ? (u.id === 'hat' ? 'worn' : 'done') : '') : (u.max ? `${lvl(S, u)}/${u.max}` : (lvl(S, u) ? '×' + lvl(S, u) : ''));
+    lv.classList.toggle('new', !!b.dataset.fresh);
+    b.querySelector('.cost').textContent = done ? '' : fmt(c) + ' maps';
+  }
+  document.getElementById('afford').textContent = S.ended || !affordable ? '' : affordable + ' ready';
+  const empty = document.getElementById('shopEmpty');
+  empty.hidden = any && !S.ended;
+  empty.textContent = S.ended ? 'Nothing left to send. Everyone already has a map.' : 'Stir up a few maps. Ways to send them out will show up here.';
+}
+
+// ---------- Friends and the mood meter ----------
+const MOODS = ['nobody, yet', 'a snail!', 'a snail and a frog', 'three whole friends', 'a little crowd', 'a proper gathering', 'half the map', 'most of the map', 'nearly everyone', 'everyone'];
+function checkFriends() {
+  const n = friendsFor(S.sent);
+  while (shownFriends < n) {
+    const f = FRIENDS[shownFriends];
+    arrivals.push({ i: shownFriends, t: 0 });
+    shownFriends++;
+    setTimeout(() => {
+      Snd.friend(); wave = 1;
+      say(`${f.name[0].toUpperCase() + f.name.slice(1)} followed a map all the way here! ${f.e}` + (S.owned.wave ? ' Gloop waves. All that practice paid off.' : ' Gloop forgets how waving works.'));
+    }, 900);
+  }
+}
+function mood() {
+  if (S.ended) return 1;
+  const n = friendsFor(S.sent);
+  if (n >= FRIENDS.length) return .92;
+  const lo = n ? Math.log10(FRIENDS[n - 1].at) : 0, hi = Math.log10(FRIENDS[n].at);
+  const frac = clamp((Math.log10(Math.max(1, S.sent)) - lo) / (hi - lo), 0, 1);
+  return ((n + frac) / FRIENDS.length) * .92;
+}
+function paintStats() {
+  document.getElementById('maps').textContent = fmt(S.maps);
+  document.getElementById('perTap').textContent = rateTxt(perTap(S));
+  document.getElementById('perSec').textContent = rateTxt(rate(S));
+  const m = mood();
+  document.getElementById('moodBar').style.width = (m * 100).toFixed(1) + '%';
+  document.getElementById('moodTxt').textContent = MOODS[S.ended ? 9 : friendsFor(S.sent)];
+}
+
+// ---------- Finale and ending ----------
+function startFinale() {
+  finaleT = 0; Snd.finale(); wave = 1;
+  say('Eight billion maps lift off the cauldron like a flock of birds.');
+  buildCrowd();
+  for (let i = 0; i < 40; i++) setTimeout(() => launchMap(1), i * 45);
+}
+function buildCrowd() {
+  crowd.length = 0;
+  const E = ['\u{1F9D1}', '\u{1F467}', '\u{1F474}', '\u{1F469}', '\u{1F466}', '\u{1F475}', '\u{1F468}', '\u{1F9D2}', '\u{1F43B}', '\u{1F407}', '\u{1F98C}', '\u{1F426}', '\u{1F41D}', '\u{1F42D}', '\u{1F9A6}', '\u{1F99D}'];
+  for (let i = 0; i < 44; i++) {
+    const a = rand(0, Math.PI * 2), o = [400 + Math.cos(a) * 470, 262 + Math.sin(a) * 320];
+    let sx, sy, tries = 0;
+    do { sx = rand(60, 740); sy = rand(170, 470); tries++; }
+    while (tries < 60 && (((sx - 400) / 200) ** 2 + ((sy - 320) / 95) ** 2 < 1 || (sx < 240 && sy > 420) || (sx > 660 && sy > 380) || SEATS.some(s => Math.hypot(s[0] - sx, s[1] - sy) < 30) || crowd.some(c => Math.hypot(c.sx - sx, c.sy - sy) < 26)));
+    crowd.push({ e: E[i % E.length], ox: o[0], oy: o[1], sx, sy, d: rand(0, 1.8) });
+  }
+}
+function end(resumed) {
+  S.ended = true; save();
+  if (!crowd.length) { buildCrowd(); crowd.forEach(c => c.d = -9); }
+  document.getElementById('ending').hidden = false;
+  refreshShop();
+  const m = Math.floor(S.time / 60), s = String(Math.floor(S.time % 60)).padStart(2, '0');
+  document.getElementById('facts').textContent = S.stirs
+    ? `${m}m${s}s · ${S.stirs.toLocaleString('en-US')} stirs · ${S.perfects.toLocaleString('en-US')} perfect · ${S.golds} compass bubbles`
+    : 'The swamp is full. Everyone is here.';
+  say(S.owned.hat ? 'Gloop wears the tiny hat to its own party. Tap the map to cheer.' : 'Everyone is here. Tap the map to cheer.');
+  if (!resumed && window.DailyGame) {
+    DailyGame.finish({ lines: [`⏱ ${m}m${s}s`, '🗺️ 8 billion maps brewed', S.owned.hat ? '🎩 the tiny hat stayed on' : `🫧 ${S.perfects} perfect stirs`] });
+  }
+}
+document.getElementById('shareBtn').addEventListener('click', () => window.DailyGame && DailyGame.share());
+document.getElementById('again').addEventListener('click', () => {
+  S = fresh(); finaleT = -1; shownFriends = 0; arrivals.length = 0; crowd.length = 0; gold = null; goldNext = GOLD_FIRST;
+  for (const id in buttons) { buttons[id].classList.remove('fresh'); delete buttons[id].dataset.fresh; }
+  save(); document.getElementById('ending').hidden = true;
+  say('A fresh sheet of parchment. Gloop is alone again, but it knows the trick now.', true);
+  refreshShop(); paintStats();
+});
+
+// ---------- Drawing ----------
+function inkPath(pts) { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); }
+function drawMark(m, a) {
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(m.x, m.y); ctx.scale(m.s, m.s);
+  ctx.strokeStyle = '#6b4e33'; ctx.lineWidth = 1.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (m.k === 'mtn') {
+    ctx.fillStyle = '#e6d3a8';
+    ctx.beginPath(); ctx.moveTo(-16, 8); ctx.lineTo(-3, -12); ctx.lineTo(4, -2); ctx.lineTo(9, -8); ctx.lineTo(18, 8); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); for (let i = 0; i < 4; i++) { ctx.moveTo(-1 + i * 2.5, -8 + i * 3.5); ctx.lineTo(-6 + i * 2.5, 6); } ctx.stroke();
+  } else if (m.k === 'tree') {
+    ctx.beginPath(); ctx.moveTo(0, 8); ctx.lineTo(0, 0); ctx.stroke();
+    ctx.fillStyle = '#b9c48a'; ctx.beginPath(); ctx.arc(0, -4, 6.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  } else {
+    ctx.fillStyle = '#ead9b3'; ctx.beginPath(); ctx.rect(-6, -3, 12, 10); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#c2654f'; ctx.beginPath(); ctx.moveTo(-8, -3); ctx.lineTo(0, -11); ctx.lineTo(8, -3); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawCompass(x, y, r, spin) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(spin);
+  ctx.strokeStyle = '#6b4e33'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, r * .78, 0, Math.PI * 2); ctx.stroke();
+  for (let i = 0; i < 8; i++) {
+    const a = i * Math.PI / 4, len = i % 2 ? r * .55 : r * .95, w = i % 2 ? r * .1 : r * .16;
+    ctx.fillStyle = i === 0 ? '#b8402f' : i % 2 ? '#d9c49a' : '#6b4e33';
+    ctx.beginPath(); ctx.moveTo(Math.cos(a) * len, Math.sin(a) * len);
+    ctx.lineTo(Math.cos(a + Math.PI / 2) * w, Math.sin(a + Math.PI / 2) * w);
+    ctx.lineTo(Math.cos(a - Math.PI / 2) * w, Math.sin(a - Math.PI / 2) * w); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawScroll(x, y, rot, s, a) {
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s, s);
+  ctx.fillStyle = '#f5e7c4'; ctx.strokeStyle = '#6b4e33'; ctx.lineWidth = 1;
+  ctx.fillRect(-8, -5, 16, 10); ctx.strokeRect(-8, -5, 16, 10);
+  ctx.fillStyle = '#e2cc9a'; ctx.beginPath(); ctx.ellipse(-8, 0, 2.2, 5.5, 0, 0, Math.PI * 2); ctx.ellipse(8, 0, 2.2, 5.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = '#b8402f'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(-3, -2); ctx.lineTo(3, 2); ctx.moveTo(3, -2); ctx.lineTo(-3, 2); ctx.stroke();
+  ctx.restore();
+}
+function emoji(e, x, y, size, a = 1) { ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = '#000'; ctx.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(e, x, y); ctx.restore(); }
+function pathPoint(i, t) { // dotted trail from a friend's corner of the map to its seat
+  const [ox, oy] = ORIGINS[i], [sx, sy] = SEATS[i];
+  const cx = (ox + sx) / 2 + (i % 2 ? 60 : -60), cy = (oy + sy) / 2 + (i % 3 - 1) * 50;
+  const u = 1 - t; return [u * u * ox + 2 * u * t * cx + t * t * sx, u * u * oy + 2 * u * t * cy + t * t * sy];
+}
+function drawGloop(t, m) {
+  const { x, y } = GLOOP, b = bounce, sq = 1 + b * .18 * Math.sin(b * 9);
+  const wob = reduceMotion ? 0 : 1;
+  ctx.save(); ctx.translate(x, y + 26);
+  ctx.scale(1 / Math.sqrt(sq), sq);
+  // body
+  ctx.beginPath();
+  for (let i = 0; i <= 40; i++) {
+    const a = Math.PI + i / 40 * Math.PI;
+    const r = 34 + wob * (1.6 * Math.sin(a * 4 + t * 3) + 1.2 * Math.sin(a * 3 - t * 2));
+    ctx.lineTo(Math.cos(a) * r * 1.15, Math.sin(a) * r * 1.08);
+  }
+  ctx.quadraticCurveTo(0, 6, -38, 0); ctx.closePath();
+  const g = ctx.createRadialGradient(-10, -32, 4, 0, -18, 52); g.addColorStop(0, '#b8f09a'); g.addColorStop(.6, '#6fc755'); g.addColorStop(1, '#4b9c3a');
+  ctx.fillStyle = g; ctx.globalAlpha = .95; ctx.fill(); ctx.globalAlpha = 1;
+  ctx.strokeStyle = '#2f6f22'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.beginPath(); ctx.ellipse(-14, -27, 6, 3.5, -.5, 0, Math.PI * 2); ctx.fill();
+  // wave arm
+  if (wave > 0 || S.ended) {
+    const k = S.ended ? .6 + .4 * Math.sin(t * 6) : wave;
+    ctx.save(); ctx.translate(30, -16); ctx.rotate(-1.1 + Math.sin(t * 12) * .45 * k);
+    ctx.fillStyle = '#6fc755'; ctx.beginPath(); ctx.ellipse(10, 0, 13, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+  // eyes
+  const blink = (t % 4.2) < .12 ? .15 : 1;
+  for (const ex of [-12, 10]) {
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(ex, -24, 7, 8 * blink, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#2f6f22'; ctx.lineWidth = 1.2; ctx.stroke();
+    if (blink > .5) { ctx.fillStyle = '#2b2018'; ctx.beginPath(); ctx.arc(ex + lookX * 3, -23 + lookY * 3, 3.4, 0, Math.PI * 2); ctx.fill(); }
+  }
+  // mouth: a wobbly frown that turns into a grin as friends arrive
+  const smile = (m - .25) * 14;
+  ctx.strokeStyle = '#24501a'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-8, -10); ctx.quadraticCurveTo(-1, -10 + smile, 6, -10); ctx.stroke();
+  if (m > .5) { ctx.fillStyle = 'rgba(230,110,110,.35)'; ctx.beginPath(); ctx.ellipse(-22, -13, 5, 3, 0, 0, Math.PI * 2); ctx.ellipse(20, -13, 5, 3, 0, 0, Math.PI * 2); ctx.fill(); }
+  // tiny hat
+  if (S.owned.hat || S.ended) {
+    ctx.save(); ctx.translate(4, -37); ctx.rotate(.18);
+    ctx.fillStyle = '#3a2a3f'; ctx.fillRect(-9, -16, 18, 16); ctx.fillRect(-14, -1, 28, 4);
+    ctx.fillStyle = '#b8402f'; ctx.fillRect(-9, -5, 18, 3); ctx.restore();
+  }
+  ctx.restore();
+}
+function drawCauldron(t) {
+  const { x, y } = POT;
+  // legs and fire
+  ctx.strokeStyle = '#2a2420'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x - 30, y + 30); ctx.lineTo(x - 36, y + 44); ctx.moveTo(x + 30, y + 30); ctx.lineTo(x + 36, y + 44); ctx.stroke();
+  for (let i = 0; i < 3; i++) {
+    const fx = x - 14 + i * 14, fl = 12 + (reduceMotion ? 0 : 4 * Math.sin(t * 9 + i * 2));
+    ctx.fillStyle = i === 1 ? '#f2b54a' : '#e2783a';
+    ctx.beginPath(); ctx.moveTo(fx - 7, y + 46); ctx.quadraticCurveTo(fx - 4, y + 46 - fl, fx, y + 44 - fl * 1.4); ctx.quadraticCurveTo(fx + 4, y + 46 - fl, fx + 7, y + 46); ctx.fill();
+  }
+  // pot
+  const g = ctx.createRadialGradient(x - 18, y - 6, 4, x, y + 4, 56); g.addColorStop(0, '#5a5560'); g.addColorStop(1, '#25222a');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y + 4, 50, 38, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#18151b'; ctx.lineWidth = 2; ctx.stroke();
+  // brew
+  const glow = glowing() && finaleT < 0 && !S.ended;
+  ctx.fillStyle = '#2b2830'; ctx.beginPath(); ctx.ellipse(RIM.x, RIM.y, RIM.rx + 6, RIM.ry + 4, 0, 0, Math.PI * 2); ctx.fill();
+  const bg = ctx.createRadialGradient(RIM.x, RIM.y, 2, RIM.x, RIM.y, RIM.rx); bg.addColorStop(0, glow ? '#d8ffb0' : '#a8e27c'); bg.addColorStop(1, '#4d9c3a');
+  ctx.fillStyle = bg; ctx.beginPath(); ctx.ellipse(RIM.x, RIM.y, RIM.rx, RIM.ry, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(40,90,30,.5)'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.ellipse(RIM.x, RIM.y, RIM.rx * .5, RIM.ry * .45, t * .8, 0, Math.PI * 1.4); ctx.stroke();
+  // googly eyes
+  if (S.owned.eyes || S.ended) {
+    for (const [ex, d] of [[-14, 0], [14, 1.3]]) {
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + ex, y + 6, 9, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#18151b'; ctx.lineWidth = 1.2; ctx.stroke();
+      const a = t * 2 + d + bounce * 6; ctx.fillStyle = '#18151b'; ctx.beginPath(); ctx.arc(x + ex - 3 + Math.cos(a) * 1.5, y + 7 + Math.abs(Math.sin(a)) * 2.5, 4.5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // the beat ring: closes in on the rim, then glows there (that's the perfect window)
+  if (finaleT < 0 && !S.ended) {
+    const p = phase(), close = clamp(p / (1 - GLOW), 0, 1), k = 1 + (1 - close) * 1.4;
+    ctx.save();
+    ctx.lineWidth = glow ? 3.2 : 1.6;
+    ctx.strokeStyle = glow ? 'rgba(80,170,60,.95)' : `rgba(107,78,51,${.25 + close * .45})`;
+    if (!glow) ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.ellipse(RIM.x, RIM.y, RIM.rx * k + 4, RIM.ry * k + 3, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  }
+}
+function drawHelpers(t) {
+  const o = S.ended ? { tadpole: 8, newt: 4, still: 3, press: 3, heron: 3, kettle: 2 } : S.owned;
+  // tadpoles swim in the puddle
+  const nt = Math.min(o.tadpole || 0, 12);
+  for (let i = 0; i < nt; i++) {
+    const a = t * (.6 + (i % 3) * .15) + i * 2.1, r = .55 + (i % 4) * .1;
+    const px = PUDDLE.x + Math.cos(a) * PUDDLE.rx * r, py = PUDDLE.y + 10 + Math.sin(a) * PUDDLE.ry * r * .6;
+    ctx.save(); ctx.translate(px, py); ctx.rotate(a + Math.PI / 2);
+    ctx.fillStyle = '#2f2a24'; ctx.beginPath(); ctx.ellipse(0, 0, 3.6, 2.6, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#2f2a24'; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.moveTo(-3, 0); ctx.quadraticCurveTo(-7, Math.sin(t * 10 + i) * 3, -10, 0); ctx.stroke();
+    ctx.restore();
+  }
+  // a shelf of workshops along the top of the map
+  const shelf = [['newt', '\u{1F98E}', 150], ['still', '\u{1F344}', 290], ['press', '\u{1FAB2}', 430]];
+  for (const [id, e, sx] of shelf) {
+    const n = Math.min(o[id] || 0, 5);
+    for (let i = 0; i < n; i++) emoji(e, sx + i * 19 - (n - 1) * 9.5, 104 + (reduceMotion ? 0 : Math.sin(t * 4 + i) * 1.5), 19);
+    if ((o[id] || 0) > 5) { ctx.fillStyle = '#6b4e33'; ctx.font = '700 12px "Courier Prime", monospace'; ctx.textAlign = 'center'; ctx.fillText('×' + o[id], sx, 128); }
+  }
+  // herons fly loops carrying bundles
+  const nh = Math.min(o.heron || 0, 4);
+  for (let i = 0; i < nh; i++) {
+    const u = ((t * .06 + i / nh) % 1), hx = -40 + u * 880, hy = 66 + Math.sin(u * 9 + i) * 14 + i * 9;
+    emoji('\u{1F426}', hx, hy, 18); drawScroll(hx + 2, hy + 13, .3, .55, 1);
+  }
+  // kettle clouds rain maps
+  const nk = Math.min(o.kettle || 0, 3);
+  for (let i = 0; i < nk; i++) {
+    const cx = 600 + i * 62, cy = 58 + (i % 2) * 14;
+    ctx.fillStyle = '#fbf5e6'; ctx.strokeStyle = '#8f7656'; ctx.lineWidth = 1.3;
+    ctx.beginPath(); ctx.arc(cx - 14, cy, 11, 0, Math.PI * 2); ctx.arc(cx, cy - 7, 14, 0, Math.PI * 2); ctx.arc(cx + 15, cy, 11, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fbf5e6'; ctx.fillRect(cx - 22, cy, 44, 8);
+    for (let k = 0; k < 3; k++) { const ry = (t * 30 + k * 13 + i * 7) % 36; drawScroll(cx - 12 + k * 12, cy + 12 + ry, .4, .4, 1 - ry / 36); }
+  }
+}
+function drawFriends(t, dt) {
+  const n = shownFriends;
+  // trails for every friend who's coming or here
+  ctx.save(); ctx.setLineDash([2, 5]); ctx.strokeStyle = 'rgba(184,64,47,.55)'; ctx.lineWidth = 1.6;
+  for (let i = 0; i < n; i++) { ctx.beginPath(); for (let k = 0; k <= 30; k++) { const [px, py] = pathPoint(i, k / 30); k ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.stroke(); }
+  ctx.restore();
+  for (let i = 0; i < n; i++) {
+    const [ox, oy] = ORIGINS[i];
+    ctx.strokeStyle = '#b8402f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ox - 5, oy - 5); ctx.lineTo(ox + 5, oy + 5); ctx.moveTo(ox + 5, oy - 5); ctx.lineTo(ox - 5, oy + 5); ctx.stroke();
+  }
+  for (let i = 0; i < n; i++) {
+    const ar = arrivals.find(a => a.i === i);
+    let p = 1;
+    if (ar) { ar.t += dt; p = clamp(ar.t / 4, 0, 1); }
+    const [px, py] = pathPoint(i, 1 - (1 - p) ** 2);
+    const hop = p < 1 ? Math.abs(Math.sin(t * 10)) * 4 : (reduceMotion ? 0 : Math.abs(Math.sin(t * 2.2 + i)) * 2);
+    ctx.fillStyle = 'rgba(80,55,25,.18)'; ctx.beginPath(); ctx.ellipse(px, py + 12, 10, 3, 0, 0, Math.PI * 2); ctx.fill();
+    emoji(FRIENDS[i].e, px, py - hop, 26);
+  }
+  // the finale crowd streams in from off the map
+  for (const c of crowd) {
+    const base = finaleT >= 0 ? finaleT : 9;
+    const p = clamp((base - c.d) / 2.6, 0, 1), e = 1 - (1 - p) ** 2;
+    if (p <= 0) continue;
+    const x = c.ox + (c.sx - c.ox) * e, y = c.oy + (c.sy - c.oy) * e;
+    emoji(c.e, x, y - (reduceMotion ? 0 : Math.abs(Math.sin(t * 3 + c.d * 5)) * 3), 20);
+  }
+}
+let last = performance.now(), saveT = 0, idleT = 0, shopT = 0;
+function frame(now) {
+  const dt = Math.min(.1, (now - last) / 1000); last = now;
+  const t = now / 1000;
+  // ---- update ----
+  if (!S.ended && finaleT < 0) {
+    S.time += dt;
+    const r = rate(S) * dt; S.maps += r; S.total += r;
+    beat += dt;
+    goldNext -= dt;
+    if (!gold && goldNext <= 0 && S.stirs > 0) gold = { x: rand(120, 680), y: H + 20, vx: rand(-12, 12), t: 0 };
+    if (gold) { gold.t += dt; gold.y -= (H + 60) / GOLD_LIFE * dt; gold.x += Math.sin(gold.t * 2) * 20 * dt + gold.vx * dt; if (gold.t > GOLD_LIFE) { gold = null; goldNext = rand(...GOLD_GAP); } }
+    idleT += dt; logT += dt;
+    if (logT > 22 && S.stirs > 20) { say(IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)], true); }
+  }
+  if (finaleT >= 0) {
+    finaleT += dt;
+    if (finaleT > 1.6 && finaleT - dt <= 1.6) say('From every corner of the map, everyone starts walking.');
+    if (finaleT > 4.2) { finaleT = -1; crowd.forEach(c => c.d = -9); end(false); }
+  }
+  bounce = Math.max(0, bounce - dt * 2.6); wave = Math.max(0, wave - dt * .35);
+  lookX *= .985; lookY *= .985;
+  shopT += dt; if (shopT > .2) { shopT = 0; refreshShop(); paintStats(); }
+  saveT += dt; if (saveT > 3) { saveT = 0; save(); }
+
+  // ---- draw ----
+  const m = mood();
+  ctx.fillStyle = '#d8dcc0'; ctx.fillRect(0, 0, W, H);                    // sea
+  ctx.strokeStyle = 'rgba(90,110,100,.35)'; ctx.lineWidth = 1;
+  for (let y = 18; y < H; y += 26) for (let x = (y / 26 % 2) * 30 + 10; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + 5, y - 4, x + 10, y); ctx.quadraticCurveTo(x + 15, y + 4, x + 20, y); ctx.stroke(); }
+  ctx.save(); inkPath(COAST); ctx.fillStyle = '#f1e4c4'; ctx.fill();          // land
+  ctx.strokeStyle = 'rgba(107,78,51,.35)'; ctx.lineWidth = 7; ctx.stroke();
+  ctx.strokeStyle = '#6b4e33'; ctx.lineWidth = 1.8; ctx.stroke(); ctx.restore();
+  ctx.drawImage(grain, 0, 0, W, H);
+  // landmarks sketch themselves in as more friends know the way
+  const shown = MARKS.length * (.12 + .88 * m);
+  for (let i = 0; i < MARKS.length; i++) { const a = clamp(shown - i, 0, 1); if (a > 0) drawMark(MARKS[i], a); }
+  // cartouche
+  ctx.save(); ctx.translate(120, 452);
+  ctx.fillStyle = '#f8eed6'; ctx.strokeStyle = '#6b4e33'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(-96, -16); ctx.lineTo(96, -16); ctx.lineTo(84, 0); ctx.lineTo(96, 16); ctx.lineTo(-96, 16); ctx.lineTo(-84, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#3f2c1d'; ctx.font = '19px "IM Fell English SC", Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Here be Slime', 0, 1);
+  ctx.restore();
+  drawCompass(712, 428, 34, reduceMotion ? 0 : Math.sin(t * .4) * .06 + (gold ? Math.sin(t * 7) * .15 : 0));
+  // the swamp
+  ctx.fillStyle = 'rgba(95,140,90,.25)'; ctx.beginPath(); ctx.ellipse(PUDDLE.x, PUDDLE.y + 6, PUDDLE.rx + 10, PUDDLE.ry + 8, 0, 0, Math.PI * 2); ctx.fill();
+  const pg = ctx.createRadialGradient(PUDDLE.x, PUDDLE.y, 10, PUDDLE.x, PUDDLE.y, PUDDLE.rx); pg.addColorStop(0, '#9fbf8a'); pg.addColorStop(1, '#6f9a6a');
+  ctx.fillStyle = pg; ctx.beginPath(); ctx.ellipse(PUDDLE.x, PUDDLE.y, PUDDLE.rx, PUDDLE.ry, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#4f6e4a'; ctx.lineWidth = 1.5; ctx.stroke();
+  for (const [lx, ly, s] of [[268, 350, 1], [520, 334, .8], [300, 368, .7]]) { ctx.fillStyle = '#7fae5e'; ctx.beginPath(); ctx.ellipse(lx, ly, 13 * s, 6 * s, 0, .3, Math.PI * 2 - .1); ctx.lineTo(lx, ly); ctx.fill(); }
+  drawHelpers(t);
+  drawFriends(t, dt);
+  drawCauldron(t);
+  drawGloop(t, m);
+  // bubbles
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    const b = bubbles[i]; b.t += dt; b.y += b.vy * dt; if (b.t > b.life) { bubbles.splice(i, 1); continue; }
+    ctx.strokeStyle = `rgba(60,130,50,${1 - b.t / b.life})`; ctx.lineWidth = 1.4; ctx.fillStyle = `rgba(190,240,160,${.5 * (1 - b.t / b.life)})`;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (1 + b.t), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+  // maps on the wind
+  for (let i = flying.length - 1; i >= 0; i--) {
+    const f = flying[i]; f.t += dt; const p = f.t / f.dur; if (p >= 1) { flying.splice(i, 1); continue; }
+    const x = f.x0 + (f.x1 - f.x0) * p, y = f.y0 + (f.y1 - f.y0) * p - Math.sin(p * Math.PI) * 60;
+    drawScroll(x, y, f.rot * p + Math.sin(p * 12) * .3, 1.1 - p * .3, p > .8 ? (1 - p) * 5 : 1);
+  }
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i]; s.t += dt; if (s.t > .7) { sparks.splice(i, 1); continue; }
+    s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 80 * dt;
+    ctx.fillStyle = s.c; ctx.globalAlpha = 1 - s.t / .7; ctx.beginPath(); ctx.arc(s.x, s.y, 2.4, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+  }
+  for (let i = floats.length - 1; i >= 0; i--) {
+    const f = floats[i]; f.t += dt; if (f.t > 1.1) { floats.splice(i, 1); continue; }
+    ctx.globalAlpha = 1 - f.t / 1.1; ctx.fillStyle = f.gold ? '#a8741a' : f.perfect ? '#2f6f22' : '#5a3e2b';
+    ctx.font = `700 ${f.perfect ? 17 : 14}px "Courier Prime", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(f.text + (f.perfect && !f.gold ? ' perfect!' : ''), f.x, f.y - f.t * 34); ctx.globalAlpha = 1;
+  }
+  // compass bubble
+  if (gold) {
+    const r = 22 + Math.sin(gold.t * 5) * 1.5;
+    ctx.fillStyle = 'rgba(255,236,170,.55)'; ctx.strokeStyle = '#c8952e'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(gold.x, gold.y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    drawCompass(gold.x, gold.y, 13, Math.atan2(GLOOP.y - gold.y, GLOOP.x - gold.x) + Math.PI / 2);
+    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.ellipse(gold.x - 8, gold.y - 10, 5, 3, -.6, 0, Math.PI * 2); ctx.fill();
+  }
+  requestAnimationFrame(frame);
+}
+
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+refreshShop(); paintStats();
+if (S.stirs > 0 && !S.ended) say('Welcome back. The cauldron kept itself warm.', true);
+if (S.ended) end(true);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -22,5 +22,17 @@
     "minutes": "8–12",
     "seed": 2229681724,
     "interaction": "drag-and-drop"
+  },
+  {
+    "n": 3,
+    "slug": "here-be-slime",
+    "date": "2026-10-25",
+    "title": "Here Be Slime",
+    "tagline": "A lonely slime brews maps to its swamp until everyone knows the way.",
+    "emoji": "🟢🗺️",
+    "scale": "billions",
+    "minutes": "9–13",
+    "seed": 3508230676,
+    "interaction": "tap"
   }
 ]
