@@ -6,7 +6,9 @@
     "tagline": "A lonely moon polishes mushrooms until it isn't lonely anymore.",
     "emoji": "🌙🍄",
     "scale": "thousands",
-    "minutes": "10–15"
+    "minutes": "10–15",
+    "seed": 2428482643,
+    "interaction": "rub"
   },
   {
     "n": 2,
@@ -15,6 +17,8 @@
     "tagline": "A grumpy ghost lives in a toaster. It hatches teacups now.",
     "emoji": "👻🫖",
     "scale": "hundreds",
-    "minutes": "8–12"
+    "minutes": "8–12",
+    "seed": 2229681724,
+    "interaction": "drag-and-drop"
   }
 ]

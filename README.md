@@ -11,6 +11,8 @@ public/
   1/index.html        game #1, Moonshroom
   _headers            keeps games.json uncached so new days show up right away
 templates/game.html   starting point for a new game
+tests/check.mjs       browser smoke test (Playwright)
+tools/roll.py         rolls a random theme for a new game
 CLAUDE.md             the design bar and checklist for making a game
 ```
 
@@ -47,6 +49,19 @@ You can queue games ahead of time; each one appears at midnight in the player's 
 
 Or, in Claude Code, run `/new-game` (optionally with steering like `/new-game Use seed 12345`). It rolls a
 theme, builds the game, checks pacing with a simulated player, tests it in a browser, and commits.
+
+## Testing
+
+```
+npm install && npm run setup   # once per machine: Playwright and its Chromium (Node 24, see mise.toml)
+npm run check                  # landing page + every game
+npm run check -- 3             # just game #3
+```
+
+`tests/check.mjs` serves `public/`, checks each game starts with the ending and upgrades hidden,
+plays the opening, loads a finished save to check the ending and share card, checks for
+sideways scroll at 390px, and fails on any console error. Screenshots go to `tests/screenshots/`.
+`package.json` is dev tooling only; the site still has no build step.
 
 ## Local data
 

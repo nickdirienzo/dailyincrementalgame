@@ -1,0 +1,14 @@
+{
+  "name": "dailyincrementalgame",
+  "private": true,
+  "type": "module",
+  "description": "Dev tooling only. The site itself is static files in public/ with no build step.",
+  "scripts": {
+    "serve": "python3 -m http.server -d public 8080",
+    "check": "node tests/check.mjs",
+    "setup": "playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
+  }
+}

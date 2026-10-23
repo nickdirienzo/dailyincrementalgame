@@ -32,15 +32,20 @@ doesn't become the only kind of satisfaction.
 
 1. Copy `templates/game.html` to `public/<n>/index.html`, where `<n>` is the next game number.
 2. Set `data-day="<n>"` on the `/shared/daily.js` script tag.
-3. Build the game. Save state under `DailyGame.storageKey('save')` (which is `di:<n>:save`).
+3. Build the game. Save state as one JSON object under `DailyGame.storageKey('save')` (which is
+   `di:<n>:save`), merged over defaults on load, so that a save of just `{ "ended": true }` opens
+   straight into the ending. The browser check relies on this.
 4. When the player reaches the ending, call `DailyGame.finish({ lines: [...] })` exactly once
    (not again when a finished save is reloaded). The lines become the share card, joined with
    " · ". Keep them short and emoji-led: time, a headline number, one in-joke.
-5. Give the ending a "Share result" button that calls `DailyGame.share()`.
+5. Give the ending a "Share result" button that calls `DailyGame.share()`. Keep the template's ids:
+   `#ending` for the ending, `#shareBtn` for the button, and upgrades as buttons inside `#shop`.
 6. Add an entry to `public/games.json` with `n`, `date` (YYYY-MM-DD, the day it goes live),
-   `title`, `tagline`, `emoji` (one or two), `scale`, `minutes`.
-7. Test locally: `python3 -m http.server -d public 8080`, then open http://localhost:8080/<n>/.
-   Play it all the way through once, with sound on, and once on a phone-width window.
+   `title`, `tagline`, `emoji` (one or two), `scale`, `minutes`, plus `seed` and `interaction`
+   from `tools/roll.py` if the theme was rolled.
+7. Run `npm run check -- <n>` and look at the screenshots in `tests/screenshots/`. Then play it
+   yourself: `npm run serve`, open http://localhost:8080/<n>/, and play all the way through once
+   with sound on and once in a phone-width window.
 
 ## Technical rules
 
