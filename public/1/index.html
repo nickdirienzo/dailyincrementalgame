@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Moonshroom · Daily Incremental #1</title>
+<meta name="description" content="A lonely moon polishes mushrooms until it isn't lonely anymore. Daily Incremental #1.">
+<meta property="og:title" content="Moonshroom · Daily Incremental #1">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Atkinson+Hyperlegible:wght@400;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column. Night-sky stage on top, a ledger strip, then the shop. Single committed dark look. */
+:root {
+  --night: #0f1126;
+  --night-2: #171a36;
+  --line: #2b2f58;
+  --dust: #9196bd;
+  --ink: #eceaf6;
+  --glim: #ffd27a;
+  --spore: #ff9fc4;
+  --display: "Young Serif", Georgia, "Times New Roman", serif;
+  --body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "DM Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+html, body { background: var(--night); color: var(--ink); }
+body {
+  margin: 0;
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: max(14px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+}
+.wrap { max-width: 1140px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.game { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 20px; align-items: start; }
+.main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.side { display: flex; flex-direction: column; gap: 10px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow-y: auto; min-width: 0; }
+.side-h { font-family: var(--display); font-weight: 400; font-size: 20px; margin: 0; display: flex; align-items: baseline; gap: 8px; }
+.side-h span { font-family: var(--body); font-size: 12px; color: var(--night); background: var(--glim); border-radius: 999px; padding: 1px 8px; }
+.side-h span:empty { display: none; }
+.side .shop { grid-template-columns: 1fr; }
+@media (max-width: 760px) {
+  .game { grid-template-columns: 1fr; }
+  .side { position: static; max-height: none; overflow: visible; }
+  .side .shop { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
+.item.fresh { border-color: var(--spore); animation: fresh 1.1s ease-in-out 4; }
+.item .new { font-family: var(--mono); font-size: 11px; color: var(--spore); text-transform: uppercase; letter-spacing: .1em; }
+@keyframes fresh { 50% { box-shadow: 0 0 0 4px rgba(255,159,196,.25); } }
+@media (prefers-reduced-motion: reduce) { .item.fresh { animation: none; } }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(30px, 6vw, 44px); margin: 0; letter-spacing: .01em; text-wrap: balance; }
+h1 span { color: var(--spore); }
+.seed { font-family: var(--mono); font-size: 12px; color: var(--dust); margin: 0; }
+.meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sound { all: unset; cursor: pointer; font-family: var(--mono); font-size: 12px; color: var(--ink); padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; }
+.sound:hover { border-color: var(--glim); }
+.sound:focus-visible { outline: 2px solid var(--glim); outline-offset: 2px; }
+.sound[aria-pressed="false"] { color: var(--dust); }
+.stage { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--night-2); }
+canvas { display: block; width: 100%; height: auto; aspect-ratio: 5 / 3; touch-action: none; cursor: none; }
+.log { min-height: 1.5em; color: var(--ink); font-style: italic; text-align: center; margin: 0; text-wrap: balance; }
+.log.dim { color: var(--dust); }
+.ledger { display: flex; gap: 14px 28px; flex-wrap: wrap; align-items: flex-end; }
+.stat .k, .lonely .k { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--dust); }
+.stat .v { font-family: var(--mono); font-size: 22px; font-variant-numeric: tabular-nums; }
+.stat .v.glim { color: var(--glim); }
+.lonely { flex: 1; min-width: 180px; }
+.lonely .k b { font-family: var(--mono); font-weight: 500; color: var(--ink); letter-spacing: 0; }
+.bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 7px; }
+.bar i { display: block; height: 100%; background: var(--dust); transition: width .8s ease; }
+.shop { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.item {
+  all: unset; box-sizing: border-box; display: flex; flex-direction: column; gap: 3px;
+  padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--night-2);
+  cursor: pointer; transition: border-color .15s, transform .08s;
+}
+.item:hover:not([aria-disabled="true"]) { border-color: var(--glim); }
+.item:active:not([aria-disabled="true"]) { transform: translateY(1px); }
+.item:focus-visible { outline: 2px solid var(--glim); outline-offset: 2px; }
+.item[aria-disabled="true"] { opacity: .45; cursor: default; }
+.item.owned { opacity: .35; }
+.item.final { border-color: var(--spore); }
+.item .row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.item .name { font-weight: 700; }
+.item .lv { font-family: var(--mono); font-size: 12px; color: var(--dust); white-space: nowrap; }
+.item .desc { color: var(--dust); font-size: 13px; }
+.item .cost { font-family: var(--mono); color: var(--glim); font-size: 13px; }
+.hint { color: var(--dust); font-size: 13px; margin: 0; }
+.ending { border: 1px solid var(--spore); border-radius: 14px; background: var(--night-2); padding: 22px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.ending h2 { font-family: var(--display); font-weight: 400; font-size: 28px; margin: 0; text-wrap: balance; }
+.ending p { margin: 0; max-width: 60ch; }
+.ending .facts { font-family: var(--mono); color: var(--dust); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ending button { all: unset; cursor: pointer; padding: 9px 16px; border-radius: 8px; background: var(--spore); color: var(--night); font-weight: 700; }
+.end-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.ending button.quiet { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.ending button:focus-visible { outline: 2px solid var(--glim); outline-offset: 2px; }
+</style>
+<script src="/shared/daily.js" data-day="1"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Moon<span>shroom</span></h1>
+    <div class="meta">
+      <p class="seed">seed 2428482643 · a lonely moon · polishing · mushrooms</p>
+      <button class="sound" id="sound" type="button" aria-pressed="true">♪ Sound on</button>
+    </div>
+  </header>
+
+  <div class="game">
+  <div class="main">
+  <div class="stage"><canvas id="c" width="800" height="480" aria-label="The moon's surface, with mushrooms to polish"></canvas></div>
+  <p class="log dim" id="log">Rub the mushrooms to polish them. The moon has nothing else to do.</p>
+
+  <div class="ledger">
+    <div class="stat"><span class="k">Glimmer</span><span class="v glim" id="g">0</span></div>
+    <div class="stat"><span class="k">Per second</span><span class="v" id="rate">0</span></div>
+    <div class="stat"><span class="k">Polished</span><span class="v" id="tot">0</span></div>
+    <div class="lonely"><span class="k">Loneliness <b id="lonelyPct">100%</b></span><div class="bar"><i id="lonelyBar" style="width:100%"></i></div></div>
+  </div>
+  <p class="hint" id="hint">Mouse: just rub over them. Touch: drag your finger across.</p>
+  <div class="ending" id="ending" hidden>
+    <h2>The moon is not lonely anymore.</h2>
+    <p>Every mushroom lit up at once, brighter than the moon had ever managed alone. Down on Earth, someone stepped outside, looked up, and blinked a flashlight back.</p>
+    <p class="facts" id="facts"></p>
+    <div class="end-actions">
+      <button id="shareBtn" type="button">Share result</button>
+      <button id="again" type="button" class="quiet">Start a new night</button>
+    </div>
+  </div>
+  </div>
+  <aside class="side" id="side">
+    <h2 class="side-h">Upgrades <span id="afford"></span></h2>
+    <div class="shop" id="shop"></div>
+    <p class="hint" id="shopEmpty">Polish a few mushrooms. Things to buy will show up here.</p>
+  </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const W = 800, H = 480;
+const MC = { x: 400, y: 1040 }, MR = 700;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Seeded RNG for the scenery, from the seed that picked the theme
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const srand = mulberry32(2428482643);
+const stars = Array.from({length: 90}, () => ({ x: srand()*W, y: srand()*320, r: .4 + srand()*1.3, p: srand()*6.28 }));
+const craters = Array.from({length: 14}, () => { const a = (srand()-.5)*1.1; const d = 30 + srand()*120; return { a, d, r: 8 + srand()*26 }; });
+
+// ---------- Sound (all synthesized with Web Audio) ----------
+const Snd = (() => {
+  let ac = null, master = null, noise = null, muted = false, lastRub = 0, popIdx = 0;
+  try { muted = localStorage.getItem('di:sound-muted') === '1'; } catch (e) {}
+  const SCALE = [0, 2, 4, 7, 9];
+  const note = (i, base = 523.25) => base * 2 ** ((SCALE[((i % 5) + 5) % 5] + 12 * Math.floor(i / 5)) / 12);
+  function unlock(){
+    if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    try {
+      ac = new C();
+      master = ac.createGain(); master.gain.value = muted ? 0 : .5; master.connect(ac.destination);
+      const len = ac.sampleRate * .5; noise = ac.createBuffer(1, len, ac.sampleRate);
+      const d = noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random()*2 - 1;
+    } catch (e) { ac = null; }
+  }
+  const ok = () => ac && !muted && ac.state === 'running';
+  function tone(f, t0, dur, type, vol, glide){
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t0);
+    if (glide) o.frequency.exponentialRampToValueAtTime(glide, t0 + dur);
+    g.gain.setValueAtTime(.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + .012);
+    g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    o.connect(g).connect(master); o.start(t0); o.stop(t0 + dur + .05);
+  }
+  return {
+    unlock,
+    get muted(){ return muted; },
+    setMuted(v){ muted = v; try { localStorage.setItem('di:sound-muted', v ? '1' : '0'); } catch (e) {} if (master) master.gain.value = v ? 0 : .5; },
+    rub(amt){
+      if (!ok()) return; const t = ac.currentTime; if (t - lastRub < .06) return; lastRub = t;
+      const s = ac.createBufferSource(); s.buffer = noise;
+      const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1600 + Math.random()*1800; f.Q.value = 7;
+      const g = ac.createGain(); g.gain.setValueAtTime(.05 + .1*amt, t); g.gain.exponentialRampToValueAtTime(.0001, t + .09);
+      s.connect(f).connect(g).connect(master); s.start(t, Math.random()*.38, .1);
+    },
+    pop(kind){
+      if (!ok()) return; const t = ac.currentTime;
+      popIdx = (popIdx + 1 + (Math.random()*3|0)) % 10;
+      const f = note(popIdx), v = kind === 'you' ? .16 : .06;
+      tone(700, t, .07, 'sine', v*.8, 220);
+      tone(f, t + .02, .45, 'sine', v);
+      tone(f*2, t + .04, .3, 'triangle', v*.3);
+      if (kind === 'sat' && Math.random() < .3) { tone(1400, t + .15, .06, 'square', .025); tone(1870, t + .24, .06, 'square', .025); }
+    },
+    buy(){ if (!ok()) return; const t = ac.currentTime; [0, 2, 4].forEach((n, k) => tone(note(n, 392), t + k*.07, .25, 'triangle', .12)); },
+    unlocked(){ if (!ok()) return; const t = ac.currentTime; tone(1046.5, t, .18, 'sine', .07); tone(1568, t + .09, .3, 'sine', .07); },
+    nope(){ if (!ok()) return; tone(130, ac.currentTime, .12, 'square', .04, 90); },
+    hum(){
+      if (!ok()) return; const t = ac.currentTime, f = note(Math.random()*5|0, 196);
+      const o = ac.createOscillator(), lfo = ac.createOscillator(), lg = ac.createGain(), g = ac.createGain();
+      o.type = 'sine'; o.frequency.value = f; lfo.frequency.value = 5; lg.gain.value = 3;
+      lfo.connect(lg).connect(o.frequency);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.07, t + .25); g.gain.exponentialRampToValueAtTime(.0001, t + 1.4);
+      o.connect(g).connect(master); o.start(t); lfo.start(t); o.stop(t + 1.5); lfo.stop(t + 1.5);
+    },
+    finale(){
+      if (!ok()) return; const t = ac.currentTime;
+      for (let k = 0; k < 14; k++) tone(note(k, 261.63), t + k*.16, 1.6, 'sine', .09);
+      [0, 2, 4, 5].forEach(n => tone(note(n, 130.81), t + 2.2, 3.5, 'triangle', .06));
+    },
+  };
+})();
+['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, Snd.unlock, true));
+const soundBtn = document.getElementById('sound');
+function syncSoundBtn(){ soundBtn.setAttribute('aria-pressed', String(!Snd.muted)); soundBtn.textContent = Snd.muted ? '♪ Sound off' : '♪ Sound on'; }
+soundBtn.addEventListener('click', () => { Snd.setMuted(!Snd.muted); syncSoundBtn(); });
+syncSoundBtn();
+
+// ---------- State ----------
+const KEY = 'di:1:save';
+function fresh(){ return { g: 0, peak: 0, total: 0, cloth: 0, crater: 0, dew: 0, comet: 0, shine: 0, once: {}, lonely: 100, time: 0, ended: false, seen: {} }; }
+let S = fresh();
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+const rubPow = () => 1.7 ** S.cloth;
+const slots = () => 3 + S.crater;
+const regrow = () => 2.4 * 0.62 ** S.dew;
+const value = () => (2 ** S.shine) * (S.once.mirror ? 3 : 1);
+
+// ---------- Mushrooms ----------
+const ANGLES = [0, -.2, .2, -.38, .38, -.1, .1, -.29, .29, -.46, .46];
+const SIZES  = [1.15, 1, 1, .9, .9, .95, .95, .85, .85, .8, .8];
+function dress(m){
+  m.hue = [330, 300, 20, 190, 270, 45, 160][Math.floor(Math.random()*7)] + Math.random()*16;
+  m.spots = []; m.smudges = [];
+  const inCap = (x,y) => (x/26)**2 + (y/20)**2 < .75;
+  while (m.spots.length < 3 + (Math.random()*2|0)) { const x = (Math.random()-.5)*44, y = 3 + Math.random()*17; if (inCap(x,y)) m.spots.push({x,y,r:2.2+Math.random()*2.6}); }
+  while (m.smudges.length < 3) { const x = (Math.random()-.5)*44, y = 2 + Math.random()*16; if (inCap(x,y)) m.smudges.push({x,y,r:5+Math.random()*4}); }
+}
+const shrooms = ANGLES.map((a, i) => { const m = { i, a, s: SIZES[i], x: MC.x + MR*Math.sin(a), y: MC.y - MR*Math.cos(a), grow: 1, polish: 0 }; dress(m); return m; });
+const active = () => shrooms.slice(0, slots());
+function capCenter(m){ const h = 30*m.s; return { x: m.x + Math.sin(m.a)*h, y: m.y - Math.cos(m.a)*h }; }
+
+// ---------- Particles & log ----------
+const parts = [];
+function burst(x, y, hue, n){ if (reduceMotion) n = Math.min(n, 4); for (let k=0;k<n;k++){ const a=Math.random()*6.28, v=40+Math.random()*120; parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-60,life:1,hue}); } }
+function floatText(x, y, txt, col){ parts.push({x,y,vx:0,vy:-38,life:1.3,txt,col}); }
+const logEl = document.getElementById('log');
+function say(msg){ logEl.textContent = msg; logEl.classList.remove('dim'); }
+
+const gains = [];
+const MILESTONES = { 1: 'It gleams. The moon feels a tiny bit less alone.', 25: 'The mushrooms seem to lean toward you now.', 100: 'A hundred polished. The moon has found its calling.', 500: 'Five hundred. The craters are starting to sparkle.', 2000: 'Two thousand mushrooms. Astronomers have noticed a slight shimmer.' };
+
+function pop(m, by){
+  const v = value();
+  S.g += v; S.total++; S.peak = Math.max(S.peak, S.g);
+  gains.push({ t: performance.now(), v });
+  const c = capCenter(m);
+  burst(c.x, c.y, m.hue, 14);
+  floatText(c.x, c.y - 20, '+' + fmt(v), 'var');
+  Snd.pop(by);
+  m.polish = 0; m.grow = 0; dress(m);
+  if (MILESTONES[S.total]) say(MILESTONES[S.total]);
+}
+
+// ---------- Input ----------
+const ptr = { x: -999, y: -999, inside: false, down: false };
+function local(e){ const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
+function rub(x, y, d){
+  if (S.ended || d <= 0) return;
+  for (const m of active()){
+    if (m.grow < 1) continue;
+    const c = capCenter(m);
+    if (Math.hypot(x - c.x, y - c.y) < 44*m.s){
+      m.polish += d * rubPow() / 260;
+      Snd.rub(Math.min(d / 40, 1));
+      if (Math.random() < .25 && !reduceMotion) parts.push({x:x+(Math.random()-.5)*20,y:y+(Math.random()-.5)*20,vx:(Math.random()-.5)*30,vy:-20-Math.random()*30,life:.6,hue:m.hue,small:true});
+      if (m.polish >= 1) pop(m, 'you');
+    }
+  }
+}
+cv.addEventListener('pointermove', e => {
+  const p = local(e);
+  const d = ptr.inside ? Math.min(Math.hypot(p.x - ptr.x, p.y - ptr.y), 60) : 0;
+  ptr.x = p.x; ptr.y = p.y; ptr.inside = true;
+  if (e.pointerType === 'mouse' || ptr.down) rub(p.x, p.y, d);
+});
+cv.addEventListener('pointerdown', e => {
+  const p = local(e); ptr.x = p.x; ptr.y = p.y; ptr.inside = true; ptr.down = true;
+  try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+  rub(p.x, p.y, 30);
+});
+const up = e => { ptr.down = false; if (e.pointerType !== 'mouse') ptr.inside = false; };
+cv.addEventListener('pointerup', up);
+cv.addEventListener('pointercancel', up);
+cv.addEventListener('pointerleave', () => { if (!ptr.down) ptr.inside = false; });
+
+// ---------- Shop ----------
+const ITEMS = [
+  { id:'cloth', name:'Softer Cloth', desc:'Each rub polishes more.', max:5, cost:l=>6*2.4**l,
+    msg:l=>['Velvet. The mushrooms approve.','Cashmere. Very fancy for a rock.','A cloth made of borrowed cloud.','A cloth woven from moonbeams, obviously.','The softest cloth in the solar system.'][l] },
+  { id:'crater', name:'Dig a Crater', desc:'Room for one more mushroom.', max:8, cost:l=>10*1.85**l,
+    msg:()=>'A new mushroom moves into the neighborhood.' },
+  { id:'gerald', name:'Name a Mushroom', desc:'Give one of them a name.', once:true, cost:()=>20, lonely:4,
+    msg:()=>"You name the big one Gerald. Gerald says nothing. It's a start." },
+  { id:'dew', name:'Moon Dew', desc:'Mushrooms regrow faster.', max:4, cost:l=>30*2.6**l,
+    msg:()=>'Morning dew, on the moon, somehow. Things grow faster.' },
+  { id:'comet', name:'Hire a Comet', desc:'Polishes while you rest. Paid in glimmer.', max:5, cost:l=>60*2.5**l, lonely:2,
+    msg:l=>['A comet signs on. It does not make small talk.','A second comet. They seem to know each other.','Three comets now. They have started a union.','Four comets. The night is getting busy.','Five comets. A whole crew.'][l] },
+  { id:'shine', name:'Shinier Spores', desc:'Each mushroom is worth double.', max:4, cost:l=>90*3.2**l,
+    msg:()=>'The new spores sparkle before you even touch them.' },
+  { id:'wave', name:'Wave at Earth', desc:'Maybe someone waves back.', once:true, cost:()=>150, lonely:2,
+    msg:()=>"Nobody waves back. It's daytime there." },
+  { id:'hat', name:'Tiny Hat for Gerald', desc:'He deserves it.', once:true, req:'gerald', cost:()=>250, lonely:6,
+    msg:()=>'Gerald looks distinguished now. Still quiet, though.' },
+  { id:'hum', name:'Learn to Hum', desc:'Something to fill the silence.', once:true, cost:()=>600, lonely:6,
+    msg:()=>'The moon hums. The mushrooms seem to sway along.' },
+  { id:'mirror', name:'Mirror Crater', desc:'Polished mushrooms are worth triple.', once:true, cost:()=>1800,
+    msg:()=>'Every mushroom can see itself now. Value tripled. Vanity is profitable.' },
+  { id:'sun', name:'Write to the Sun', desc:'Long time, no see. Literally.', once:true, cost:()=>4000, lonely:3,
+    msg:()=>'The sun replies: "k".' },
+  { id:'sat', name:'Befriend a Satellite', desc:'It polishes, and it listens.', once:true, cost:()=>9000, lonely:18,
+    msg:()=>'A satellite drifts over and decides to stay. It beeps sometimes. You beep back.' },
+  { id:'sky', name:'Light the Sky', desc:'Polish every mushroom at once, as bright as a moon can be.', once:true, req:'sat', final:true, cost:()=>60000 },
+];
+const level = it => it.once ? (S.once[it.id] ? 1 : 0) : S[it.id];
+const maxed = it => it.once ? !!S.once[it.id] : S[it.id] >= it.max;
+const priceOf = it => Math.ceil(it.cost(level(it)));
+
+const shopEl = document.getElementById('shop');
+const btns = ITEMS.map(it => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'item' + (it.final ? ' final' : ''); b.id = 'buy-' + it.id; b.hidden = true;
+  b.innerHTML = `<span class="row"><span class="name"></span><span class="lv"></span></span><span class="desc"></span><span class="cost"></span>`;
+  b.querySelector('.name').textContent = it.name;
+  b.querySelector('.desc').textContent = it.desc;
+  b.addEventListener('click', () => buy(it));
+  shopEl.appendChild(b);
+  return b;
+});
+
+function buy(it){
+  if (S.ended || maxed(it)) return;
+  const p = priceOf(it);
+  if (S.g < p) { Snd.nope(); return; }
+  const l = level(it);
+  if (!it.final) Snd.buy();
+  S.g -= p;
+  if (it.once) S.once[it.id] = true; else S[it.id]++;
+  if (it.lonely) S.lonely = Math.max(0, S.lonely - it.lonely);
+  if (it.id === 'crater') { const m = shrooms[slots()-1]; m.grow = 0; m.polish = 0; }
+  if (it.final) { finale(); }
+  else if (it.msg) say(it.msg(l));
+  save(); renderUI(true);
+}
+
+function renderUI(){
+  document.getElementById('g').textContent = fmt(S.g);
+  document.getElementById('tot').textContent = fmt(S.total);
+  const now = performance.now();
+  while (gains.length && now - gains[0].t > 5000) gains.shift();
+  document.getElementById('rate').textContent = fmt(gains.reduce((a,b)=>a+b.v,0)/5, true);
+  document.getElementById('lonelyPct').textContent = Math.round(S.lonely) + '%';
+  document.getElementById('lonelyBar').style.width = S.lonely + '%';
+  ITEMS.forEach((it, i) => {
+    const b = btns[i];
+    const reqOk = !it.req || S.once[it.req];
+    if (!S.seen[it.id] && reqOk && (S.peak >= priceOf(it) * .5 || level(it) > 0)) {
+      S.seen[it.id] = true;
+      b.classList.add('fresh');
+      b.querySelector('.lv').dataset.fresh = '1';
+      Snd.unlocked();
+      setTimeout(() => { b.classList.remove('fresh'); delete b.querySelector('.lv').dataset.fresh; }, 9000);
+    }
+    b.hidden = !S.seen[it.id] || S.ended;
+    const done = maxed(it);
+    b.classList.toggle('owned', done);
+    const lv = b.querySelector('.lv');
+    lv.textContent = lv.dataset.fresh ? 'new' : it.once ? (done ? 'owned' : '') : `lv ${S[it.id]}/${it.max}`;
+    lv.classList.toggle('new', !!lv.dataset.fresh);
+    b.querySelector('.cost').textContent = done ? (it.once ? '—' : 'maxed') : fmt(priceOf(it)) + ' glimmer';
+    b.setAttribute('aria-disabled', String(done || S.g < priceOf(it)));
+  });
+  const affordable = ITEMS.filter(it => S.seen[it.id] && !maxed(it) && S.g >= priceOf(it)).length;
+  document.getElementById('afford').textContent = S.ended || !affordable ? '' : affordable + ' ready';
+  document.getElementById('shopEmpty').hidden = S.ended || ITEMS.some(it => S.seen[it.id]);
+  document.getElementById('side').hidden = S.ended;
+}
+
+function fmt(n, dec){
+  if (n < 1000) return dec && n < 10 ? n.toFixed(1) : String(Math.floor(n));
+  const u = ['k','M','B','T']; let i = -1;
+  while (n >= 1000 && i < u.length-1) { n /= 1000; i++; }
+  return n.toFixed(n < 10 ? 2 : 1) + u[i];
+}
+
+// ---------- Ending ----------
+let finaleT = -1;
+function finale(){
+  S.ended = true; S.lonely = 0; finaleT = 0;
+  Snd.finale();
+  say('...');
+  for (const m of shrooms) { m.grow = 1; m.polish = 1; }
+  setTimeout(() => showEnding(false), 2600);
+}
+function showEnding(resumed){
+  const mins = Math.floor(S.time/60), secs = Math.floor(S.time%60);
+  document.getElementById('facts').textContent = `${mins}m ${String(secs).padStart(2,'0')}s · ${fmt(S.total)} mushrooms polished · Gerald ${S.once.hat ? 'wore his hat' : 'went hatless'}`;
+  document.getElementById('ending').hidden = false;
+  document.getElementById('hint').hidden = true;
+  say('Someone down there looked up.');
+  renderUI();
+  if (!resumed && window.DailyGame) {
+    window.DailyGame.finish({ lines: [
+      `⏱ ${mins}m${String(secs).padStart(2,'0')}s`,
+      `🍄 ${fmt(S.total)} polished`,
+      S.once.hat ? '🎩 Gerald' : '😶 hatless Gerald',
+    ] });
+  }
+}
+document.getElementById('shareBtn').addEventListener('click', () => window.DailyGame && window.DailyGame.share());
+document.getElementById('again').addEventListener('click', () => {
+  S = fresh(); finaleT = -1; save();
+  for (const m of shrooms) { m.grow = 1; m.polish = 0; dress(m); }
+  document.getElementById('ending').hidden = true;
+  document.getElementById('hint').hidden = false;
+  logEl.textContent = 'A new night. The moon is lonely again. Back to work.'; logEl.classList.add('dim');
+  renderUI();
+});
+
+// ---------- Helpers in the sky ----------
+const comets = Array.from({length:5}, (_, i) => ({ ph: i*1.26, sp: .35 + i*.05, target: null }));
+const sat = { target: null };
+function cometPos(c, t){ return { x: 400 + 330*Math.cos(t*c.sp + c.ph), y: 150 + 70*Math.sin(t*c.sp*1.7 + c.ph) }; }
+function satPos(t){ return { x: 400 + 260*Math.cos(t*.25), y: 250 + 40*Math.sin(t*.25) }; }
+function helper(h, rate, dt){
+  const pool = active().filter(m => m.grow >= 1);
+  if (!pool.length) { h.target = null; return; }
+  if (!h.target || h.target.grow < 1 || !pool.includes(h.target)) h.target = pool[Math.random()*pool.length|0];
+  h.target.polish += rate*dt;
+  if (h.target.polish >= 1) { pop(h.target, h === sat ? 'sat' : 'helper'); h.target = null; }
+}
+
+// ---------- Loop ----------
+let last = performance.now(), T = 0, humT = 0, uiT = 0, saveT = 0;
+function frame(now){
+  const dt = Math.min((now - last)/1000, .05); last = now; T += dt;
+  if (!S.ended) S.time += dt;
+  for (const m of active()) if (m.grow < 1) m.grow = Math.min(1, m.grow + dt/regrow());
+  if (!S.ended){
+    for (let i=0;i<S.comet;i++) helper(comets[i], .6, dt);
+    if (S.once.sat) helper(sat, 2, dt);
+  }
+  if (S.once.hum && (humT += dt) > 2.2){ humT = 0; if (Math.random() < .5) Snd.hum(); if (!reduceMotion) { const m = active()[Math.random()*slots()|0]; const c = capCenter(m); parts.push({x:c.x,y:c.y-20,vx:(Math.random()-.5)*10,vy:-28,life:2,txt:Math.random()<.5?'♪':'♫',col:'note'}); } }
+  if (finaleT >= 0) { finaleT += dt; if (Math.random() < .5 && !reduceMotion) { const m = shrooms[Math.random()*shrooms.length|0]; const c = capCenter(m); burst(c.x, c.y, m.hue, 2); } }
+  for (let k=parts.length-1;k>=0;k--){ const p = parts[k]; p.life -= dt*(p.txt?.8:1.4); p.x += p.vx*dt; p.y += p.vy*dt; if (!p.txt) p.vy += 120*dt; if (p.life <= 0) parts.splice(k,1); }
+  draw();
+  if ((uiT += dt) > .15) { uiT = 0; renderUI(); }
+  if ((saveT += dt) > 3) { saveT = 0; save(); }
+  requestAnimationFrame(frame);
+}
+
+function draw(){
+  const glow = finaleT >= 0 ? Math.min(finaleT/2, 1) : 0;
+  // sky
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, mix('#0b0d22', '#232a66', glow));
+  sky.addColorStop(1, mix('#1d2046', '#4a3f7a', glow));
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  for (const s of stars){ ctx.globalAlpha = .35 + .65*Math.abs(Math.sin(reduceMotion ? s.p : T*.8 + s.p)); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.28); ctx.fill(); }
+  ctx.globalAlpha = 1;
+
+  // earth
+  const E = { x: 692, y: 78, r: 18 };
+  ctx.fillStyle = '#3f78c9'; ctx.beginPath(); ctx.arc(E.x, E.y, E.r, 0, 6.28); ctx.fill();
+  ctx.fillStyle = '#5fae74'; ctx.beginPath(); ctx.ellipse(E.x-5, E.y-4, 7, 5, .4, 0, 6.28); ctx.fill(); ctx.beginPath(); ctx.ellipse(E.x+7, E.y+6, 5, 4, -.3, 0, 6.28); ctx.fill();
+  ctx.fillStyle = 'rgba(8,10,30,.55)'; ctx.beginPath(); ctx.arc(E.x, E.y, E.r, -1.2, 1.9); ctx.fill();
+  if (finaleT > 1.5 && Math.sin(T*6) > 0){ ctx.fillStyle = '#ffe9a8'; ctx.shadowColor = '#ffe9a8'; ctx.shadowBlur = 12; ctx.beginPath(); ctx.arc(E.x+9, E.y+3, 2.2, 0, 6.28); ctx.fill(); ctx.shadowBlur = 0; }
+
+  // comets & satellite
+  for (let i=0;i<S.comet;i++){
+    const c = comets[i], p = cometPos(c, T), q = cometPos(c, T - .25);
+    const tail = ctx.createLinearGradient(p.x, p.y, q.x, q.y); tail.addColorStop(0, 'rgba(200,230,255,.9)'); tail.addColorStop(1, 'rgba(200,230,255,0)');
+    ctx.strokeStyle = tail; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+    ctx.fillStyle = '#eaf6ff'; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, 6.28); ctx.fill();
+    if (c.target && !S.ended){ const tc = capCenter(c.target); ctx.strokeStyle = 'rgba(200,230,255,.12)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(tc.x, tc.y); ctx.stroke(); }
+  }
+  if (S.once.sat){
+    const p = satPos(T);
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.sin(T*.7)*.3);
+    ctx.fillStyle = '#5a6bb0'; ctx.fillRect(-22, -4, 14, 8); ctx.fillRect(8, -4, 14, 8);
+    ctx.fillStyle = '#d4d6e6'; ctx.fillRect(-7, -6, 14, 12);
+    ctx.fillStyle = Math.sin(T*3) > .6 ? '#ff7a7a' : '#7a3a3a'; ctx.beginPath(); ctx.arc(0, -8, 2, 0, 6.28); ctx.fill();
+    ctx.restore();
+    if (sat.target && !S.ended){ const tc = capCenter(sat.target); ctx.strokeStyle = 'rgba(255,210,122,.15)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(tc.x, tc.y); ctx.stroke(); }
+  }
+
+  // moon
+  const mg = ctx.createRadialGradient(MC.x - 120, MC.y - MR + 40, 40, MC.x, MC.y, MR);
+  mg.addColorStop(0, mix('#d8dae8', '#f1eefc', glow)); mg.addColorStop(1, '#8d91ad');
+  ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(MC.x, MC.y, MR, 0, 6.28); ctx.fill();
+  for (const c of craters){
+    const x = MC.x + (MR - c.d)*Math.sin(c.a), y = MC.y - (MR - c.d)*Math.cos(c.a);
+    ctx.fillStyle = 'rgba(90,94,128,.35)'; ctx.beginPath(); ctx.ellipse(x, y, c.r, c.r*.45, c.a, 0, 6.28); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(x, y + 1, c.r, c.r*.45, c.a, .2, 2.9); ctx.stroke();
+  }
+
+  // mushrooms
+  for (const m of active()) drawShroom(m, glow);
+
+  // particles
+  for (const p of parts){
+    ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+    if (p.txt){
+      ctx.font = p.col === 'note' ? '20px "Young Serif", Georgia, serif' : '500 16px "DM Mono", ui-monospace, monospace';
+      ctx.textAlign = 'center'; ctx.fillStyle = p.col === 'note' ? '#cfd3ff' : '#ffd27a'; ctx.fillText(p.txt, p.x, p.y);
+    } else {
+      ctx.fillStyle = `hsl(${p.hue},90%,80%)`; ctx.beginPath(); ctx.arc(p.x, p.y, p.small ? 1.6 : 2.6, 0, 6.28); ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // cloth cursor
+  if (ptr.inside && !S.ended){
+    ctx.save(); ctx.translate(ptr.x, ptr.y); ctx.rotate(-.35 + Math.sin(T*10)*.05*(ptr.down?1:0));
+    ctx.fillStyle = S.cloth >= 4 ? '#e9e2ff' : ['#c9b48f','#7b5ea8','#d8c7e8','#f1f1f7','#e9e2ff','#fff'][S.cloth];
+    ctx.strokeStyle = 'rgba(15,17,38,.5)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(-14, -10, 28, 20, 5); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawShroom(m, glow){
+  const g = 1 - (1 - m.grow)**3;
+  if (g < .03) return;
+  const s = m.s * g, p = Math.min(m.polish, 1);
+  ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.a);
+  const lit = Math.max(p, glow);
+  if (lit > .3){ ctx.shadowColor = `hsla(${m.hue},95%,75%,${.85*lit})`; ctx.shadowBlur = glow ? 46 : 30*lit; }
+  ctx.fillStyle = `hsl(40,${12+18*lit}%,${62+24*lit}%)`;
+  ctx.beginPath(); ctx.roundRect(-7*s, -30*s, 14*s, 30*s, 6*s); ctx.fill();
+  ctx.fillStyle = `hsl(${m.hue},${22+60*lit}%,${44+28*lit}%)`;
+  ctx.beginPath(); ctx.ellipse(0, -28*s, 28*s, 22*s, 0, Math.PI, Math.PI*2); ctx.closePath(); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = `rgba(255,255,255,${.3 + .6*lit})`;
+  for (const d of m.spots){ ctx.beginPath(); ctx.arc(d.x*s, (-28 - d.y)*s, d.r*s, 0, 6.28); ctx.fill(); }
+  if (!glow){ ctx.fillStyle = `rgba(38,34,58,${.55*(1-p)})`; for (const d of m.smudges){ ctx.beginPath(); ctx.arc(d.x*s, (-28 - d.y)*s, d.r*s, 0, 6.28); ctx.fill(); } }
+  if (lit > .5){ ctx.strokeStyle = `rgba(255,255,255,${(lit-.5)*1.5})`; ctx.lineWidth = 3*s; ctx.lineCap = 'round'; ctx.beginPath(); ctx.ellipse(0, -28*s, 20*s, 15*s, 0, Math.PI*1.12, Math.PI*1.38); ctx.stroke(); }
+  if (m.i === 0 && S.once.hat){
+    ctx.fillStyle = '#1b1c2e';
+    ctx.fillRect(-13*s, -52*s, 26*s, 4*s);
+    ctx.fillRect(-8*s, -68*s, 16*s, 17*s);
+    ctx.fillStyle = '#ff9fc4'; ctx.fillRect(-8*s, -56*s, 16*s, 3*s);
+  }
+  ctx.restore();
+  if (m.i === 0 && S.once.gerald && g > .5){
+    ctx.font = '12px "Atkinson Hyperlegible", system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(30,32,60,.8)'; ctx.fillText('Gerald', m.x, m.y + 18);
+  }
+}
+
+function mix(a, b, t){
+  const pa = [1,3,5].map(i => parseInt(a.slice(i,i+2),16)), pb = [1,3,5].map(i => parseInt(b.slice(i,i+2),16));
+  return 'rgb(' + pa.map((v,i) => Math.round(v + (pb[i]-v)*t)).join(',') + ')';
+}
+
+// Resume an ended game straight into its ending
+if (S.ended){ finaleT = 3; for (const m of shrooms) { m.grow = 1; m.polish = 1; } showEnding(true); }
+renderUI();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

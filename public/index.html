@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daily Incremental</title>
+<meta name="description" content="A new tiny incremental game every day. Ten minutes, number goes up, then it ends.">
+<meta property="og:title" content="Daily Incremental">
+<meta property="og:description" content="A new tiny incremental game every day. Ten minutes, number goes up, then it ends.">
+<meta property="og:url" content="https://dailyincrementalgame.com/">
+<meta name="theme-color" content="#eef0fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12131f" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow column. Wordmark, today's game card led by a big ticking day number, then the archive. */
+:root {
+  --bg: #eef0fb;
+  --card: #ffffff;
+  --ink: #191b33;
+  --mute: #62668a;
+  --line: #d5d8ef;
+  --hot: #ff5a36;
+  --done: #2f9e6b;
+  --display: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "DM Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12131f; --card: #1b1d2e; --ink: #eceefa; --mute: #9a9ec2; --line: #2c2f48; --hot: #ff7a5c; --done: #5fd39b;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--ink); }
+body {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 16px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: max(32px, env(safe-area-inset-top, 0px)) max(56px, env(safe-area-inset-bottom, 0px));
+}
+.wrap { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
+
+.brand { display: flex; flex-direction: column; gap: 6px; }
+.brand h1 { margin: 0; font-weight: 800; font-size: clamp(36px, 8vw, 60px); line-height: .95; letter-spacing: -.03em; text-wrap: balance; }
+.brand p { margin: 0; color: var(--mute); max-width: 52ch; }
+
+.today {
+  background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+  padding: 24px; display: grid; gap: 4px 24px;
+  grid-template-columns: auto minmax(0, 1fr); align-items: end;
+}
+.num {
+  font-family: var(--mono); font-weight: 500; color: var(--hot);
+  font-size: clamp(64px, 17vw, 120px); line-height: .85; letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+}
+.num small { font-size: .38em; letter-spacing: 0; vertical-align: top; margin-right: .08em; }
+.today .info { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding-bottom: 6px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--mute); margin: 0; }
+.today h2 { margin: 0; font-size: clamp(26px, 5vw, 36px); line-height: 1.05; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+.today .tagline { margin: 0; color: var(--mute); }
+.today .actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 18px; }
+.play {
+  display: inline-block; text-decoration: none;
+  padding: 13px 26px; border-radius: 12px;
+  background: var(--ink); color: var(--bg); font-weight: 800; font-size: 18px;
+  transition: transform .1s;
+}
+.play:hover { transform: translateY(-1px); }
+.play:focus-visible { outline: 3px solid var(--hot); outline-offset: 3px; }
+.meta { font-family: var(--mono); font-size: 13px; color: var(--mute); }
+.meta b { color: var(--done); font-weight: 500; }
+
+.stats { display: flex; gap: 32px; flex-wrap: wrap; }
+.stat .k { display: block; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--mute); }
+.stat .v { font-family: var(--mono); font-size: 28px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.archive h3 { margin: 0 0 10px; font-size: 20px; font-weight: 800; }
+.archive ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.archive li { border-bottom: 1px solid var(--line); }
+.archive a {
+  display: grid; grid-template-columns: 4ch minmax(0, 1fr) auto; gap: 14px; align-items: baseline;
+  padding: 12px 4px; color: inherit; text-decoration: none;
+}
+.archive a:hover .t, .archive a:focus-visible .t { text-decoration: underline; }
+.archive a:focus-visible { outline: 2px solid var(--hot); outline-offset: -2px; border-radius: 6px; }
+.archive .n { font-family: var(--mono); color: var(--mute); font-variant-numeric: tabular-nums; }
+.archive .t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.archive .d { font-family: var(--mono); font-size: 13px; color: var(--mute); white-space: nowrap; }
+.archive .d.ok { color: var(--done); }
+.empty { color: var(--mute); margin: 0; }
+
+footer { color: var(--mute); font-size: 13px; }
+
+@media (max-width: 480px) {
+  .today { grid-template-columns: 1fr; }
+  .today .info { padding-bottom: 0; }
+}
+</style>
+<script src="/shared/daily.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <header class="brand">
+    <h1>Daily Incremental</h1>
+    <p>A new tiny incremental game every day. About ten minutes, a number goes up, and then it ends.</p>
+  </header>
+
+  <section class="today" id="today" aria-live="polite">
+    <div class="num" id="num"><small>#</small>000</div>
+    <div class="info">
+      <p class="eyebrow" id="todayDate">Loading today's game</p>
+      <h2 id="todayTitle">&nbsp;</h2>
+      <p class="tagline" id="todayTag"></p>
+    </div>
+    <div class="actions">
+      <a class="play" id="play" href="/1/">Play</a>
+      <span class="meta" id="todayMeta"></span>
+    </div>
+  </section>
+
+  <section class="stats" aria-label="Your stats">
+    <div class="stat"><span class="k">Streak</span><span class="v" id="streak">0</span></div>
+    <div class="stat"><span class="k">Finished</span><span class="v" id="finished">0</span></div>
+  </section>
+
+  <section class="archive">
+    <h3>Every game so far</h3>
+    <ol id="archive"></ol>
+    <p class="empty" id="archiveEmpty" hidden>Nothing yet. The first game is on its way.</p>
+  </section>
+
+  <footer>New game every day at midnight, your time. Progress lives in this browser.</footer>
+</main>
+
+<script>
+addEventListener('DOMContentLoaded', async () => {
+  const D = window.DailyGame;
+  const list = await D.manifest();
+  const games = D.released(list);
+  const done = D.completions();
+  const today = D.localDate();
+
+  const fmtDate = iso => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
+  const latest = games[games.length - 1];
+  const numEl = document.getElementById('num');
+  const setNum = n => { numEl.innerHTML = '<small>#</small>' + String(n).padStart(3, '0'); };
+
+  if (!latest) {
+    document.getElementById('todayDate').textContent = 'Coming soon';
+    document.getElementById('todayTitle').textContent = 'The first game is almost ready';
+    document.getElementById('play').hidden = true;
+  } else {
+    document.getElementById('todayDate').textContent = latest.date === today ? `Today · ${fmtDate(latest.date)}` : `Latest · ${fmtDate(latest.date)}`;
+    document.getElementById('todayTitle').textContent = latest.title;
+    document.getElementById('todayTag').textContent = latest.tagline || '';
+    document.getElementById('play').href = `/${latest.n}/`;
+    document.getElementById('play').textContent = done[latest.n] ? 'Play again' : 'Play';
+    const bits = [];
+    if (latest.minutes) bits.push(`${latest.minutes} min`);
+    if (latest.scale) bits.push(`numbers in the ${latest.scale}`);
+    document.getElementById('todayMeta').innerHTML = (done[latest.n] ? '<b>✓ finished</b> · ' : '') + bits.join(' · ');
+
+    // Number go up.
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) setNum(latest.n);
+    else {
+      const start = performance.now(), dur = 700 + Math.min(latest.n, 300) * 3;
+      const tick = t => {
+        const p = Math.min((t - start) / dur, 1);
+        setNum(Math.round(latest.n * (1 - (1 - p) ** 3)));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+  }
+
+  document.getElementById('streak').textContent = D.streak(list);
+  document.getElementById('finished').textContent = games.filter(g => done[g.n]).length;
+
+  const ol = document.getElementById('archive');
+  document.getElementById('archiveEmpty').hidden = games.length > 0;
+  for (const g of [...games].reverse()) {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = `/${g.n}/`;
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = '#' + g.n;
+    const t = document.createElement('span'); t.className = 't'; t.textContent = `${g.title} ${g.emoji || ''}`.trim();
+    const d = document.createElement('span'); d.className = 'd' + (done[g.n] ? ' ok' : '');
+    d.textContent = done[g.n] ? '✓ ' + fmtDate(g.date) : fmtDate(g.date);
+    a.append(n, t, d); li.append(a); ol.append(li);
+  }
+});
+</script>
+</body>
+</html>

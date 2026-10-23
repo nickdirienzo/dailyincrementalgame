@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GAME TITLE · Daily Incremental #N</title>
+<meta name="description" content="ONE-LINE TAGLINE. Daily Incremental #N.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  /* Each game picks its own look. Keep the 16px side gutter and the safe-area padding. */
+  :root { --bg: #111; --ink: #eee; --accent: #fc6; color-scheme: dark; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    margin: 0; font: 15px/1.45 system-ui, sans-serif;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: max(14px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; }
+  /* Play area on the left, upgrades on the right; stacks on phones. */
+  .game { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .game { grid-template-columns: 1fr; } }
+</style>
+<!-- Shared site runtime: top bar, share card, streaks. Set data-day to this game's number. -->
+<script src="/shared/daily.js" data-day="N"></script>
+</head>
+<body>
+<div class="wrap">
+  <h1>GAME TITLE</h1>
+  <div class="game">
+    <main><!-- play area, log line, stats --></main>
+    <aside><!-- upgrades --></aside>
+  </div>
+  <section id="ending" hidden>
+    <h2>The ending.</h2>
+    <button id="shareBtn" type="button">Share result</button>
+  </section>
+</div>
+<script>
+(() => {
+  const KEY = window.DailyGame ? DailyGame.storageKey('save') : 'di:N:save';
+  let S = { n: 0, time: 0, ended: false };
+  try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+  function end(resumed) {
+    S.ended = true; save();
+    document.getElementById('ending').hidden = false;
+    if (!resumed && window.DailyGame) {
+      DailyGame.finish({ lines: [`⏱ ${Math.floor(S.time / 60)}m${String(Math.floor(S.time % 60)).padStart(2, '0')}s`, `✨ ${S.n} things`] });
+    }
+  }
+  document.getElementById('shareBtn').addEventListener('click', () => window.DailyGame && DailyGame.share());
+  if (S.ended) end(true);
+})();
+</script>
+</body>
+</html>

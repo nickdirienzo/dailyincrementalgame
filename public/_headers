@@ -1,0 +1,5 @@
+/games.json
+  Cache-Control: no-cache
+
+/shared/*
+  Cache-Control: public, max-age=300
