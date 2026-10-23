@@ -45,6 +45,9 @@ See `CLAUDE.md`. In short: copy the template to `public/<n>/index.html`, build t
 `DailyGame.finish()` at the ending, add the entry to `games.json` with its release date, and deploy.
 You can queue games ahead of time; each one appears at midnight in the player's local time.
 
+Or, in Claude Code, run `/new-game` (optionally with steering like `/new-game Use seed 12345`). It rolls a
+theme, builds the game, checks pacing with a simulated player, tests it in a browser, and commits.
+
 ## Local data
 
 Everything is stored in the player's browser under the `di:` localStorage prefix:
