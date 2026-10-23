@@ -4,7 +4,7 @@ dailyincrementalgame.com serves one small incremental game per day. Each game is
 self-contained HTML file, vibe-coded and then hand-tuned. There is no shared game engine on
 purpose: every day can be whatever it wants to be.
 
-## The bar (from game #1, Moonshroom)
+## The bar (from the first game, Moonshroom)
 
 Every game should have these bones:
 
@@ -30,8 +30,11 @@ doesn't become the only kind of satisfaction.
 
 ## Checklist for a new day
 
-1. Copy `templates/game.html` to `public/<n>/index.html`, where `<n>` is the next game number.
-2. Set `data-day="<n>"` on the `/shared/daily.js` script tag.
+1. Pick the title and its slug: lowercase, words joined by hyphens ("Moonshroom" → `moonshroom`).
+   Copy `templates/game.html` to `public/<slug>/index.html`. Players only ever see the name; the
+   URL is `/<slug>/`.
+2. Set `data-day="<n>"` on the `/shared/daily.js` script tag, where `<n>` is the next number in
+   `games.json`. It's an internal id for saves and streaks and is never shown to players.
 3. Build the game. Save state as one JSON object under `DailyGame.storageKey('save')` (which is
    `di:<n>:save`), merged over defaults on load, so that a save of just `{ "ended": true }` opens
    straight into the ending. The browser check relies on this.
@@ -40,11 +43,11 @@ doesn't become the only kind of satisfaction.
    " · ". Keep them short and emoji-led: time, a headline number, one in-joke.
 5. Give the ending a "Share result" button that calls `DailyGame.share()`. Keep the template's ids:
    `#ending` for the ending, `#shareBtn` for the button, and upgrades as buttons inside `#shop`.
-6. Add an entry to `public/games.json` with `n`, `date` (YYYY-MM-DD, the day it goes live),
+6. Add an entry to `public/games.json` with `n`, `slug`, `date` (YYYY-MM-DD, the day it goes live),
    `title`, `tagline`, `emoji` (one or two), `scale`, `minutes`, plus `seed` and `interaction`
    from `tools/roll.py` if the theme was rolled.
-7. Run `npm run check -- <n>` and look at the screenshots in `tests/screenshots/`. Then play it
-   yourself: `npm run serve`, open http://localhost:8080/<n>/, and play all the way through once
+7. Run `npm run check -- <slug>` and look at the screenshots in `tests/screenshots/`. Then play it
+   yourself: `npm run serve`, open http://localhost:8080/<slug>/, and play all the way through once
    with sound on and once in a phone-width window.
 
 ## Technical rules

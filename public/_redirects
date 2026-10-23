@@ -1,0 +1,5 @@
+# Games used to live at /<number>/. Keep old links working.
+/1 /moonshroom/ 301
+/1/* /moonshroom/:splat 301
+/2 /toastergeist/ 301
+/2/* /toastergeist/:splat 301

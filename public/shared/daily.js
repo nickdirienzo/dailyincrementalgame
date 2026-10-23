@@ -1,5 +1,6 @@
 // Daily Incremental shared runtime.
 // Include on every page:  <script src="/shared/daily.js" data-day="N" defer></script>
+// N is the game's "n" in games.json: an internal id for saves and streaks, never shown to players.
 // (omit data-day on non-game pages like the landing page).
 //
 // Game API:
@@ -58,8 +59,9 @@
   // ---------- Share card ----------
   let cardEl = null;
   function shareText(game, lines) {
-    const head = `Daily Incremental #${game ? game.n : DAY}${game && game.emoji ? ' ' + game.emoji : ''}`;
-    return [head, (lines || []).join(' · '), `${SITE}/${game ? game.n : DAY}`].filter(Boolean).join('\n');
+    const head = game ? `Daily Incremental: ${game.title}${game.emoji ? ' ' + game.emoji : ''}` : 'Daily Incremental';
+    const url = game ? `${SITE}/${game.slug}` : SITE;
+    return [head, (lines || []).join(' · '), url].filter(Boolean).join('\n');
   }
 
   async function openCard() {
@@ -102,7 +104,7 @@
         setTimeout(() => { btn.textContent = 'Copy result'; }, 1800);
       });
     }
-    cardEl.querySelector('.di-title').textContent = game ? game.title : `Game #${DAY}`;
+    cardEl.querySelector('.di-title').textContent = game ? game.title : document.title;
     cardEl.querySelector('.di-share').textContent = text;
     cardEl.querySelector('.di-streak').textContent = s > 0 ? `Streak: ${s} day${s === 1 ? '' : 's'}` : '';
     cardEl.hidden = false;
@@ -125,7 +127,7 @@
     if (DAY == null) return;
     const bar = document.createElement('nav');
     bar.className = 'di-bar';
-    bar.innerHTML = `<a href="/">← Daily Incremental</a><span class="di-bar-n">#${DAY}</span>`;
+    bar.innerHTML = `<a href="/">← Daily Incremental</a>`;
     document.body.prepend(bar);
   }
 

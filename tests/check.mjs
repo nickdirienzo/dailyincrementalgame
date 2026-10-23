@@ -1,7 +1,7 @@
 // Smoke-tests the site in headless Chromium and saves screenshots to tests/screenshots/.
 //
 //   npm run check            landing page + every game in games.json
-//   npm run check -- 3       just game #3 (several numbers allowed)
+//   npm run check -- moonshroom   just that game (several slugs allowed)
 //
 // For each game it checks, with a fresh save, that the ending and upgrades start hidden, then plays
 // the opening by dragging and tapping on the canvas. It reloads with a finished save
@@ -70,15 +70,15 @@ async function checkLanding(browser, base) {
 }
 
 async function checkGame(browser, base, game) {
-  const n = game.n, url = `${base}/${n}/`;
-  console.log(`#${n} ${game.title || ''}`);
+  const n = game.n, slug = game.slug, url = `${base}/${slug}/`;
+  console.log(`${game.title || slug} (/${slug}/)`);
 
   // Fresh start: nothing finished, no upgrades yet. Then play the opening.
   {
     const { page, context, errors } = await open(browser, url);
     check('ending hidden at start', !(await page.locator('#ending').isVisible()));
     check('no upgrades showing at start', (await visibleCount(page, '#shop button, #side button')) === 0);
-    await shot(page, `${n}-start.png`);
+    await shot(page, `${slug}-start.png`);
 
     const box = await page.locator('canvas').first().boundingBox();
     if (!box) check('has a canvas to play on', false);
@@ -93,7 +93,7 @@ async function checkGame(browser, base, game) {
       }
       for (let i = 0; i < 30; i++) { await page.mouse.click(...at(0.2 + 0.6 * ((i * 7) % 10) / 10, 0.35 + 0.4 * ((i * 3) % 10) / 10)); await page.waitForTimeout(60); }
       await page.waitForTimeout(500);
-      await shot(page, `${n}-opening.png`);
+      await shot(page, `${slug}-opening.png`);
       check('ending still hidden after the opening', !(await page.locator('#ending').isVisible()));
     }
     check('no console errors (opening)', errors.length === 0, errors.join(' | '));
@@ -105,7 +105,7 @@ async function checkGame(browser, base, game) {
     const { page, context, errors } = await open(browser, url, { ctx: PHONE });
     const over = await sideScroll(page);
     check('no sideways scroll at 390px', over <= 0, over > 0 ? `${over}px too wide` : '');
-    await shot(page, `${n}-390px.png`, true);
+    await shot(page, `${slug}-390px.png`, true);
     check('no console errors (390px)', errors.length === 0, errors.join(' | '));
     await context.close();
   }
@@ -122,13 +122,13 @@ async function checkGame(browser, base, game) {
     check(`ending shows for a finished save (${label})`, await ending.isVisible());
     if (label === '390px') { const over = await sideScroll(page); check('no sideways scroll at the ending, 390px', over <= 0, over > 0 ? `${over}px too wide` : ''); }
     await ending.scrollIntoViewIfNeeded().catch(() => {});
-    await shot(page, `${n}-ending-${label}.png`);
+    await shot(page, `${slug}-ending-${label}.png`);
     const share = page.locator('#shareBtn');
     if (await share.isVisible()) {
       await share.click();
       await page.waitForTimeout(400);
       check(`Share opens the share card (${label})`, await page.locator('.di-overlay').isVisible());
-      await shot(page, `${n}-share-${label}.png`);
+      await shot(page, `${slug}-share-${label}.png`);
     } else check(`Share button visible at the ending (${label})`, false);
     check(`no console errors (ending, ${label})`, errors.length === 0, errors.join(' | '));
     await context.close();
@@ -136,9 +136,16 @@ async function checkGame(browser, base, game) {
 }
 
 const games = JSON.parse(fs.readFileSync(path.join(PUBLIC, 'games.json'), 'utf8'));
-const only = process.argv.slice(2).map(Number).filter(Boolean);
-const targets = only.length ? games.filter(g => only.includes(g.n)) : games;
-for (const n of only) if (!games.some(g => g.n === n) && fs.existsSync(path.join(PUBLIC, String(n)))) targets.push({ n, title: '(not in games.json yet)', date: new Date().toISOString().slice(0, 10) });
+const only = process.argv.slice(2);
+const targets = only.length ? games.filter(g => only.includes(g.slug)) : games;
+for (const slug of only) {
+  if (games.some(g => g.slug === slug)) continue;
+  // A game that isn't in games.json yet: read its internal number from the page.
+  const file = path.join(PUBLIC, slug, 'index.html');
+  if (!fs.existsSync(file)) { console.error(`no game at public/${slug}/`); process.exit(1); }
+  const n = Number((fs.readFileSync(file, 'utf8').match(/data-day="(\d+)"/) || [])[1]);
+  targets.push({ n, slug, title: `${slug} (not in games.json yet)`, date: new Date().toISOString().slice(0, 10) });
+}
 
 fs.rmSync(SHOTS, { recursive: true, force: true });
 fs.mkdirSync(SHOTS, { recursive: true });

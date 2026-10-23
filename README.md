@@ -8,7 +8,8 @@ public/
   games.json          the manifest; one entry per day
   shared/daily.js     site runtime injected into each game: top bar, share card, streaks
   shared/daily.css
-  1/index.html        game #1, Moonshroom
+  moonshroom/         one folder per game, named by its slug
+  _redirects          old /1/-style links → named URLs
   _headers            keeps games.json uncached so new days show up right away
 templates/game.html   starting point for a new game
 tests/check.mjs       browser smoke test (Playwright)
@@ -43,7 +44,7 @@ Then add the custom domain the same way as in step 4.
 
 ## Adding a day
 
-See `CLAUDE.md`. In short: copy the template to `public/<n>/index.html`, build the game, call
+See `CLAUDE.md`. In short: copy the template to `public/<slug>/index.html`, build the game, call
 `DailyGame.finish()` at the ending, add the entry to `games.json` with its release date, and deploy.
 You can queue games ahead of time; each one appears at midnight in the player's local time.
 
@@ -55,7 +56,7 @@ theme, builds the game, checks pacing with a simulated player, tests it in a bro
 ```
 npm install && npm run setup   # once per machine: Playwright and its Chromium (Node 24, see mise.toml)
 npm run check                  # landing page + every game
-npm run check -- 3             # just game #3
+npm run check -- moonshroom    # just one game
 ```
 
 `tests/check.mjs` serves `public/`, checks each game starts with the ending and upgrades hidden,
@@ -67,4 +68,5 @@ sideways scroll at 390px, and fails on any console error. Screenshots go to `tes
 
 Everything is stored in the player's browser under the `di:` localStorage prefix:
 `di:done` (completions, which drive streaks and checkmarks), `di:sound-muted`, and `di:<n>:save`
-for each game's own progress.
+for each game's own progress. `<n>` is the game's internal number from `games.json`, so renaming a
+game's slug doesn't lose anyone's progress.

@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=DM+Mono:wght@400;500&display=swap">
 <style>
 [hidden] { display: none !important; }
-/* Layout: one narrow column. Wordmark, today's game card led by a big ticking day number, then the archive. */
+/* Layout: one narrow column. Wordmark, today's game card led by its big emoji, then the archive. */
 :root {
   --bg: #eef0fb;
   --card: #ffffff;
@@ -56,12 +56,10 @@ body {
   padding: 24px; display: grid; gap: 4px 24px;
   grid-template-columns: auto minmax(0, 1fr); align-items: end;
 }
-.num {
-  font-family: var(--mono); font-weight: 500; color: var(--hot);
-  font-size: clamp(64px, 17vw, 120px); line-height: .85; letter-spacing: -.04em;
-  font-variant-numeric: tabular-nums;
-}
-.num small { font-size: .38em; letter-spacing: 0; vertical-align: top; margin-right: .08em; }
+.emoji { font-size: clamp(56px, 14vw, 96px); line-height: 1; white-space: nowrap; }
+.emoji.pop { animation: pop .5s cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes pop { from { transform: scale(.4) rotate(-12deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .emoji.pop { animation: none; } }
 .today .info { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding-bottom: 6px; }
 .eyebrow { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--mute); margin: 0; }
 .today h2 { margin: 0; font-size: clamp(26px, 5vw, 36px); line-height: 1.05; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
@@ -86,12 +84,12 @@ body {
 .archive ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
 .archive li { border-bottom: 1px solid var(--line); }
 .archive a {
-  display: grid; grid-template-columns: 4ch minmax(0, 1fr) auto; gap: 14px; align-items: baseline;
+  display: grid; grid-template-columns: 3em minmax(0, 1fr) auto; gap: 14px; align-items: baseline;
   padding: 12px 4px; color: inherit; text-decoration: none;
 }
 .archive a:hover .t, .archive a:focus-visible .t { text-decoration: underline; }
 .archive a:focus-visible { outline: 2px solid var(--hot); outline-offset: -2px; border-radius: 6px; }
-.archive .n { font-family: var(--mono); color: var(--mute); font-variant-numeric: tabular-nums; }
+.archive .e { white-space: nowrap; }
 .archive .t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .archive .d { font-family: var(--mono); font-size: 13px; color: var(--mute); white-space: nowrap; }
 .archive .d.ok { color: var(--done); }
@@ -114,7 +112,7 @@ footer { color: var(--mute); font-size: 13px; }
   </header>
 
   <section class="today" id="today" aria-live="polite">
-    <div class="num" id="num"><small>#</small>000</div>
+    <div class="emoji" id="emoji" aria-hidden="true"></div>
     <div class="info">
       <p class="eyebrow" id="todayDate">Loading today's game</p>
       <h2 id="todayTitle">&nbsp;</h2>
@@ -154,8 +152,6 @@ addEventListener('DOMContentLoaded', async () => {
   };
 
   const latest = games[games.length - 1];
-  const numEl = document.getElementById('num');
-  const setNum = n => { numEl.innerHTML = '<small>#</small>' + String(n).padStart(3, '0'); };
 
   if (!latest) {
     document.getElementById('todayDate').textContent = 'Coming soon';
@@ -165,24 +161,16 @@ addEventListener('DOMContentLoaded', async () => {
     document.getElementById('todayDate').textContent = latest.date === today ? `Today · ${fmtDate(latest.date)}` : `Latest · ${fmtDate(latest.date)}`;
     document.getElementById('todayTitle').textContent = latest.title;
     document.getElementById('todayTag').textContent = latest.tagline || '';
-    document.getElementById('play').href = `/${latest.n}/`;
+    document.getElementById('play').href = `/${latest.slug}/`;
     document.getElementById('play').textContent = done[latest.n] ? 'Play again' : 'Play';
     const bits = [];
     if (latest.minutes) bits.push(`${latest.minutes} min`);
     if (latest.scale) bits.push(`numbers in the ${latest.scale}`);
     document.getElementById('todayMeta').innerHTML = (done[latest.n] ? '<b>✓ finished</b> · ' : '') + bits.join(' · ');
 
-    // Number go up.
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) setNum(latest.n);
-    else {
-      const start = performance.now(), dur = 700 + Math.min(latest.n, 300) * 3;
-      const tick = t => {
-        const p = Math.min((t - start) / dur, 1);
-        setNum(Math.round(latest.n * (1 - (1 - p) ** 3)));
-        if (p < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    }
+    const emoji = document.getElementById('emoji');
+    emoji.textContent = latest.emoji || '🎲';
+    emoji.classList.add('pop');
   }
 
   document.getElementById('streak').textContent = D.streak(list);
@@ -193,12 +181,12 @@ addEventListener('DOMContentLoaded', async () => {
   for (const g of [...games].reverse()) {
     const li = document.createElement('li');
     const a = document.createElement('a');
-    a.href = `/${g.n}/`;
-    const n = document.createElement('span'); n.className = 'n'; n.textContent = '#' + g.n;
-    const t = document.createElement('span'); t.className = 't'; t.textContent = `${g.title} ${g.emoji || ''}`.trim();
+    a.href = `/${g.slug}/`;
+    const e = document.createElement('span'); e.className = 'e'; e.textContent = g.emoji || '';
+    const t = document.createElement('span'); t.className = 't'; t.textContent = g.title;
     const d = document.createElement('span'); d.className = 'd' + (done[g.n] ? ' ok' : '');
     d.textContent = done[g.n] ? '✓ ' + fmtDate(g.date) : fmtDate(g.date);
-    a.append(n, t, d); li.append(a); ol.append(li);
+    a.append(e, t, d); li.append(a); ol.append(li);
   }
 });
 </script>

@@ -7,7 +7,6 @@
 }
 .di-bar a { color: inherit; opacity: .7; text-decoration: none; }
 .di-bar a:hover, .di-bar a:focus-visible { opacity: 1; text-decoration: underline; }
-.di-bar-n { opacity: .5; }
 
 .di-overlay {
   position: fixed; inset: 0; z-index: 1000;

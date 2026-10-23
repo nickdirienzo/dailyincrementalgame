@@ -1,6 +1,7 @@
 [
   {
     "n": 1,
+    "slug": "moonshroom",
     "date": "2026-10-23",
     "title": "Moonshroom",
     "tagline": "A lonely moon polishes mushrooms until it isn't lonely anymore.",
@@ -12,6 +13,7 @@
   },
   {
     "n": 2,
+    "slug": "toastergeist",
     "date": "2026-10-24",
     "title": "Toastergeist",
     "tagline": "A grumpy ghost lives in a toaster. It hatches teacups now.",
