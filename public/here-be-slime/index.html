@@ -90,7 +90,6 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 8 / 5; touch-a
 .item:active:not([aria-disabled="true"]) { transform: translateY(1px); }
 .item:focus-visible { outline: 2px solid var(--slime-ink); outline-offset: 2px; }
 .item[aria-disabled="true"] { opacity: .5; cursor: default; }
-.item.owned { opacity: .38; }
 .item.silly .name { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 16px; }
 .item.final { border-color: var(--wax); border-width: 2px; }
 .item .row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
@@ -478,22 +477,22 @@ function refreshShop() {
         setTimeout(() => { b.classList.remove('fresh'); delete b.dataset.fresh; }, 12000);
       }
     }
-    b.hidden = !S.seen[u.id] || S.ended;
+    b.hidden = !S.seen[u.id] || S.ended || maxed(S, u);   // finished upgrades leave the list
     if (b.hidden) continue;
     any = true;
-    const done = maxed(S, u), c = price(S, u), can = !done && S.maps >= c;
+    const c = price(S, u), can = S.maps >= c;
     if (can) affordable++;
     b.setAttribute('aria-disabled', String(!can));
-    b.classList.toggle('owned', done);
     const lv = b.querySelector('.lv');
-    lv.textContent = b.dataset.fresh ? 'new' : once(u) ? (done ? (u.id === 'hat' ? 'worn' : 'done') : '') : (u.max ? `${lvl(S, u)}/${u.max}` : (lvl(S, u) ? '×' + lvl(S, u) : ''));
+    lv.textContent = b.dataset.fresh ? 'new' : once(u) ? '' : (u.max ? `${lvl(S, u)}/${u.max}` : (lvl(S, u) ? '×' + lvl(S, u) : ''));
     lv.classList.toggle('new', !!b.dataset.fresh);
-    b.querySelector('.cost').textContent = done ? '' : fmt(c) + ' maps';
+    b.querySelector('.cost').textContent = fmt(c) + ' maps';
   }
   document.getElementById('afford').textContent = S.ended || !affordable ? '' : affordable + ' ready';
   const empty = document.getElementById('shopEmpty');
   empty.hidden = any && !S.ended;
-  empty.textContent = S.ended ? 'Nothing left to send. Everyone already has a map.' : 'Stir up a few maps. Ways to send them out will show up here.';
+  empty.textContent = S.ended ? 'Nothing left to send. Everyone already has a map.'
+    : S.stirs ? 'Keep stirring. More ways to send maps out will show up soon.' : 'Stir up a few maps. Ways to send them out will show up here.';
 }
 
 // ---------- Friends and the mood meter ----------
