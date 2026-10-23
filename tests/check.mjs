@@ -9,30 +9,16 @@
 // Every page is also loaded at 390px wide to check nothing scrolls sideways, and any console
 // error or uncaught exception fails the run. Look at the screenshots too; this can't judge looks.
 import { chromium } from 'playwright';
-import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { serve } from '../tools/serve.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = path.join(ROOT, 'public');
 const SHOTS = path.join(ROOT, 'tests', 'screenshots');
 const DESKTOP = { width: 1280, height: 900 };
 const PHONE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 };
-
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' };
-
-function serve() {
-  const server = http.createServer((req, res) => {
-    let p = path.join(PUBLIC, decodeURIComponent(new URL(req.url, 'http://x').pathname));
-    if (!p.startsWith(PUBLIC)) { res.writeHead(403).end(); return; }
-    if (fs.existsSync(p) && fs.statSync(p).isDirectory()) p = path.join(p, 'index.html');
-    if (!fs.existsSync(p)) { res.writeHead(404).end('not found'); return; }
-    res.writeHead(200, { 'content-type': TYPES[path.extname(p)] || 'application/octet-stream', 'cache-control': 'no-store' });
-    fs.createReadStream(p).pipe(res);
-  });
-  return new Promise(resolve => server.listen(0, '127.0.0.1', () => resolve(server)));
-}
 
 const results = [];
 function check(name, ok, detail = '') {
@@ -72,6 +58,13 @@ async function checkLanding(browser, base) {
 async function checkGame(browser, base, game) {
   const n = game.n, slug = game.slug, url = `${base}/${slug}/`;
   console.log(`${game.title || slug} (/${slug}/)`);
+
+  // Social card: tags in the page and the image next to it.
+  {
+    const html = fs.readFileSync(path.join(PUBLIC, slug, 'index.html'), 'utf8');
+    const img = (html.match(/<meta property="og:image" content="([^"]+)"/) || [])[1] || '';
+    check('has a social card (npm run og)', img.includes(`/${slug}/og.png`) && fs.existsSync(path.join(PUBLIC, slug, 'og.png')));
+  }
 
   // Fresh start: nothing finished, no upgrades yet. Then play the opening.
   {
@@ -149,7 +142,7 @@ for (const slug of only) {
 
 fs.rmSync(SHOTS, { recursive: true, force: true });
 fs.mkdirSync(SHOTS, { recursive: true });
-const server = await serve();
+const server = await serve(PUBLIC);
 const base = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch();
 try {

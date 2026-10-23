@@ -14,6 +14,7 @@ public/
 templates/game.html   starting point for a new game
 tests/check.mjs       browser smoke test (Playwright)
 tools/roll.py         rolls a random theme for a new game
+tools/og.mjs          renders social cards (og.png) and their meta tags
 CLAUDE.md             the design bar and checklist for making a game
 ```
 
@@ -63,6 +64,13 @@ npm run check -- moonshroom    # just one game
 plays the opening, loads a finished save to check the ending and share card, checks for
 sideways scroll at 390px, and fails on any console error. Screenshots go to `tests/screenshots/`.
 `package.json` is dev tooling only; the site still has no build step.
+
+## Social cards
+
+Each game has its own link preview: `public/<slug>/og.png` plus `og:`/`twitter:` meta tags in its
+page. `npm run og` renders cards for games that don't have one yet and refreshes the landing card;
+`npm run og -- <slug>` re-renders one game. Chat apps cache previews hard, so the image URL carries
+a content hash to make them refetch a changed card.
 
 ## Local data
 

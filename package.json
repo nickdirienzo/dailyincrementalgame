@@ -6,6 +6,7 @@
   "scripts": {
     "serve": "python3 -m http.server -d public 8080",
     "check": "node tests/check.mjs",
+    "og": "node tools/og.mjs",
     "setup": "playwright install chromium"
   },
   "devDependencies": {

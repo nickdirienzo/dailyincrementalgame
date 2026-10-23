@@ -19,6 +19,6 @@ Make the next Daily Incremental game. Read CLAUDE.md first and follow it exactly
 
 4. Test it in a real browser. Run `npm run check -- <slug>` (first time on a machine: `npm install && npm run setup`). It checks that the ending and upgrades are hidden at the start, plays the opening, loads a finished save to check the ending and share card, checks for sideways scroll at 390px, and fails on console errors. It relies on the conventions in CLAUDE.md (`#ending`, `#shareBtn`, upgrades as buttons in `#shop`, a save with `ended: true` resuming into the ending). Then look at every screenshot in tests/screenshots/ and fix anything that looks off. If the core interaction needs more than the script's generic drag-and-tap, play it with a short Playwright script of your own.
 
-5. Add the entry to public/games.json, dated the day after the last one, with n, slug, title, tagline, emoji, scale and minutes, plus `seed` and `interaction` from the roll. Commit with a message naming the game and its seed.
+5. Add the entry to public/games.json, dated the day after the last one, with n, slug, title, tagline, emoji, scale and minutes, plus `seed` and `interaction` from the roll. Then run `npm run og` to render its social card and refresh the landing card, look at public/<slug>/og.png, and rerun `npm run check -- <slug>`. Commit with a message naming the game and its seed.
 
 $ARGUMENTS

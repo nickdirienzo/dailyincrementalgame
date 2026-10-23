@@ -46,7 +46,9 @@ doesn't become the only kind of satisfaction.
 6. Add an entry to `public/games.json` with `n`, `slug`, `date` (YYYY-MM-DD, the day it goes live),
    `title`, `tagline`, `emoji` (one or two), `scale`, `minutes`, plus `seed` and `interaction`
    from `tools/roll.py` if the theme was rolled.
-7. Run `npm run check -- <slug>` and look at the screenshots in `tests/screenshots/`. Then play it
+7. Run `npm run og` to render the game's social card (`public/<slug>/og.png`, the preview image in
+   chat apps) and write its meta tags, and look at the card. It also refreshes the landing card.
+8. Run `npm run check -- <slug>` and look at the screenshots in `tests/screenshots/`. Then play it
    yourself: `npm run serve`, open http://localhost:8080/<slug>/, and play all the way through once
    with sound on and once in a phone-width window.
 
