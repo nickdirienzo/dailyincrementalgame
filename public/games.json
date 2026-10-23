@@ -7,5 +7,14 @@
     "emoji": "🌙🍄",
     "scale": "thousands",
     "minutes": "10–15"
+  },
+  {
+    "n": 2,
+    "date": "2026-10-24",
+    "title": "Toastergeist",
+    "tagline": "A grumpy ghost lives in a toaster. It hatches teacups now.",
+    "emoji": "👻🫖",
+    "scale": "hundreds",
+    "minutes": "8–12"
   }
 ]
