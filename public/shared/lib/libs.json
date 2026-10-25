@@ -1,0 +1,72 @@
+[
+  {
+    "name": "pixi.js",
+    "version": "8.22.0",
+    "license": "MIT",
+    "what": "WebGL sprites and scenes",
+    "path": "/shared/lib/pixi.js@8.22.0/pixi.min.mjs",
+    "import": "pixi.js",
+    "home": "https://pixijs.com",
+    "support": "https://opencollective.com/pixijs"
+  },
+  {
+    "name": "pixi-filters",
+    "version": "6.1.5",
+    "license": "MIT",
+    "what": "CRT, glitch, bloom, pixelate and other filters for PixiJS",
+    "path": "/shared/lib/pixi-filters@6.1.5/pixi-filters.mjs",
+    "import": "pixi-filters",
+    "home": "https://github.com/pixijs/filters",
+    "support": "https://opencollective.com/pixijs"
+  },
+  {
+    "name": "roughjs",
+    "version": "4.6.6",
+    "license": "MIT",
+    "what": "hand-drawn, sketchy shapes",
+    "path": "/shared/lib/roughjs@4.6.6/rough.esm.js",
+    "import": "roughjs",
+    "home": "https://roughjs.com",
+    "support": "https://github.com/sponsors/pshihn"
+  },
+  {
+    "name": "perfect-freehand",
+    "version": "1.2.3",
+    "license": "MIT",
+    "what": "pressure-sensitive ink strokes",
+    "path": "/shared/lib/perfect-freehand@1.2.3/index.mjs",
+    "import": "perfect-freehand",
+    "home": "https://github.com/steveruizok/perfect-freehand",
+    "support": "https://github.com/sponsors/steveruizok"
+  },
+  {
+    "name": "zzfx",
+    "version": "1.4.0",
+    "license": "MIT",
+    "what": "tiny generated sound effects",
+    "path": "/shared/lib/zzfx@1.4.0/ZzFX.js",
+    "import": "zzfx",
+    "home": "https://github.com/KilledByAPixel/ZzFX",
+    "support": "https://github.com/sponsors/KilledByAPixel"
+  },
+  {
+    "name": "matter-js",
+    "version": "0.20.0",
+    "license": "MIT",
+    "what": "2D physics (classic script, sets window.Matter)",
+    "path": "/shared/lib/matter-js@0.20.0/matter.min.js",
+    "classic": true,
+    "home": "https://brm.io/matter-js/",
+    "support": "https://github.com/liabru/matter-js"
+  },
+  {
+    "name": "break_infinity.js",
+    "version": "2.2.0",
+    "license": "MIT",
+    "what": "numbers past 1e308 for absurd-scale games (classic script, sets window.Decimal)",
+    "path": "/shared/lib/break_infinity.js@2.2.0/break_infinity.min.js",
+    "classic": true,
+    "home": "https://github.com/Patashu/break_infinity.js",
+    "support": "https://github.com/Patashu/break_infinity.js"
+  }
+]

@@ -46,5 +46,15 @@
   all: unset; cursor: pointer; position: absolute; top: 10px; right: 14px;
   font-size: 22px; line-height: 1; color: #62668a;
 }
+.di-credits { width: min(520px, 100%); max-height: calc(100vh - 32px); overflow: auto; }
+.di-credits h3 { margin: 6px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: #62668a; }
+.di-credits ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.di-credits li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 14px; }
+.di-credits a { color: #191b33; }
+.di-credit-name { font-weight: 700; }
+.di-credit-meta { color: #62668a; font-size: 13px; flex: 1 1 200px; overflow-wrap: anywhere; }
+.di-credit-meta a { color: inherit; }
+.di-credits .di-support { font-size: 13px; font-weight: 700; color: #ff5a36; text-decoration: none; white-space: nowrap; }
+.di-credits .di-support:hover { text-decoration: underline; }
 @keyframes di-fade { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .di-overlay { animation: none; } }

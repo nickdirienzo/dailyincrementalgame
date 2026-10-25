@@ -1,0 +1,197 @@
+// Sound and music for Daily Incremental games, all synthesized with Web Audio (no audio files).
+//
+//   import { createAudio, scale, loop } from '/shared/kit/audio.mjs';
+//   const A = createAudio();                       // unlocks on the first pointerdown/keydown
+//   A.bindToggles(soundBtn, musicBtn);             // shared di:sound-muted / di:music-muted keys
+//   const notes = scale('harmonic minor', 57);     // notes(degree) -> Hz, degrees past the scale go up octaves
+//   A.tone({ type: 'square', freq: notes(4), dur: 0.12 });   // a sound effect on the sfx bus
+//   const song = loop(A, { bpm: 104, onStep(step, t, bar) { ... A.tone({ ..., at: t, bus: A.music }) } });
+//
+// Music runs only while music is on, sound is on, and the tab is visible. The sound toggle mutes
+// everything; the music toggle only the music. Keep music well under the effects in the mix.
+
+const SOUND_KEY = 'di:sound-muted', MUSIC_KEY = 'di:music-muted';
+const read = k => { try { return localStorage.getItem(k) === '1'; } catch (e) { return false; } };
+const write = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0'); } catch (e) {} };
+
+export function createAudio({ sfxVolume = 0.55, musicVolume = 0.22 } = {}) {
+  let ctx = null, master, sfx, music, noiseBuf;
+  let soundMuted = read(SOUND_KEY), musicMuted = read(MUSIC_KEY);
+  const listeners = new Set();
+  const A = {
+    get ctx() { return ctx; }, get sfx() { return sfx; }, get music() { return music; }, get noise() { return noiseBuf; },
+    get ready() { return !!ctx && ctx.state === 'running'; },
+    get soundOn() { return !soundMuted; }, get musicOn() { return !musicMuted && !soundMuted; },
+    get now() { return ctx ? ctx.currentTime : 0; },
+    unlock, setSound, setMusic, bindToggles, tone, noiseHit, onChange: fn => (listeners.add(fn), () => listeners.delete(fn)),
+  };
+  const emit = () => listeners.forEach(fn => fn(A));
+
+  function unlock() {
+    if (!ctx) {
+      const C = window.AudioContext || window.webkitAudioContext;
+      if (!C) return;
+      ctx = new C();
+      master = ctx.createGain(); master.gain.value = soundMuted ? 0 : 1;
+      // A gentle compressor keeps stacked sounds from clipping.
+      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+      master.connect(comp).connect(ctx.destination);
+      sfx = ctx.createGain(); sfx.gain.value = sfxVolume; sfx.connect(master);
+      music = ctx.createGain(); music.gain.value = musicMuted ? 0 : musicVolume; music.connect(master);
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ctx.state === 'suspended' && !document.hidden) ctx.resume().then(emit, () => {});
+    emit();
+  }
+  ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, true));
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx) return;
+    if (document.hidden) ctx.suspend().then(emit, () => {}); else ctx.resume().then(emit, () => {});
+  });
+
+  function setSound(on) {
+    soundMuted = !on; write(SOUND_KEY, soundMuted);
+    if (master) master.gain.setTargetAtTime(on ? 1 : 0, ctx.currentTime, 0.02);
+    emit();
+  }
+  function setMusic(on) {
+    musicMuted = !on; write(MUSIC_KEY, musicMuted);
+    if (music) music.gain.setTargetAtTime(on ? musicVolume : 0, ctx.currentTime, 0.08);
+    emit();
+  }
+
+  // Wires two buttons as toggles: aria-pressed plus a label. labels: { sound: [on, off], music: [on, off] }.
+  function bindToggles(soundBtn, musicBtn, labels = {}) {
+    const L = { sound: ['♪ Sound on', '♪ Sound off'], music: ['♫ Music on', '♫ Music off'], ...labels };
+    const sync = () => {
+      if (soundBtn) { soundBtn.setAttribute('aria-pressed', String(!soundMuted)); soundBtn.textContent = L.sound[soundMuted ? 1 : 0]; }
+      if (musicBtn) { musicBtn.setAttribute('aria-pressed', String(!musicMuted)); musicBtn.textContent = L.music[musicMuted ? 1 : 0]; musicBtn.disabled = soundMuted; }
+    };
+    if (soundBtn) soundBtn.addEventListener('click', () => setSound(soundMuted));
+    if (musicBtn) musicBtn.addEventListener('click', () => setMusic(musicMuted));
+    A.onChange(sync); sync();
+  }
+
+  // One synthesized note. type: any OscillatorType, 'pulse' (narrow square, chiptune), 'pluck'
+  // (kalimba / harp), 'bell', 'keys' (soft detuned electric piano), 'pad' (slow swell).
+  // Envelope in seconds; `glide` bends the pitch toward freq*glide; `cutoff` adds a low-pass.
+  function tone({ type = 'sine', freq = 440, dur = 0.15, vol = 0.3, attack = 0.005, release = null, at = null,
+    glide = 0, cutoff = 0, detune = 0, pan = 0, bus = null } = {}) {
+    if (!ctx || ctx.state !== 'running') return;
+    const t = at ?? ctx.currentTime, out = bus || sfx;
+    const rel = release ?? (type === 'pluck' || type === 'bell' ? dur * 2.5 : 0.06);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + attack + 0.001);
+    if (type === 'pluck' || type === 'bell') g.gain.exponentialRampToValueAtTime(0.0001, t + attack + rel);
+    else { g.gain.setValueAtTime(vol, t + Math.max(attack, dur)); g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(attack, dur) + rel); }
+    let node = g;
+    if (cutoff) { const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cutoff; f.Q.value = 0.7; g.connect(f); node = f; }
+    if (pan) { const p = ctx.createStereoPanner(); p.pan.value = pan; node.connect(p); node = p; }
+    node.connect(out);
+    const end = t + Math.max(attack, dur) + rel + 0.05;
+    const osc = (wave, f, d = 0, v = 1) => {
+      const o = ctx.createOscillator();
+      if (wave === 'pulse') o.setPeriodicWave(pulseWave(ctx));
+      else o.type = wave;
+      o.frequency.setValueAtTime(f, t); o.detune.value = detune + d;
+      if (glide) o.frequency.exponentialRampToValueAtTime(f * glide, t + dur);
+      const og = ctx.createGain(); og.gain.value = v; o.connect(og).connect(g);
+      o.start(t); o.stop(end);
+    };
+    if (type === 'pluck') { osc('triangle', freq); osc('sine', freq * 2, 0, 0.35); osc('sine', freq * 4.2, 0, 0.08); }
+    else if (type === 'bell') { osc('sine', freq); osc('sine', freq * 2.76, 0, 0.3); osc('sine', freq * 5.4, 0, 0.12); }
+    else if (type === 'keys') { osc('triangle', freq, -6); osc('sine', freq, 6); osc('sine', freq * 2, 0, 0.15); }
+    else if (type === 'pad') { osc('sawtooth', freq, -9, 0.4); osc('sawtooth', freq, 9, 0.4); osc('triangle', freq / 2, 0, 0.5); }
+    else osc(type, freq);
+  }
+
+  // Filtered noise burst: drums, whooshes, sand, crackle. kind: 'kick' | 'snare' | 'hat' | 'shaker' | 'whoosh'.
+  function noiseHit(kind = 'hat', { at = null, vol = 0.25, bus = null, dur = null } = {}) {
+    if (!ctx || ctx.state !== 'running') return;
+    const t = at ?? ctx.currentTime, out = bus || sfx;
+    if (kind === 'kick') {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.12);
+      g.gain.setValueAtTime(vol * 1.6, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+      o.connect(g).connect(out); o.start(t); o.stop(t + 0.25);
+      return;
+    }
+    const spec = { snare: [1800, 'bandpass', 0.14], hat: [8000, 'highpass', 0.04], shaker: [6000, 'highpass', 0.07], whoosh: [900, 'bandpass', 0.5] }[kind] || [3000, 'bandpass', 0.1];
+    const len = dur ?? spec[2];
+    const s = ctx.createBufferSource(); s.buffer = noiseBuf;
+    const f = ctx.createBiquadFilter(); f.type = spec[1]; f.frequency.value = spec[0];
+    if (kind === 'whoosh') { f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(2400, t + len); }
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + (kind === 'whoosh' ? len * 0.4 : 0.002));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    s.connect(f).connect(g).connect(out);
+    s.start(t, Math.random() * 0.5); s.stop(t + len + 0.02);
+  }
+
+  return A;
+}
+
+let pulseCache = null;
+function pulseWave(ctx) {
+  if (pulseCache && pulseCache.ctx === ctx) return pulseCache.wave;
+  // 25% duty cycle: the classic NES lead.
+  const n = 64, re = new Float32Array(n), im = new Float32Array(n), duty = 0.25;
+  for (let k = 1; k < n; k++) im[k] = (2 / (k * Math.PI)) * Math.sin(k * Math.PI * duty);
+  pulseCache = { ctx, wave: ctx.createPeriodicWave(re, im) };
+  return pulseCache.wave;
+}
+
+// ---------- Scales ----------
+
+export const SCALES = {
+  'major pentatonic': [0, 2, 4, 7, 9], 'minor pentatonic': [0, 3, 5, 7, 10],
+  dorian: [0, 2, 3, 5, 7, 9, 10], lydian: [0, 2, 4, 6, 7, 9, 11], mixolydian: [0, 2, 4, 5, 7, 9, 10],
+  blues: [0, 3, 5, 6, 7, 10], 'in-sen': [0, 1, 5, 7, 10], 'harmonic minor': [0, 2, 3, 5, 7, 8, 11],
+  major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10],
+};
+
+export const midiToHz = m => 440 * Math.pow(2, (m - 69) / 12);
+
+// scale(name, rootMidi) -> degree => Hz. Degree 0 is the root; negative degrees go down.
+export function scale(name, root = 60) {
+  const s = SCALES[name];
+  if (!s) throw new Error(`unknown scale "${name}"`);
+  const fn = deg => {
+    const o = Math.floor(deg / s.length), i = ((deg % s.length) + s.length) % s.length;
+    return midiToHz(root + o * 12 + s[i]);
+  };
+  fn.size = s.length;
+  fn.midi = deg => { const o = Math.floor(deg / s.length), i = ((deg % s.length) + s.length) % s.length; return root + o * 12 + s[i]; };
+  return fn;
+}
+
+// ---------- Sequencer ----------
+
+// A step loop with lookahead scheduling, so timing stays tight even when the page is busy.
+// onStep(step, time, bar) runs for each step a little ahead of time; schedule notes `at: time`.
+// stepsPerBar 16 = sixteenth notes in 4/4. swing 0..0.3 delays every other step.
+export function loop(A, { bpm = 100, stepsPerBar = 16, swing = 0, onStep }) {
+  let timer = null, next = 0, step = 0, playing = false;
+  const stepDur = () => 60 / bpm / 4;
+  function tick() {
+    const ctx = A.ctx;
+    if (!ctx || ctx.state !== 'running' || !A.musicOn) return;
+    if (next < ctx.currentTime - 0.2) next = ctx.currentTime + 0.05;
+    while (next < ctx.currentTime + 0.15) {
+      const s = step % stepsPerBar;
+      const t = next + (s % 2 === 1 ? swing * stepDur() : 0);
+      try { onStep(s, t, Math.floor(step / stepsPerBar)); } catch (e) { console.warn(e); }
+      next += stepDur(); step++;
+    }
+  }
+  const api = {
+    start() { if (playing) return api; playing = true; next = 0; timer = setInterval(tick, 30); return api; },
+    stop() { playing = false; clearInterval(timer); return api; },
+    get playing() { return playing; },
+    get bpm() { return bpm; }, set bpm(v) { bpm = v; },
+    restart() { step = 0; return api; },
+  };
+  return api;
+}

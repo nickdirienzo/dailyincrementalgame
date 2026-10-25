@@ -84,9 +84,11 @@ INITIALS = "ABCDEFGHIJKLMNOPRSTVW"
 
 # How the game is built and how long it runs. Without these every game came out the same shape:
 # one currency, a straight line of upgrades, helpers at minute 2, done at minute 10.
-LENGTHS = ["short (5–8 min)", "standard (10–15 min)", "long (20–30 min)", "extended (45–60 min)"]
+# Modeled on real incrementals: jam-sized games, short complete ones (Spaceplan, Candy Box) and
+# story-driven ones (A Dark Room, Universal Paperclips).
+LENGTHS = ["mini (10–60 min)", "short (1–3 hours)", "story (3–10 hours, over several sittings)"]
 # How many structures each length combines; longer games have room to layer or chain several.
-STRUCTURE_COUNTS = {"short": (1, 1), "standard": (1, 2), "long": (2, 3), "extended": (2, 4)}
+STRUCTURE_COUNTS = {"mini": (1, 2), "short": (2, 3), "story": (2, 4)}
 
 STRUCTURES = [
     "straight line of upgrades", "reset loop (prestige for a permanent bonus)",
@@ -140,6 +142,11 @@ CALENDAR_KINDS = [
 ]
 
 
+# Color palettes from Lospec, vendored by tools/palettes.mjs (append-only, like these lists).
+PALETTES = [p["slug"] for p in json.loads(
+    (Path(__file__).resolve().parent.parent / "public" / "shared" / "palettes.json").read_text())]
+
+
 def roll(seed):
     rng = random.Random(seed)
     r = {
@@ -171,6 +178,8 @@ def roll(seed):
     r["context"] = rng.choice(CONTEXTS)
     if r["context"] == "calendar":
         r["context"] = {"kind": "calendar", "nod": rng.choice(CALENDAR_KINDS)}
+    # Colors in public/shared/palettes.json under this slug.
+    r["palette"] = rng.choice(PALETTES)
     return r
 
 

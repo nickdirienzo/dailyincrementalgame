@@ -3,3 +3,9 @@
 
 /shared/*
   Cache-Control: public, max-age=300
+
+# Vendored libraries live under versioned folders, so they never change in place.
+# "! Cache-Control" drops the /shared/* value so the two don't get joined.
+/shared/lib/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable

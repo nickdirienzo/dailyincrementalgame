@@ -1,6 +1,8 @@
 // Daily Incremental shared runtime.
 // Include on every page:  <script src="/shared/daily.js" data-day="N" defer></script>
 // N is the game's "n" in games.json: an internal id for saves and streaks, never shown to players.
+// Add data-credits when the game has a credits.json next to it (npm run credits -- <slug>): the top
+// bar then links to a Credits panel with licenses and support links.
 // (omit data-day on non-game pages like the landing page).
 //
 // Game API:
@@ -122,6 +124,48 @@
     openCard();
   }
 
+  // ---------- Credits ----------
+  // Games list what they're built on in credits.json next to the page (npm run credits -- <slug>).
+  // The top bar links to a panel with each project's license and where to support it.
+  let creditsEl = null;
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const link = (href, text) => href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text);
+  function creditsHtml(c) {
+    const item = (title, meta, support) => `<li><span class="di-credit-name">${title}</span><span class="di-credit-meta">${meta}</span>${support ? ` <a class="di-support" href="${esc(support)}" target="_blank" rel="noopener">Support ♥</a>` : ''}</li>`;
+    const parts = [];
+    if (c.libs && c.libs.length) parts.push(`<h3>Code</h3><ul>${c.libs.map(l => item(link(l.home, l.name), `${esc(l.what)} · ${esc(l.license)}`, l.support)).join('')}</ul>`);
+    if (c.art && c.art.length) parts.push(`<h3>Art, redrawn for this game</h3><ul>${c.art.map(s => {
+      const authors = [...new Set(s.icons.map(i => i.author))].join(', ');
+      const icons = s.icons.map(i => link(i.source, i.icon.split(':')[1])).join(', ');
+      return item(link(s.home, s.set), `${icons} · by ${esc(authors)} · ${link(s.licenseUrl, s.license)}`, s.support);
+    }).join('')}</ul>`);
+    if (c.palette) parts.push(`<h3>Palette</h3><ul>${item(link(c.palette.home, c.palette.name), c.palette.author ? `by ${esc(c.palette.author)} · Lospec` : 'Lospec', '')}</ul>`);
+    if (c.fonts && c.fonts.length) parts.push(`<h3>Fonts</h3><ul>${c.fonts.map(f => item(link(f.home, f.name), 'Google Fonts · Open Font License', '')).join('')}</ul>`);
+    return parts.join('');
+  }
+  function openCredits(c) {
+    if (!creditsEl) {
+      creditsEl = document.createElement('div');
+      creditsEl.className = 'di-overlay';
+      creditsEl.innerHTML = `
+        <div class="di-card di-credits" role="dialog" aria-modal="true" aria-labelledby="di-credits-title">
+          <p class="di-eyebrow">Made with open things</p>
+          <h2 id="di-credits-title" class="di-title">Credits</h2>
+          <div class="di-credits-body"></div>
+          <p class="di-streak">These are free because people gave their time. If one made you smile, consider supporting it.</p>
+          <button type="button" class="di-close" aria-label="Close">×</button>
+        </div>`;
+      document.body.appendChild(creditsEl);
+      const close = () => { creditsEl.hidden = true; };
+      creditsEl.addEventListener('click', e => { if (e.target === creditsEl) close(); });
+      creditsEl.querySelector('.di-close').addEventListener('click', close);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+    creditsEl.querySelector('.di-credits-body').innerHTML = creditsHtml(c);
+    creditsEl.hidden = false;
+    creditsEl.querySelector('.di-close').focus();
+  }
+
   // ---------- Top bar on game pages ----------
   function addBar() {
     if (DAY == null) return;
@@ -129,6 +173,14 @@
     bar.className = 'di-bar';
     bar.innerHTML = `<a href="/">← Daily Incremental</a>`;
     document.body.prepend(bar);
+    if (!script || !script.hasAttribute('data-credits')) return;
+    fetch('credits.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(c => {
+      if (!c || !((c.libs || []).length || (c.art || []).length || c.palette || (c.fonts || []).length)) return;
+      const a = document.createElement('a');
+      a.href = '#credits'; a.className = 'di-credits-link'; a.textContent = 'Credits';
+      a.addEventListener('click', e => { e.preventDefault(); openCredits(c); });
+      bar.appendChild(a);
+    }).catch(() => {});
   }
 
   // Stylesheet lives next to this script.

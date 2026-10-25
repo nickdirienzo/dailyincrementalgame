@@ -6,15 +6,22 @@ One tiny incremental game per day. It's a static site with no build step, hosted
 public/
   index.html          landing page: today's game, streak, archive
   games.json          the manifest; one entry per day
-  shared/daily.js     site runtime injected into each game: top bar, share card, streaks
+  shared/daily.js     site runtime injected into each game: top bar, credits, share card, streaks
   shared/daily.css
-  moonshroom/         one folder per game, named by its slug
+  shared/kit/         our helpers for games: audio + music, sprites, style passes
+  shared/lib/         vendored third-party libraries, pinned by version (libs.json lists them)
+  shared/palettes.json  Lospec palettes the roll picks from
+  moonshroom/         one folder per game, named by its slug (page, modules, art/, credits.json)
   _redirects          old /1/-style links → named URLs
-  _headers            keeps games.json uncached so new days show up right away
+  _headers            keeps games.json uncached so new days show up right away; caches shared/lib forever
 templates/game.html   starting point for a new game
 tests/check.mjs       browser smoke test (Playwright)
-tools/roll.py         rolls a random theme for a new game
+tools/roll.py         rolls a random theme and game shape for a new game
 tools/og.mjs          renders social cards (og.png) and their meta tags
+tools/art.mjs         finds and fetches open-licensed SVG art (Iconify), license-checked
+tools/credits.mjs     writes a game's credits.json (libraries, art, fonts, palette, support links)
+tools/vendor.mjs      copies pinned libraries from node_modules into public/shared/lib
+tools/palettes.mjs    adds Lospec palettes to public/shared/palettes.json
 CLAUDE.md             the design bar and checklist for making a game
 ```
 

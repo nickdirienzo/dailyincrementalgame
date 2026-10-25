@@ -7,7 +7,9 @@
 // the opening by dragging and tapping on the canvas. It reloads with a finished save
 // (di:<n>:save = { ended: true }) and checks the ending shows and Share opens the share card.
 // Every page is also loaded at 390px wide to check nothing scrolls sideways, and any console
-// error or uncaught exception fails the run. Look at the screenshots too; this can't judge looks.
+// error or uncaught exception fails the run. Games that use the shared kit also get their credits,
+// sprite sheet (?sprites) and sound/music toggles checked. Look at the screenshots too; this can't
+// judge looks.
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -90,6 +92,58 @@ async function checkGame(browser, base, game) {
       check('ending still hidden after the opening', !(await page.locator('#ending').isVisible()));
     }
     check('no console errors (opening)', errors.length === 0, errors.join(' | '));
+    await context.close();
+  }
+
+  const html = fs.readFileSync(path.join(PUBLIC, slug, 'index.html'), 'utf8');
+
+  // Credits: anything built on vendored libraries or fetched art must credit it.
+  {
+    const usesLibs = /\/shared\/lib\//.test(html), usesArt = /art\/[\w-]+--[\w-]+\.svg/.test(html) || fs.existsSync(path.join(PUBLIC, slug, 'art'));
+    if (usesLibs || usesArt || html.includes('data-credits')) {
+      const file = path.join(PUBLIC, slug, 'credits.json');
+      const credits = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+      check('has credits.json (npm run credits)', !!credits);
+      check('daily.js tag has data-credits', html.includes('data-credits'));
+      if (credits) {
+        const missing = [...html.matchAll(/\/shared\/lib\/([\w.-]+)@/g)].map(m => m[1]).filter(name => !(credits.libs || []).some(l => l.name === name));
+        check('credits list every library the page loads', missing.length === 0, missing.join(', '));
+        const { page, context, errors } = await open(browser, url);
+        const link = page.locator('.di-credits-link');
+        if (await link.isVisible()) {
+          await link.click(); await page.waitForTimeout(300);
+          check('Credits panel opens', await page.locator('.di-credits').isVisible());
+          await shot(page, `${slug}-credits.png`);
+        } else check('Credits link in the top bar', false);
+        check('no console errors (credits)', errors.length === 0, errors.join(' | '));
+        await context.close();
+      }
+    }
+  }
+
+  // Sprite sheet: games using the sprite kit show every sprite at ?sprites.
+  if (html.includes('/shared/kit/sprites.mjs')) {
+    const { page, context, errors } = await open(browser, url + '?sprites');
+    const ok = await page.locator('#di-sprites[data-ready]').waitFor({ timeout: 8000 }).then(() => true, () => false);
+    check('sprite sheet renders at ?sprites', ok);
+    if (ok) await shot(page, `${slug}-sprites.png`, true);
+    check('no console errors (sprites)', errors.length === 0, errors.join(' | '));
+    await context.close();
+  }
+
+  // Sound and music toggles, for games on the audio kit: both exist, and each flips its shared key.
+  if (html.includes('/shared/kit/audio.mjs')) {
+    const { page, context, errors } = await open(browser, url);
+    for (const [id, key] of [['#soundBtn', 'di:sound-muted'], ['#musicBtn', 'di:music-muted']]) {
+      const btn = page.locator(id);
+      if (!(await btn.count())) { check(`has ${id}`, false); continue; }
+      const before = await page.evaluate(k => localStorage.getItem(k), key);
+      await btn.click(); await page.waitForTimeout(100);
+      const after = await page.evaluate(k => localStorage.getItem(k), key);
+      check(`${id} toggles ${key}`, after != null && after !== before, `${before} -> ${after}`);
+      await btn.click();
+    }
+    check('no console errors (toggles)', errors.length === 0, errors.join(' | '));
     await context.close();
   }
 
