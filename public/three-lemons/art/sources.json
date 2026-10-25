@@ -1,0 +1,47 @@
+{
+  "game-icons--wooden-crate.svg": {
+    "icon": "game-icons:wooden-crate",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Delapouite",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/delapouite/wooden-crate.html"
+  },
+  "game-icons--treasure-map.svg": {
+    "icon": "game-icons:treasure-map",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Lorc",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/lorc/treasure-map.html"
+  },
+  "mdi--alarm-clock.svg": {
+    "icon": "mdi:alarm-clock",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/alarm-clock/"
+  },
+  "mdi--slot-machine.svg": {
+    "icon": "mdi:slot-machine",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/slot-machine/"
+  },
+  "mdi--lightbulb-on.svg": {
+    "icon": "mdi:lightbulb-on",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/lightbulb-on/"
+  }
+}

@@ -67,5 +67,42 @@
     "tone": "mild horror",
     "context": "none",
     "palette": "justparchment8"
+  },
+  {
+    "n": 5,
+    "slug": "three-lemons",
+    "date": "2026-10-27",
+    "title": "Three Lemons",
+    "tagline": "A mole on the night shift sorts a billion lemons by touch, because a ferret promised to show it the sun.",
+    "emoji": "🍋🎰",
+    "scale": "billions",
+    "minutes": "180–600",
+    "seed": 3267020948,
+    "interaction": "rub",
+    "arc": {
+      "drive": "a promise",
+      "obstacle": "a bad map",
+      "turn": "it was the wrong goal all along",
+      "initial": "F"
+    },
+    "length": "story (3–10 hours, over several sittings)",
+    "structure": [
+      "stacked currencies (A makes B, B makes C)",
+      "straight line of upgrades"
+    ],
+    "twist": "gambling or loot drops",
+    "ending": "the game ends itself",
+    "look": "watercolor",
+    "music": {
+      "style": "dub",
+      "scale": "major pentatonic"
+    },
+    "tone": "noir",
+    "context": {
+      "kind": "calendar",
+      "nod": "the season and its weather",
+      "topic": "late-October first frost and morning fog"
+    },
+    "palette": "cryptic-ocean"
   }
 ]

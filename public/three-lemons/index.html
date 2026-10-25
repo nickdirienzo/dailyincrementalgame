@@ -1,0 +1,1376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Three Lemons · Daily Incremental</title>
+<meta name="description" content="A mole on the night shift sorts a billion lemons by touch, because a ferret promised to show it the sun. Daily Incremental.">
+<meta property="og:site_name" content="Daily Incremental">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Three Lemons">
+<meta property="og:description" content="A mole on the night shift sorts a billion lemons by touch, because a ferret promised to show it the sun.">
+<meta property="og:url" content="https://dailyincrementalgame.com/three-lemons/">
+<meta property="og:image" content="https://dailyincrementalgame.com/three-lemons/og.png?v=e353f27e">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Three Lemons: A mole on the night shift sorts a billion lemons by touch, because a ferret promised to show it the sun.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Limelight&family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+  /* Watercolor noir in the Cryptic Ocean palette (Klafooty, Lospec): ink-blue washes, one pale light. */
+  :root {
+    --p0: #2a173b; --p1: #3f2c5f; --p2: #443f7b; --p3: #4c5c87; --p4: #69809e; --p5: #95c5ac;
+    --bg: var(--p0); --ink: var(--p5); --dim: var(--p4);
+    --display: "Limelight", Georgia, serif;
+    --type: "Special Elite", "Courier New", monospace;
+    --body: "Courier Prime", "Courier New", monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--ink); }
+  /* Keep this: any display rule (flex, grid) would otherwise override the hidden attribute. */
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; font: 15px/1.45 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: max(14px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 0%, rgba(68,63,123,.55), transparent 70%),
+      radial-gradient(ellipse 50% 50% at 90% 30%, rgba(63,44,95,.6), transparent 70%),
+      radial-gradient(ellipse 70% 40% at 50% 100%, rgba(76,92,135,.25), transparent 70%),
+      var(--bg);
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  header { display: flex; align-items: flex-end; justify-content: space-between; gap: 6px 18px; flex-wrap: wrap; }
+  h1 { margin: 0; font: 400 clamp(34px, 6.5vw, 58px)/0.95 var(--display); letter-spacing: .02em; color: var(--p5);
+       text-shadow: 0 0 18px rgba(149,197,172,.18); }
+  .sub { margin: 4px 0 0; font: 15px/1.3 var(--type); color: var(--p4); }
+
+  .game { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .game { grid-template-columns: 1fr; } }
+  main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+  /* Panels look like washes of ink on paper: soft uneven edges, darker rims. */
+  .wash { background: var(--p1); border-radius: 14px 9px 13px 8px / 9px 13px 8px 14px;
+          box-shadow: inset 0 0 0 1px rgba(105,128,158,.25), inset 0 0 22px rgba(42,23,59,.7); }
+  .stage { position: relative; overflow: hidden; border-radius: 18px 12px 16px 10px / 12px 16px 10px 18px; background: var(--p0);
+           box-shadow: 0 0 0 2px rgba(68,63,123,.6), 0 10px 40px rgba(0,0,0,.35); }
+  #stage { display: block; width: 100%; height: auto; touch-action: none; cursor: grab; }
+  #stage.rubbing { cursor: grabbing; }
+  #stage:focus-visible { outline: 2px solid var(--p5); outline-offset: -4px; }
+
+  .log { min-height: 3em; margin: 0; font: 16px/1.45 var(--type); color: var(--p5); }
+  .log.fresh { animation: logIn .6s ease; }
+  @keyframes logIn { from { opacity: 0; filter: blur(2px); } }
+
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  @media (max-width: 520px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .stat { padding: 8px 10px; min-width: 0; }
+  .stat small { display: block; font: 12px/1.2 var(--type); color: var(--p4); letter-spacing: .04em; text-transform: uppercase; }
+  .stat b { display: block; font: 400 21px/1.2 var(--type); color: var(--p5); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat em { font: italic 13px var(--body); color: var(--p4); white-space: nowrap; }
+
+  .row2 { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 8px; }
+  @media (max-width: 520px) { .row2 { grid-template-columns: 1fr; } }
+  .meters { padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+  .meter-head { display: flex; justify-content: space-between; gap: 10px; font: 13px/1.3 var(--type); color: var(--p4); }
+  .meter-head span:last-child { color: var(--p5); font-variant-numeric: tabular-nums; text-align: right; }
+  .bar { margin-top: 5px; height: 12px; background: var(--p0); border-radius: 6px 3px 7px 4px; position: relative; overflow: hidden; }
+  .bar i { position: absolute; inset: 0 auto 0 0; border-radius: inherit; transition: width .6s ease;
+           background: linear-gradient(90deg, rgba(149,197,172,.55), var(--p5)); box-shadow: 0 0 10px rgba(149,197,172,.4); }
+  .bar.eyes i { background: linear-gradient(90deg, var(--p3), var(--p4) 60%, var(--p5)); }
+
+  .row2:has(.machine[hidden]) { grid-template-columns: 1fr; }
+  .machine { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .machine p { margin: 0; font: 13px/1.35 var(--type); color: var(--p4); }
+  #pullBtn { all: unset; box-sizing: border-box; cursor: pointer; text-align: center; padding: 9px 12px; font: 16px/1 var(--type);
+             background: var(--p3); color: var(--p5); border-radius: 10px 6px 9px 5px / 6px 9px 5px 10px; }
+  #pullBtn:hover:not([aria-disabled="true"]) { background: var(--p4); color: var(--p0); }
+  #pullBtn[aria-disabled="true"] { opacity: .5; cursor: default; }
+  #pullBtn:focus-visible { outline: 2px solid var(--p5); outline-offset: 2px; }
+
+  aside { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  @media (max-width: 760px) { aside { position: static; } }
+  aside h2 { margin: 0; font: 400 26px/1.1 var(--display); color: var(--p5); display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  #afford { font: 13px var(--type); color: var(--p4); }
+  .shopnote { margin: 0; font: italic 14px/1.4 var(--body); color: var(--p4); }
+  #shop { display: flex; flex-direction: column; gap: 8px; }
+  .up {
+    all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px;
+    padding: 9px 11px; background: var(--p1); color: var(--p4); position: relative;
+    border-radius: 12px 7px 11px 6px / 7px 11px 6px 12px;
+    box-shadow: inset 0 0 0 1px rgba(105,128,158,.22), inset 0 0 16px rgba(42,23,59,.6);
+  }
+  .up .name { font: 16px/1.25 var(--type); color: var(--p4); }
+  .up .lvl { font: 13px var(--type); color: var(--p3); margin-left: 4px; }
+  .up .cost { grid-column: 1 / -1; font: 13px/1.4 var(--type); color: var(--p3); font-variant-numeric: tabular-nums; }
+  .up .desc { grid-column: 1 / -1; font: 13.5px/1.35 var(--body); color: var(--p4); opacity: .85; }
+  .up .fx { grid-column: 1 / -1; font: 12.5px/1.3 var(--type); color: var(--p3); }
+  .up.silly .name::after { content: " ✶"; color: var(--p3); }
+  .up.goal { box-shadow: inset 0 0 0 1px rgba(149,197,172,.4), inset 0 0 16px rgba(42,23,59,.6); }
+  .up.can { background: var(--p2); }
+  .up.can .name { color: var(--p5); }
+  .up.can .cost, .up.can .fx { color: var(--p5); }
+  .up:not(.can) { cursor: default; }
+  .up.can:hover { background: var(--p3); }
+  .up:focus-visible { outline: 2px solid var(--p5); outline-offset: 2px; }
+  .up .tag { position: absolute; top: -9px; right: 10px; padding: 1px 8px; font: 12px/1.4 var(--type); background: var(--p5); color: var(--p0);
+             border-radius: 7px 4px 6px 3px; }
+  .up.new { animation: pulse 1.6s ease-in-out 4; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 3px rgba(149,197,172,.6), 0 0 22px rgba(149,197,172,.3); } }
+
+  #ending { padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+  #ending h2 { margin: 0; font: 400 40px/1 var(--display); color: var(--p5); }
+  #ending p { margin: 0; max-width: 64ch; color: var(--p5); }
+  #ending .slip { font: 15px/1.5 var(--type); color: var(--p4); border-left: 3px solid var(--p3); padding-left: 12px; }
+  #ending .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  #shareBtn { all: unset; cursor: pointer; padding: 11px 20px; font: 17px/1 var(--type); background: var(--p5); color: var(--p0);
+              border-radius: 12px 7px 11px 6px / 7px 11px 6px 12px; }
+  #shareBtn:focus-visible { outline: 2px solid var(--p5); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh { animation: none; } .bar i { transition: none; } }
+</style>
+<script type="importmap">
+{ "imports": {
+  "@strudel/web": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/core": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/webaudio": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/soundfonts": "/shared/lib/@strudel/soundfonts@1.3.0/index.mjs"
+} }
+</script>
+<script src="/shared/daily.js" data-day="5" data-credits></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Three Lemons</h1>
+      <p class="sub" id="sub">The night shift, in the cellars under the grove.</p>
+    </div>
+  </header>
+  <div class="game">
+    <main>
+      <div class="stage"><canvas id="stage" tabindex="0" aria-label="A dark lemon cellar. Rub the lemon on the table, back and forth, to sort it. Press space to rub with the keyboard. The fruit machine is in the corner."></canvas></div>
+      <p class="log" id="log" aria-live="polite">Fitch says you can see the sun when the order ships. One billion lemons. Rub one. Your paws know a good lemon from a dud.</p>
+      <div class="stats">
+        <div class="stat wash"><small>Lemons</small><b id="sLemons">0</b><em id="sLemonRate"></em></div>
+        <div class="stat wash"><small>Duds</small><b id="sDuds">0</b><em id="sDudNote">¼ of every sort</em></div>
+        <div class="stat wash" id="statVolts" hidden><small>Volts</small><b id="sVolts">0</b><em id="sVoltRate"></em></div>
+        <div class="stat wash" id="statLight" hidden><small>Light</small><b id="sLight">0</b><em id="sLightRate"></em></div>
+      </div>
+      <div class="row2">
+        <div class="meters wash">
+          <div>
+            <div class="meter-head"><span>Fitch’s order · then he shows you the sun</span><span id="mOrder">0 / 1 billion</span></div>
+            <div class="bar"><i id="bOrder" style="width:0%"></i></div>
+          </div>
+          <div id="eyesMeter" hidden>
+            <div class="meter-head"><span>Your eyes · the sun is 100,000 lux</span><span id="mEyes">0 lux</span></div>
+            <div class="bar eyes"><i id="bEyes" style="width:0%"></i></div>
+          </div>
+          <div>
+            <div class="meter-head"><span>Fitch’s map · tunnels marked UP</span><span id="mMap">1 of 7 cellars</span></div>
+          </div>
+        </div>
+        <div class="machine wash">
+          <button id="pullBtn" type="button">Pull the fruit machine · 3 duds</button>
+          <p id="machineNote">It runs on fruit. Three lemons a pull. Fitch keeps the map in there. Says it’s safer.</p>
+        </div>
+      </div>
+    </main>
+    <aside id="side">
+      <h2>Fitch’s Board <span id="afford"></span></h2>
+      <p class="shopnote" id="shopnote">Chalked on a crate lid. Fitch takes lemons. Later he takes other things.</p>
+      <div id="shop"></div>
+    </aside>
+  </div>
+  <section id="ending" class="wash" hidden>
+    <h2>Sunup.</h2>
+    <p>The order shipped at three in the morning. Fitch kept his word: he rode the dumbwaiter up with you, past the crates, into the grove. It was dark. There was frost on the grass and fog in the rows, and no sun anywhere.</p>
+    <p>So you sat on a crate and waited, because what else was there. At 6:47 the fog went pale and the sun came up over the lemon trees, and your eyes, trained on a billion lemons’ worth of light, could look right at it.</p>
+    <p class="slip">“Coulda come up any morning, kid,” says Fitch. “It does this every day. Six forty-seven, this time of year.” You ask why he never said. “You never asked. You had a promise. Folks with a promise don’t ask.” It was the wrong goal all along. You didn’t need a billion lemons. You needed to stay up past your shift.</p>
+    <p>It looks like a lemon, you think. A big one. Nobody’s sorted it.</p>
+    <div class="row"><button id="shareBtn" type="button">Share result</button></div>
+  </section>
+</div>
+<script type="module">
+import * as E from './economy.mjs';
+import * as Sp from '/shared/kit/sprites.mjs';
+import { grain } from '/shared/kit/fx.mjs';
+import { wash } from '/shared/kit/fx.mjs';
+import { createAudio, scale } from '/shared/kit/audio.mjs';
+import { createMusic } from '/shared/kit/music.mjs';
+
+const P = ['#2a173b', '#3f2c5f', '#443f7b', '#4c5c87', '#69809e', '#95c5ac'];
+const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+const DEBUG = location.search.includes('debug');
+
+// ---------- Save ----------
+const KEY = window.DailyGame ? DailyGame.storageKey('save') : 'di:5:save';
+let S = E.defaults();
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(E.defaults(), JSON.parse(raw)); } catch (e) {}
+for (const k of ['owned', 'seen', 'unlocked']) S[k] ||= {};
+S.buffs ||= []; S.trinkets ||= [];
+// A finished save shows the finished world: every cellar dug, every light on, the sun up.
+if (S.ended) {
+  S.cellars = E.CELLARS.length; S.scraps = E.CELLARS.length; S.eyes = E.EYES.length; S.shipped = E.ORDER;
+  S.unlocked.volts = S.unlocked.light = true;
+  for (const [id, n] of [['beetle', 40], ['vole', 30], ['shrew', 20], ['badger', 12], ['starnose', 8], ['belt', 4], ['nose', 2],
+    ['cell', 30], ['stack', 20], ['cratebat', 12], ['barrel', 6], ['pile', 3], ['penlight', 20], ['desk', 12], ['street', 8], ['stage', 4], ['lens', 2],
+    ['fedora', 1], ['scarf', 1], ['nametag', 1], ['sunglasses', 1], ['clock', 1], ['radio', 1], ['lever', 1]]) S.owned[id] ||= n;
+}
+const save = () => { S.lastSeen = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+setInterval(save, 3000);
+addEventListener('pagehide', save);
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+
+// ---------- Audio: dub in G major pentatonic, with a tape echo on the effects ----------
+// Trims from npm run mix: music near -24 dBFS, effects peaking near -10.
+const A = createAudio({ sfxTrim: 1, musicTrim: 2.6 });
+const KEYS = { 1: 55, 2: 55, 3: 57, 4: 60, up: 62 }; // G, G, A, C, D (MIDI roots for effects)
+let N = scale('major pentatonic', KEYS[E.phase(S)]);
+let echo = null;
+function echoBus() {
+  if (echo || !A.ctx) return echo;
+  const c = A.ctx, input = c.createGain(), d = c.createDelay(2), fb = c.createGain(), lp = c.createBiquadFilter(), out = c.createGain();
+  d.delayTime.value = 0.32; fb.gain.value = 0.42; lp.type = 'lowpass'; lp.frequency.value = 1800; out.gain.value = 0.6;
+  input.connect(d); d.connect(lp).connect(fb).connect(d); lp.connect(out).connect(A.sfx);
+  return (echo = input);
+}
+let stepIdx = 0;
+const sfx = {
+  // A soft rasp while you rub: brushed noise, very quiet.
+  rasp() { A.noiseHit('shaker', { vol: 0.3 + Math.random() * 0.02, dur: 0.06 }); },
+  // A lemon sorted: a plucked note climbing the scale, echoing off the cellar walls.
+  sort() { const d = 7 + (stepIdx++ % 6); A.tone({ type: 'pluck', freq: N(d), dur: 0.12, vol: 0.479 }); A.tone({ type: 'pluck', freq: N(d), dur: 0.1, vol: 0.239, bus: echoBus() }); },
+  dud() { A.tone({ type: 'pluck', freq: N(2), dur: 0.1, vol: 0.32, cutoff: 900 }); A.noiseHit('kick', { vol: 0.12 }); },
+  // The machine: a ratchet while it spins, then the reels land.
+  lever() { for (let i = 0; i < 8; i++) A.noiseHit('hat', { vol: 0.304, at: A.now + i * 0.11 }); A.tone({ type: 'triangle', freq: N(-3), dur: 0.08, vol: 0.38, glide: 0.6 }); },
+  win() { [0, 2, 4].forEach((d, i) => A.tone({ type: 'pluck', freq: N(d + 9), dur: 0.12, vol: 0.434, at: A.now + i * 0.08 })); A.tone({ type: 'bell', freq: N(14), dur: 0.2, vol: 0.186, bus: echoBus(), at: A.now + 0.24 }); },
+  lose() { A.tone({ type: 'triangle', freq: N(4), dur: 0.16, vol: 0.496, glide: 0.94 }); A.tone({ type: 'triangle', freq: N(3), dur: 0.3, vol: 0.465, glide: 0.9, at: A.now + 0.2 }); },
+  rare() { [0, 2, 4, 5, 7].forEach((d, i) => A.tone({ type: 'bell', freq: N(d + 7), dur: 0.2, vol: 0.26, at: A.now + i * 0.07 })); A.tone({ type: 'bell', freq: N(12), dur: 0.3, vol: 0.16, bus: echoBus(), at: A.now + 0.35 }); },
+  scrap() { [0, 4, 7, 9].forEach((d, i) => A.tone({ type: 'keys', freq: N(d + 5), dur: 0.2, vol: 0.122, at: A.now + i * 0.12, cutoff: 2600 })); A.tone({ type: 'keys', freq: N(12), dur: 0.4, vol: 0.091, bus: echoBus(), at: A.now + 0.5, cutoff: 2600 }); },
+  // Buying: an organ skank stab, the way dub does it, with the echo throwing it back.
+  buy() { [0, 2, 4].forEach(d => A.tone({ type: 'keys', freq: N(d + 5), dur: 0.07, vol: 0.09, cutoff: 2200 })); [0, 2, 4].forEach(d => A.tone({ type: 'keys', freq: N(d + 5), dur: 0.06, vol: 0.048, cutoff: 1600, bus: echoBus() })); },
+  unlock() { A.tone({ type: 'bell', freq: N(11), dur: 0.3, vol: 0.358 }); A.tone({ type: 'bell', freq: N(13), dur: 0.3, vol: 0.275, at: A.now + 0.14, bus: echoBus() }); },
+  // A tunnel: a deep thud, a bass drop sliding down, and the "more lemons" chime.
+  dig() {
+    A.noiseHit('kick', { vol: 0.32 }); A.tone({ type: 'sine', freq: N(4) / 2, dur: 0.8, vol: 0.28, glide: 0.5 });
+    A.tone({ type: 'sine', freq: N(0) / 2, dur: 0.6, vol: 0.16, glide: 0.5, at: A.now + 0.3, bus: echoBus() });
+    [0, 2, 4, 7].forEach((d, i) => A.tone({ type: 'pluck', freq: N(d + 7), dur: 0.14, vol: 0.16, at: A.now + 0.5 + i * 0.1 }));
+  },
+  eyes() { [0, 4, 7, 9, 12].forEach((d, i) => A.tone({ type: 'bell', freq: N(d + 5), dur: 0.35, vol: 0.234, at: A.now + i * 0.09 })); A.tone({ type: 'pad', freq: N(5), dur: 0.8, vol: 0.13, attack: 0.3, release: 1, cutoff: 1800 }); },
+  finale() {
+    // Sunup: a slow climb up the scale over a warm pad, each note thrown into the echo.
+    [-5, 0, 2, 4].forEach(d => A.tone({ type: 'pad', freq: N(d), dur: 5, vol: 0.068, attack: 2, release: 3, cutoff: 1500 }));
+    for (let i = 0; i < 10; i++) A.tone({ type: 'pluck', freq: N(i + 2), dur: 0.2, vol: 0.272, at: A.now + 1 + i * 0.35, bus: i % 2 ? echoBus() : null });
+    A.tone({ type: 'bell', freq: N(14), dur: 1, vol: 0.163, at: A.now + 4.8 });
+  },
+};
+if (DEBUG) window.__game = { A, sfx, long: ['finale', 'dig'], S: () => S, E };
+
+// ---------- Music: dub on Strudel ----------
+// One-drop drums, a bass line that mutates a note at a time, an organ skank, and (with the radio)
+// a harmonica playing melodica lines into a long echo. Every layer drops in and out on its own
+// clock, like a dub engineer riding the faders, so the mix keeps changing for minutes.
+let music = null;
+const PROG = '<0 0 3 4 0 0 1 3>/2';
+function song() {
+  const { n, s, stack } = music.strudel;
+  const ph = E.phase(S);
+  const root = { 1: 'G', 2: 'G', 3: 'A', 4: 'C', up: 'D' }[ph];
+  const sc = o => `${root}${o}:major:pentatonic`;
+  if (ph === 'up') return ['up', stack(
+    n('<[0,2,4] [0,2,4] [3,5,7] [1,3,5]>').scale(sc(3)).s('gm_pad_warm').attack(1.5).release(3).gain(0.4),
+    n('<0 ~ 4 ~ 2 ~ ~ 7>/2').scale(sc(4)).s('harmonica_soft').gain(0.32).delay(0.6).delaytime(0.43).delayfeedback(0.55).room(0.5).degradeBy(0.25),
+    n('<0 3 4 1>').scale(sc(1)).s('gm_electric_bass_finger').gain(0.6).lpf(500),
+  ), 58 / 240];
+  const bass = n('<[0 ~ ~ 0 ~ 2 ~ 4] [0 ~ 4 ~ 2 ~ ~ ~] [~ 0 ~ 2 4 ~ 2 ~] [0 ~ ~ ~ -1 ~ 0 ~]>')
+    .add(n(PROG)).sometimesBy(0.12, x => x.add(n('<2 -1>'))).scale(sc(1)).s('gm_electric_bass_finger').lpf(700).gain(0.95);
+  const drums = stack(
+    s('~ ~ bassdrum1 ~').gain(0.75),
+    s('~ ~ snare_rim ~').gain(0.45).mask('<1 1 1 1 1 1 0 1>/2'),
+    s('hihat*8').gain('0.18 0.1 0.15 0.1').degradeBy(0.25).mask('<1 1 0 1 1 1 1 0>/4'),
+    // Delay throws: a rim shot now and then, flung into the echo.
+    s('~ ~ ~ snare_rim').degradeBy(0.6).gain(0.35).delay(0.65).delaytime(0.64).delayfeedback(0.6).lpf(2500),
+  );
+  const layers = [bass.mask('<1 1 1 1 1 1 1 0 1 1 1 1>/2'), drums];
+  if (ph >= 2) layers.push(n('~ [0,2,4] ~ [0,2,4]').add(n(PROG)).scale(sc(3)).s('gm_rock_organ').clip(0.25).gain(0.32)
+    .delay(0.3).delaytime(0.43).delayfeedback(0.35).mask('<1 1 1 0 1 1 0 1 1 1 1 0>/3'));
+  if (ph >= 3) layers.push(n('<[~ 0 ~ 2] [4 ~ ~ ~]>').add(n(PROG)).scale(sc(4)).s('gm_electric_guitar_muted').gain(0.3).degradeBy(0.3).mask('<0 1 1 1 0 1>/4'));
+  if (S.owned.radio) layers.push(n('<[4 ~ 2 ~] [~ ~ 5 4] ~ [7 ~ ~ 4] [2 ~ ~ ~] ~ [5 4 2 ~] ~>').sometimesBy(0.2, x => x.add(n(1)))
+    .scale(sc(4)).s('harmonica_soft').gain(0.3).delay(0.55).delaytime(0.64).delayfeedback(0.55).room(0.4).mask('<1 1 0 0 1 0 1 1>/4'));
+  if (ph >= 4) layers.push(n('<[0,4] [3,7] [4,9] [1,5]>/2').scale(sc(3)).s('gm_pad_warm').attack(1).release(2).gain(0.22));
+  return [`${ph}-${S.owned.radio ? 'r' : ''}`, stack(...layers), ({ 1: 72, 2: 72, 3: 74, 4: 76 }[ph]) / 240];
+}
+createMusic(A, { packs: ['vcsl'], soundfonts: true, song }).then(m => { music = m; music.update(); if (DEBUG) window.__game.music = m; })
+  .catch(e => console.warn('music unavailable', e));
+
+// ---------- Canvas ----------
+const cv = $('stage'), ctx = cv.getContext('2d');
+let W = 960, H = 600, DPR = 1;
+const L = {};
+function resize() {
+  const narrow = cv.parentElement.clientWidth < 560;
+  W = narrow ? 600 : 960; H = narrow ? 700 : 600;
+  DPR = Math.min(2, devicePixelRatio || 1);
+  cv.width = W * DPR; cv.height = H * DPR;
+  layout(); bgDirty = true; memoCache.clear();
+}
+function layout() {
+  const m = Math.min(W, H), narrow = W < H;
+  Object.assign(L, {
+    m, narrow,
+    wallBottom: H * (narrow ? 0.56 : 0.6),
+    floor: H * (narrow ? 0.64 : 0.68),
+    table: { x: W * (narrow ? 0.5 : 0.47), y: H * (narrow ? 0.73 : 0.74), w: W * (narrow ? 0.6 : 0.4), h: H * 0.05 },
+    lemon: { x: W * (narrow ? 0.5 : 0.47), y: H * (narrow ? 0.715 : 0.725), r: m * 0.062 },
+    mole: { x: W * (narrow ? 0.5 : 0.47), y: H * (narrow ? 0.71 : 0.72), k: m / 600 },
+    crate: { x: W * (narrow ? 0.79 : 0.71), y: H * (narrow ? 0.79 : 0.8), s: m * 0.14 },
+    bin: { x: W * (narrow ? 0.2 : 0.23), y: H * (narrow ? 0.8 : 0.81), s: m * 0.11 },
+    machine: { x: W * (narrow ? 0.78 : 0.87), y: H * (narrow ? 0.3 : 0.36), w: m * (narrow ? 0.2 : 0.17), h: m * (narrow ? 0.3 : 0.28) },
+    shaft: { x: W * 0.02, w: W * (narrow ? 0.12 : 0.09) },
+    map: { x: W * (narrow ? 0.42 : 0.5), y: H * 0.1, w: m * 0.26, h: m * 0.16 },
+    doors: { y: H * (narrow ? 0.29 : 0.31), h: H * (narrow ? 0.2 : 0.24), x0: W * (narrow ? 0.18 : 0.17), x1: W * (narrow ? 0.66 : 0.78) },
+    shelves: narrow ? [[W * 0.04, W * 0.3], [W * 0.7, W * 0.96]] : [[W * 0.13, W * 0.34], [W * 0.6, W * 0.8]],
+    shelfY: H * (narrow ? 0.6 : 0.63),
+    critters: { y: H * 0.94, x0: W * 0.04, x1: W * 0.96 },
+  });
+}
+let seed0 = 5;
+function rng(seed) { return () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; }
+
+// ---------- Watercolor brush ----------
+// Every shape is laid down in a few thin, slightly shifted glazes, then given a darker rim where
+// the pigment pooled, the way a wash dries on paper.
+function blob(c, cx, cy, rx, ry, R, n = 28, amp = 0.08) {
+  const pts = [];
+  const ph = R() * 6;
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2;
+    const k = 1 + Math.sin(a * 3 + ph) * amp * 0.6 + (R() - 0.5) * amp;
+    pts.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k]);
+  }
+  return pts;
+}
+function trace(c, pts) {
+  c.beginPath();
+  const n = pts.length;
+  for (let i = 0; i < n; i++) {
+    const p = pts[i], q = pts[(i + 1) % n];
+    const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2;
+    if (i === 0) c.moveTo(mx, my); else c.quadraticCurveTo(p[0], p[1], mx, my);
+  }
+  const p = pts[0], q = pts[1 % n];
+  c.quadraticCurveTo(p[0], p[1], (p[0] + q[0]) / 2, (p[1] + q[1]) / 2);
+  c.closePath();
+}
+function glaze(c, shape, color, { R = Math.random, layers = 3, alpha = 0.55, jitter = 2, rim = 0.5, rimColor = P[0], blur = 1.2 } = {}) {
+  c.save();
+  for (let i = 0; i < layers; i++) {
+    c.globalAlpha = alpha;
+    c.fillStyle = color;
+    c.save(); c.translate((R() - 0.5) * jitter, (R() - 0.5) * jitter); shape(c, i); c.fill(); c.restore();
+  }
+  if (rim) {
+    c.globalAlpha = rim; c.strokeStyle = rimColor; c.lineWidth = 1.6;
+    if (blur) c.filter = `blur(${blur}px)`;
+    shape(c, 0); c.stroke();
+    c.filter = 'none';
+  }
+  c.restore();
+}
+// Granulation: specks of pigment settling in the paper.
+function speckle(c, x0, y0, w, h, color, n, R, size = 1.4) {
+  c.save(); c.fillStyle = color;
+  for (let i = 0; i < n; i++) { c.globalAlpha = 0.08 + R() * 0.18; c.beginPath(); c.arc(x0 + R() * w, y0 + R() * h, R() * size + 0.3, 0, 7); c.fill(); }
+  c.restore();
+}
+function softSpot(c, x, y, r, color, a) {
+  const g = c.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, rgba(color, a)); g.addColorStop(1, rgba(color, 0));
+  c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
+}
+
+// ---------- Cache ----------
+// Painting a wash is slow (layers, blurred rims), so everything is painted once into a sprite
+// and stamped from then on.
+const memoCache = new Map();
+function memo(key, w, h, paint) {
+  let c = memoCache.get(key);
+  if (!c) {
+    if (memoCache.size > 500) memoCache.clear();
+    c = Sp.canvas(Math.ceil(w * DPR), Math.ceil(h * DPR));
+    const x = c.getContext('2d'); x.scale(DPR, DPR); paint(x);
+    memoCache.set(key, c);
+  }
+  return c;
+}
+
+// ---------- Lemons ----------
+function lemonPts(cx, cy, r, R, tilt = 0) {
+  const pts = [], n = 30, ph = R() * 6;
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2;
+    // An ellipse with a nub at each end: that's a lemon.
+    const nub = Math.pow(Math.abs(Math.cos(a)), 18) * 0.28;
+    const rx = r * (1.18 + nub), ry = r * 0.88;
+    const w = 1 + Math.sin(a * 4 + ph) * 0.025;
+    const x = Math.cos(a) * rx * w, y = Math.sin(a) * ry * w;
+    pts.push([cx + x * Math.cos(tilt) - y * Math.sin(tilt), cy + x * Math.sin(tilt) + y * Math.cos(tilt)]);
+  }
+  return pts;
+}
+function drawLemon(c, x, y, r, { dud = false, seed = 1, tilt = -0.15, glow = 0 } = {}) {
+  if (glow) softSpot(c, x, y, r * 2.4, P[5], 0.12 * glow);
+  const rq = Math.max(2, Math.round(r * 2) / 2), tq = Math.round(tilt * 5) / 5, sz = rq * 3.6;
+  const m = memo(`L${seed}|${rq}|${dud ? 1 : 0}|${tq}`, sz, sz, cc => paintLemon(cc, sz / 2, sz / 2, rq, { dud, seed, tilt: tq }));
+  c.drawImage(m, x - sz / 2, y - sz / 2, sz, sz);
+}
+function paintLemon(c, x, y, r, { dud = false, seed = 1, tilt = -0.15 } = {}) {
+  const R = rng(seed);
+  const pts = lemonPts(x, y, r, R, tilt);
+  glaze(c, cc => trace(cc, pts), dud ? P[3] : P[5], { R, layers: 3, alpha: 0.5, jitter: r * 0.05, rim: 0.6 });
+  // Shade on the underside, a wet highlight on top.
+  c.save(); trace(c, pts); c.clip();
+  const g = c.createLinearGradient(x, y - r, x, y + r);
+  g.addColorStop(0, rgba(P[5], 0)); g.addColorStop(1, rgba(dud ? P[1] : P[4], 0.6));
+  c.fillStyle = g; c.fillRect(x - r * 2, y - r, r * 4, r * 2);
+  if (dud) { c.fillStyle = rgba(P[1], 0.55); for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(x + (R() - 0.5) * r * 1.6, y + (R() - 0.5) * r, r * (0.1 + R() * 0.14), 0, 7); c.fill(); } }
+  else { c.fillStyle = rgba(P[5], 0.5); c.beginPath(); c.ellipse(x - r * 0.35, y - r * 0.35, r * 0.4, r * 0.18, -0.4, 0, 7); c.fill(); }
+  speckle(c, x - r * 1.3, y - r, r * 2.6, r * 2, dud ? P[0] : P[3], Math.round(r * 1.2), R, r * 0.05);
+  c.restore();
+}
+
+// ---------- Sprites: icons restyled into washes, and things drawn by hand ----------
+const ART = {};
+async function iconWash(file, size, stops, { bleed = 1.2, edge = 0.55 } = {}) {
+  const svg = await Sp.loadSvg(`art/${file}`);
+  const flat = await Sp.svgToCanvas(Sp.recolor(svg, stops[0]), size);
+  const grad = await Sp.svgToCanvas(Sp.gradient(Sp.recolor(svg, stops[0]), stops, { angle: 110 }), size);
+  const pad = 8, c = Sp.canvas(size + pad * 2, size + pad * 2), x = c.getContext('2d');
+  // A pale first glaze, slightly off register, then the real one on top.
+  x.globalAlpha = 0.35; x.drawImage(flat, pad + 3, pad + 2);
+  x.globalAlpha = 0.9; x.drawImage(grad, pad, pad);
+  // Granulation and lighter blooms, kept inside the shape.
+  x.globalCompositeOperation = 'source-atop';
+  const R = rng(size + stops.length);
+  speckle(x, 0, 0, c.width, c.height, P[0], size * 3, R, size / 60);
+  for (let i = 0; i < 5; i++) softSpot(x, R() * c.width, R() * c.height, size * (0.15 + R() * 0.2), stops[stops.length - 1], 0.35);
+  x.globalCompositeOperation = 'source-over';
+  return wash(c, { bleed, edge });
+}
+function made(w, h, draw) { const c = Sp.canvas(w, h); draw(c.getContext('2d'), w, h); return c; }
+async function makeSprites() {
+  const list = [
+    ['crate', 'game-icons--wooden-crate.svg', 120, [P[4], P[2]]],
+    ['map scrap', 'game-icons--treasure-map.svg', 90, [P[5], P[4]]],
+    ['alarm clock', 'mdi--alarm-clock.svg', 60, [P[5], P[3]]],
+    ['fruit machine', 'mdi--slot-machine.svg', 200, [P[4], P[3], P[2]]],
+    ['bulb', 'mdi--lightbulb-on.svg', 60, [P[5], P[4]]],
+  ];
+  await Promise.all(list.map(async ([name, file, size, color]) => { ART[name] = Sp.register(name, await iconWash(file, size, color)); }));
+  ART.lemon = Sp.register('lemon (live)', made(120, 100, c => drawLemon(c, 60, 50, 32, { seed: 3 })));
+  ART.dud = Sp.register('dud (live)', made(120, 100, c => drawLemon(c, 60, 50, 32, { dud: true, seed: 4 })));
+  ART.cell = Sp.register('lemon cell', made(70, 60, c => drawCell(c, 35, 36, 16)));
+  ART.mole = Sp.register('the mole (live)', made(260, 240, c => drawMole(c, 130, 200, 1, 0, true)));
+  ART.fitch = Sp.register('Fitch (live)', made(220, 240, c => drawFitch(c, 110, 230, 1, true)));
+  for (const k of ['beetle', 'vole', 'shrew', 'badger', 'starnose', 'belt', 'nose']) ART[k] = Sp.register(k, made(80, 60, c => drawCritter(c, k, 40, 52, 1)));
+  ART.sun = Sp.register('the sun (ending)', made(160, 160, c => { softSpot(c, 80, 80, 80, P[5], 0.4); drawLemon(c, 80, 80, 36, { seed: 9, tilt: 0 }); }));
+}
+
+// A dud, two nails, a twist of wire: a lemon battery.
+function drawCell(c, x, y, r, seed = 2) {
+  drawLemon(c, x, y, r, { dud: true, seed, tilt: 0 });
+  c.save(); c.lineCap = 'round';
+  c.strokeStyle = P[4]; c.lineWidth = Math.max(1.5, r * 0.14);
+  c.beginPath(); c.moveTo(x - r * 0.4, y - r * 0.4); c.lineTo(x - r * 0.45, y - r * 1.2); c.stroke();
+  c.strokeStyle = P[2];
+  c.beginPath(); c.moveTo(x + r * 0.4, y - r * 0.4); c.lineTo(x + r * 0.45, y - r * 1.2); c.stroke();
+  c.strokeStyle = rgba(P[5], 0.7); c.lineWidth = Math.max(1, r * 0.07);
+  c.beginPath(); c.moveTo(x - r * 0.45, y - r * 1.2); c.quadraticCurveTo(x, y - r * 1.9, x + r * 0.45, y - r * 1.2); c.stroke();
+  c.restore();
+}
+
+// The mole: drawn live so its paws can rub and its eyes can open as they learn the light.
+function drawMole(c, x, y, k, rubT, still = false) {
+  if (still) return paintMole(c, x, y, k, rubT, true);
+  const bob = reduced ? 0 : Math.sin(T * 1.6) * 1.5 * k;
+  const w = 200 * k, h = 220 * k;
+  const key = `M${k.toFixed(3)}|${S.eyes}|${['scarf', 'sunglasses', 'fedora', 'nametag'].map(i => S.owned[i] ? 1 : 0).join('')}`;
+  const m = memo(key, w, h, cc => paintMole(cc, w / 2, 200 * k, k, 0, false));
+  c.drawImage(m, x - w / 2, y - 200 * k + bob, w, h);
+}
+function paintMole(c, x, y, k, rubT, still = false) {
+  const R = rng(11);
+  c.save(); c.translate(x, y); c.scale(k, k);
+  const bob = 0;
+  // Body: a velvet lump.
+  const body = blob(c, 0, -70 + bob, 78, 66, R, 30, 0.05);
+  glaze(c, cc => trace(cc, body), P[2], { R, layers: 3, alpha: 0.6, jitter: 3, rim: 0.7 });
+  c.save(); trace(c, body); c.clip();
+  softSpot(c, -20, -110 + bob, 70, P[3], 0.5);
+  c.strokeStyle = rgba(P[1], 0.6); c.lineWidth = 1.2;
+  for (let i = 0; i < 40; i++) { const a = R() * 7, rr = 20 + R() * 55; const px = Math.cos(a) * rr, py = -70 + Math.sin(a) * rr * 0.8; c.beginPath(); c.moveTo(px, py); c.lineTo(px + 3, py + 6); c.stroke(); }
+  c.restore();
+  // Scarf, if bought.
+  if (S.owned.scarf) {
+    glaze(c, cc => { cc.beginPath(); cc.ellipse(0, -96 + bob, 56, 13, 0, 0, 7); }, P[3], { R, layers: 2, alpha: 0.7, rim: 0.5 });
+    glaze(c, cc => { cc.beginPath(); cc.roundRect(22, -96 + bob, 16, 42, 6); }, P[3], { R, layers: 2, alpha: 0.7, rim: 0.5 });
+    c.strokeStyle = rgba(P[5], 0.4); c.lineWidth = 2; for (let i = -40; i < 50; i += 14) { c.beginPath(); c.moveTo(i, -106 + bob); c.lineTo(i + 4, -86 + bob); c.stroke(); }
+  }
+  // Head and snout, leaning over the table.
+  const head = blob(c, 0, -118 + bob, 46, 36, R, 24, 0.05);
+  glaze(c, cc => trace(cc, head), P[2], { R, layers: 3, alpha: 0.6, jitter: 2, rim: 0.7 });
+  glaze(c, cc => { cc.beginPath(); cc.ellipse(0, -96 + bob, 13, 17, 0, 0, 7); }, P[3], { R, layers: 2, alpha: 0.7, rim: 0.5 });
+  glaze(c, cc => { cc.beginPath(); cc.ellipse(0, -82 + bob, 11, 8, 0, 0, 7); }, P[4], { R, layers: 2, alpha: 0.85, rim: 0.6 }); // the nose
+  c.fillStyle = rgba(P[5], 0.6); c.beginPath(); c.ellipse(-3, -85 + bob, 4, 2, 0, 0, 7); c.fill();
+  // Whiskers.
+  c.strokeStyle = rgba(P[4], 0.6); c.lineWidth = 1;
+  for (const s of [-1, 1]) for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(s * 10, -86 + bob + i * 3); c.quadraticCurveTo(s * 30, -90 + bob + i * 6, s * 44, -84 + bob + i * 9); c.stroke(); }
+  // Eyes: shut slits at first, then little open beads as the light gets trained in.
+  const open = Math.min(1, S.eyes / E.EYES.length);
+  for (const s of [-1, 1]) {
+    const ex = s * 20, ey = -124 + bob;
+    if (open < 0.15) { c.strokeStyle = P[0]; c.lineWidth = 2.2; c.beginPath(); c.moveTo(ex - 5, ey); c.quadraticCurveTo(ex, ey + 3, ex + 5, ey); c.stroke(); }
+    else {
+      c.fillStyle = P[0]; c.beginPath(); c.ellipse(ex, ey, 3 + open * 3, 1.5 + open * 4, 0, 0, 7); c.fill();
+      c.fillStyle = P[5]; c.beginPath(); c.arc(ex - 1, ey - 1.5, 0.8 + open * 1.2, 0, 7); c.fill();
+    }
+  }
+  if (S.owned.sunglasses && !still) { // pushed up on the forehead, for later
+    c.fillStyle = rgba(P[0], 0.9); c.beginPath(); c.ellipse(-14, -146 + bob, 10, 6, 0, 0, 7); c.ellipse(14, -146 + bob, 10, 6, 0, 0, 7); c.fill();
+    c.fillRect(-4, -148 + bob, 8, 2);
+  }
+  if (S.owned.fedora) {
+    glaze(c, cc => { cc.beginPath(); cc.ellipse(0, -150 + bob, 50, 8, -0.06, 0, 7); }, P[0], { R, layers: 2, alpha: 0.85, rim: 0.3 });
+    glaze(c, cc => { cc.beginPath(); cc.moveTo(-28, -152 + bob); cc.quadraticCurveTo(-26, -184 + bob, -4, -180 + bob); cc.lineTo(0, -174 + bob); cc.lineTo(4, -180 + bob); cc.quadraticCurveTo(26, -184 + bob, 28, -152 + bob); cc.closePath(); }, P[0], { R, layers: 2, alpha: 0.9, rim: 0.3 });
+    c.fillStyle = rgba(P[3], 0.85); c.fillRect(-28, -160 + bob, 56, 6);
+  }
+  if (S.owned.nametag) { glaze(c, cc => { cc.beginPath(); cc.roundRect(-52, -70 + bob, 30, 16, 3); }, P[5], { R, layers: 2, alpha: 0.7, rim: 0.4 }); c.fillStyle = P[1]; c.font = '9px "Special Elite", monospace'; c.fillText('MOLE', -49, -58 + bob); }
+  c.restore();
+  if (!still) return;
+  drawPaws(c, x, y, k, rubT);
+}
+// Paws: big pale spades, rubbing back and forth on the lemon.
+function drawPaws(c, x, y, k, rubT) {
+  const pw = 64 * k, ph = 48 * k;
+  const m = memo(`P${k.toFixed(3)}`, pw, ph, cc => {
+    const R = rng(12);
+    cc.save(); cc.translate(pw / 2, ph * 0.4); cc.scale(k, k);
+    const paw = blob(cc, 0, 0, 22, 14, R, 18, 0.1);
+    glaze(cc, q => trace(q, paw), P[4], { R, layers: 2, alpha: 0.75, jitter: 1, rim: 0.6 });
+    cc.strokeStyle = rgba(P[1], 0.7); cc.lineWidth = 1.6;
+    for (let i = -2; i <= 2; i++) { cc.beginPath(); cc.moveTo(i * 7, 8); cc.lineTo(i * 8, 15); cc.stroke(); }
+    cc.restore();
+  });
+  const swing = Math.sin(rubT * Math.PI * 2) * 14;
+  for (const s of [-1, 1]) {
+    const px = s * 34 + swing * s * -0.3 + swing * 0.7;
+    c.drawImage(m, x + px * k - pw / 2, y - 4 * k - ph * 0.4, pw, ph);
+  }
+}
+
+// Fitch: a ferret in a hat, leaning in the doorway with a toothpick.
+function drawFitch(c, x, y, k, still = false) {
+  if (still) return paintFitch(c, x, y, k, true);
+  const w = 130 * k, h = 270 * k;
+  const m = memo(`F${k.toFixed(3)}`, w, h, cc => paintFitch(cc, w / 2, 260 * k, k, true));
+  c.drawImage(m, x - w / 2, y - 260 * k, w, h);
+}
+function paintFitch(c, x, y, k, still = false) {
+  const R = rng(23);
+  c.save(); c.translate(x, y); c.scale(k, k);
+  const lean = still || reduced ? 0 : Math.sin(T * 0.7) * 1.2;
+  c.rotate(-0.06 + lean * 0.01);
+  const body = [[-26, 0], [-34, -70], [-30, -150], [-18, -178], [18, -178], [30, -150], [32, -70], [24, 0]];
+  glaze(c, cc => trace(cc, body), P[4], { R, layers: 3, alpha: 0.55, rim: 0.7 });
+  glaze(c, cc => { cc.beginPath(); cc.ellipse(0, -90, 18, 60, 0, 0, 7); }, P[5], { R, layers: 2, alpha: 0.3, rim: 0 });
+  // Coat: a long dark wash.
+  glaze(c, cc => { cc.beginPath(); cc.moveTo(-36, -2); cc.lineTo(-38, -140); cc.quadraticCurveTo(0, -158, 38, -140); cc.lineTo(36, -2); cc.closePath(); }, P[1], { R, layers: 3, alpha: 0.55, rim: 0.6 });
+  c.strokeStyle = rgba(P[3], 0.7); c.lineWidth = 2; c.beginPath(); c.moveTo(0, -140); c.lineTo(-4, -4); c.stroke();
+  // Head: long, with the bandit mask.
+  const head = blob(c, 0, -196, 30, 26, R, 22, 0.05);
+  glaze(c, cc => trace(cc, head), P[5], { R, layers: 3, alpha: 0.55, rim: 0.7 });
+  glaze(c, cc => { cc.beginPath(); cc.ellipse(0, -200, 27, 9, 0, 0, 7); }, P[2], { R, layers: 2, alpha: 0.8, rim: 0.4 });
+  for (const s of [-1, 1]) { c.fillStyle = P[0]; c.beginPath(); c.arc(s * 10, -200, 3.4, 0, 7); c.fill(); c.fillStyle = P[5]; c.beginPath(); c.arc(s * 10 - 1, -201, 1, 0, 7); c.fill(); }
+  c.fillStyle = P[1]; c.beginPath(); c.ellipse(0, -182, 5, 3.5, 0, 0, 7); c.fill();
+  c.strokeStyle = rgba(P[5], 0.9); c.lineWidth = 2; c.lineCap = 'round'; c.beginPath(); c.moveTo(4, -174); c.lineTo(26, -170); c.stroke(); // toothpick
+  for (const s of [-1, 1]) glaze(c, cc => { cc.beginPath(); cc.ellipse(s * 22, -218, 8, 9, 0, 0, 7); }, P[4], { R, layers: 2, alpha: 0.7, rim: 0.6 });
+  // The hat.
+  glaze(c, cc => { cc.beginPath(); cc.ellipse(0, -218, 40, 7, -0.08, 0, 7); }, P[0], { R, layers: 2, alpha: 0.85, rim: 0.3 });
+  glaze(c, cc => { cc.beginPath(); cc.moveTo(-22, -220); cc.quadraticCurveTo(-20, -248, 0, -246); cc.quadraticCurveTo(20, -248, 22, -220); cc.closePath(); }, P[0], { R, layers: 2, alpha: 0.85, rim: 0.3 });
+  c.fillStyle = rgba(P[3], 0.8); c.fillRect(-22, -228, 44, 5);
+  c.restore();
+}
+
+function drawCritter(c, kind, x, y, k, direct = false) {
+  if (!direct) {
+    const w = 84 * k, h = 64 * k;
+    const m = memo(`C${kind}${k.toFixed(3)}`, w, h, cc => drawCritter(cc, kind, 42 * k, 54 * k, k, true));
+    c.drawImage(m, x - 42 * k, y - 54 * k, w, h);
+    return;
+  }
+  const R = rng(kind.length * 7 + 3);
+  c.save(); c.translate(x, y); c.scale(k, k);
+  const g = (shape, col, o = {}) => glaze(c, shape, col, { R, layers: 2, alpha: 0.7, rim: 0.6, ...o });
+  if (kind === 'beetle') {
+    g(cc => { cc.beginPath(); cc.ellipse(0, -12, 16, 11, 0, 0, 7); }, P[0]);
+    c.strokeStyle = rgba(P[4], 0.7); c.lineWidth = 1; c.beginPath(); c.moveTo(0, -23); c.lineTo(0, -1); c.stroke();
+    softSpot(c, 14, -14, 12, P[5], 0.35); c.fillStyle = P[5]; c.beginPath(); c.arc(16, -14, 2.5, 0, 7); c.fill();
+    for (let i = -1; i <= 1; i++) { c.strokeStyle = P[0]; c.beginPath(); c.moveTo(i * 8, -4); c.lineTo(i * 10, 2); c.stroke(); }
+  } else if (kind === 'vole' || kind === 'shrew') {
+    const col = kind === 'vole' ? P[3] : P[4];
+    g(cc => { cc.beginPath(); cc.ellipse(0, -14, kind === 'vole' ? 20 : 15, 13, 0, 0, 7); }, col);
+    g(cc => { cc.beginPath(); cc.ellipse(kind === 'vole' ? 16 : 14, -18, 10, 8, 0.2, 0, 7); }, col);
+    if (kind === 'shrew') g(cc => { cc.beginPath(); cc.moveTo(22, -20); cc.lineTo(34, -14); cc.lineTo(22, -14); cc.closePath(); }, P[4]);
+    g(cc => { cc.beginPath(); cc.arc(10, -26, 5, 0, 7); }, col);
+    c.fillStyle = P[0]; c.beginPath(); c.arc(20, -20, 1.8, 0, 7); c.fill();
+    c.strokeStyle = rgba(P[4], 0.7); c.beginPath(); c.moveTo(-18, -10); c.quadraticCurveTo(-30, -6, -32, -16); c.stroke();
+  } else if (kind === 'badger') {
+    g(cc => { cc.beginPath(); cc.ellipse(-2, -16, 24, 16, 0, 0, 7); }, P[1]);
+    g(cc => { cc.beginPath(); cc.ellipse(20, -20, 12, 10, 0, 0, 7); }, P[5]);
+    c.fillStyle = rgba(P[0], 0.9); c.beginPath(); c.ellipse(20, -20, 12, 3.5, 0, 0, 7); c.fill();
+  } else if (kind === 'starnose') {
+    g(cc => { cc.beginPath(); cc.ellipse(0, -14, 20, 14, 0, 0, 7); }, P[2]);
+    c.save(); c.translate(24, -16);
+    for (let i = 0; i < 11; i++) { const a = i / 11 * 7; g(cc => { cc.beginPath(); cc.ellipse(Math.cos(a) * 6, Math.sin(a) * 6, 4, 1.6, a, 0, 7); }, P[4], { layers: 1, rim: 0.3 }); }
+    c.restore();
+  } else if (kind === 'belt') {
+    g(cc => { cc.beginPath(); cc.roundRect(-34, -16, 68, 12, 6); }, P[1]);
+    c.strokeStyle = rgba(P[4], 0.7); for (let i = -30; i < 32; i += 8) { c.beginPath(); c.moveTo(i, -16); c.lineTo(i + 3, -4); c.stroke(); }
+    drawLemon(c, -12, -24, 6, { seed: 6 }); drawLemon(c, 10, -24, 6, { seed: 7 });
+  } else if (kind === 'nose') {
+    g(cc => { cc.beginPath(); cc.roundRect(-22, -40, 44, 40, 5); }, P[3]);
+    g(cc => { cc.beginPath(); cc.moveTo(22, -30); cc.lineTo(38, -38); cc.lineTo(38, -14); cc.lineTo(22, -18); cc.closePath(); }, P[4]);
+    softSpot(c, -8, -28, 8, P[5], 0.6); c.fillStyle = P[5]; c.beginPath(); c.arc(-8, -28, 2.5, 0, 7); c.fill();
+  }
+  c.restore();
+}
+
+// ---------- The cellar backdrop (cached; redrawn when something on it changes) ----------
+const bg = document.createElement('canvas'), bgx = bg.getContext('2d');
+let bgDirty = true, bgKey = '';
+const OPEN_DOORS = () => S.cellars - 1;
+function drawBackdrop() {
+  bg.width = W * DPR; bg.height = H * DPR;
+  const c = bgx; c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const R = rng(5);
+  // Paper first, then the wall in big wet washes.
+  c.fillStyle = P[1]; c.fillRect(0, 0, W, H);
+  for (let i = 0; i < 10; i++) softSpot(c, R() * W, R() * L.wallBottom, 120 + R() * 200, [P[2], P[3], P[2]][i % 3], 0.45);
+  // Washes that dried where they landed: irregular patches with darker, pooled edges.
+  for (let i = 0; i < 34; i++) {
+    const x = R() * W, y = R() * L.wallBottom * 1.05, r = L.m * (0.06 + R() * 0.18);
+    const pts = blob(c, x, y, r * (1 + R()), r, R, 26, 0.32);
+    glaze(c, cc => trace(cc, pts), [P[2], P[3], P[0], P[2], P[4]][i % 5], { R, layers: 1, alpha: 0.12 + R() * 0.14, rim: 0.35, rimColor: P[0], blur: 1.5, jitter: 0 });
+  }
+  // Drips down the wall.
+  c.save(); c.lineCap = 'round';
+  for (let i = 0; i < 14; i++) { const x = R() * W, y0 = R() * L.wallBottom * 0.5, len = L.wallBottom * (0.2 + R() * 0.5); c.strokeStyle = rgba(P[0], 0.18 + R() * 0.15); c.lineWidth = 2 + R() * 5; c.beginPath(); c.moveTo(x, y0); c.lineTo(x + (R() - 0.5) * 6, y0 + len); c.stroke(); }
+  c.restore();
+  // The vaulted ceiling: arches of brick, brushed in.
+  c.save(); c.strokeStyle = rgba(P[3], 0.35); c.lineCap = 'round';
+  for (let row = 0; row < 9; row++) {
+    const y = L.wallBottom * (0.12 + row * 0.1);
+    for (let x = -20 + (row % 2) * 30; x < W; x += 60 + R() * 8) {
+      c.lineWidth = 1 + R(); c.globalAlpha = 0.25 + R() * 0.35;
+      c.beginPath(); c.moveTo(x, y + R() * 2); c.lineTo(x + 50 + R() * 6, y + R() * 3); c.stroke();
+      c.beginPath(); c.moveTo(x, y); c.lineTo(x + R() * 2, y + L.wallBottom * 0.1 - 2); c.stroke();
+    }
+  }
+  c.restore();
+  // A big arch shadow across the top.
+  c.save(); c.globalAlpha = 0.6; c.fillStyle = P[0];
+  c.beginPath(); c.moveTo(0, 0); c.lineTo(W, 0); c.lineTo(W, H * 0.12); c.quadraticCurveTo(W / 2, -H * 0.05, 0, H * 0.12); c.closePath(); c.fill(); c.restore();
+  // Floor: a darker wash with a wet edge where it meets the wall.
+  glaze(c, cc => { cc.beginPath(); cc.moveTo(0, L.wallBottom); for (let x = 0; x <= W; x += 40) cc.lineTo(x, L.wallBottom + Math.sin(x * 0.03) * 3); cc.lineTo(W, H); cc.lineTo(0, H); cc.closePath(); }, P[1], { R, layers: 3, alpha: 0.6, rim: 0.7, jitter: 4 });
+  for (let i = 0; i < 10; i++) softSpot(c, R() * W, L.wallBottom + R() * (H - L.wallBottom), 60 + R() * 120, P[0], 0.35);
+  speckle(c, 0, 0, W, H, P[0], 1400, R, 1.6);
+  speckle(c, 0, 0, W, L.wallBottom, P[4], 500, R, 1.1);
+  paper(c);
+  // Doors along the back wall: Fitch's tunnels, each marked UP.
+  const n = E.CELLARS.length - 1, dw = (L.doors.x1 - L.doors.x0) / n;
+  for (let i = 0; i < n; i++) {
+    const x = L.doors.x0 + dw * (i + 0.5), w = dw * 0.66, y = L.doors.y, h = L.doors.h;
+    const open = i < OPEN_DOORS();
+    const arch = cc => { cc.beginPath(); cc.moveTo(x - w / 2, y + h); cc.lineTo(x - w / 2, y + w / 2); cc.arc(x, y + w / 2, w / 2, Math.PI, 0); cc.lineTo(x + w / 2, y + h); cc.closePath(); };
+    glaze(c, arch, open ? P[0] : P[3], { R, layers: 3, alpha: open ? 0.85 : 0.5, rim: 0.8, jitter: 2 });
+    if (open) {
+      // Inside: more lemons, of course. They glow a little in the dark.
+      c.save(); arch(c); c.clip();
+      for (let j = 0; j < 9; j++) drawLemon(c, x - w * 0.35 + R() * w * 0.7, y + h - 6 - R() * h * 0.3, w * 0.11, { seed: i * 20 + j, tilt: R() - 0.5 });
+      softSpot(c, x, y + h * 0.85, w, P[5], 0.12);
+      c.restore();
+      c.fillStyle = rgba(P[4], 0.9); c.font = `${Math.round(w * 0.24)}px "Special Elite", monospace`; c.textAlign = 'center';
+      c.fillText(`No.${i + 2}`, x, y - 6);
+    } else {
+      // Boarded, with chalk.
+      c.strokeStyle = rgba(P[2], 0.9); c.lineWidth = w * 0.12;
+      for (let b = 0; b < 3; b++) { const by = y + h * (0.35 + b * 0.22); c.beginPath(); c.moveTo(x - w * 0.55, by + (R() - 0.5) * 8); c.lineTo(x + w * 0.55, by + (R() - 0.5) * 8); c.stroke(); }
+      c.fillStyle = rgba(P[5], 0.55); c.font = `${Math.round(w * 0.28)}px "Special Elite", monospace`; c.textAlign = 'center';
+      c.fillText('UP', x, y + h * 0.3);
+      c.strokeStyle = rgba(P[5], 0.5); c.lineWidth = 2; c.beginPath(); c.moveTo(x, y + h * 0.14); c.lineTo(x, y - h * 0.02); c.moveTo(x - 5, y + 4); c.lineTo(x, y - h * 0.02); c.lineTo(x + 5, y + 4); c.stroke();
+    }
+  }
+  c.textAlign = 'left';
+  // The dumbwaiter shaft on the left: the way the crates go up.
+  const sx = L.shaft.x, sw = L.shaft.w;
+  glaze(c, cc => { cc.beginPath(); cc.rect(sx, -10, sw, L.floor + 10); }, P[0], { R, layers: 3, alpha: 0.8, rim: 0.8, rimColor: P[3] });
+  c.strokeStyle = rgba(P[3], 0.6); c.lineWidth = 2;
+  c.beginPath(); c.moveTo(sx + sw * 0.3, 0); c.lineTo(sx + sw * 0.3, L.floor); c.moveTo(sx + sw * 0.7, 0); c.lineTo(sx + sw * 0.7, L.floor); c.stroke();
+  // A thin line of moonlight down the shaft, from somewhere far above.
+  const g = c.createLinearGradient(sx, 0, sx, L.floor); g.addColorStop(0, rgba(P[4], 0.35)); g.addColorStop(1, rgba(P[4], 0));
+  c.fillStyle = g; c.fillRect(sx + sw * 0.45, 0, sw * 0.1, L.floor);
+  // Shelf for batteries.
+  if (S.unlocked.volts) for (const [a, b] of L.shelves) glaze(c, cc => { cc.beginPath(); cc.rect(a, L.shelfY, b - a, 7); }, P[3], { R, layers: 2, alpha: 0.8, rim: 0.6 });
+  // The table.
+  const t = L.table;
+  glaze(c, cc => { cc.beginPath(); cc.rect(t.x - t.w / 2 + 10, t.y, 12, H * 0.2); cc.rect(t.x + t.w / 2 - 22, t.y, 12, H * 0.2); }, P[1], { R, layers: 2, alpha: 0.8, rim: 0.6 });
+  glaze(c, cc => { cc.beginPath(); cc.roundRect(t.x - t.w / 2, t.y - t.h * 0.2, t.w, t.h, 6); }, P[3], { R: rng(31), layers: 2, alpha: 0.75, rim: 0.7 });
+  drawCrate(c); drawBin(c); drawMap(c);
+  bgKey = key();
+}
+const crateN = () => Math.min(7, 2 + Math.floor(Math.log10(S.shipped + 10)));
+const binN = () => Math.min(6, Math.floor(Math.log10(S.duds + 10)));
+// Paper: soft fibers and the tooth of cold-press, laid over everything once.
+let paperTile = null;
+function paper(c) {
+  if (!paperTile) {
+    paperTile = Sp.canvas(256, 256); const x = paperTile.getContext('2d'), R = rng(8);
+    for (let i = 0; i < 700; i++) { x.strokeStyle = rgba(R() < 0.5 ? P[5] : P[0], 0.05 + R() * 0.06); x.lineWidth = 0.6; const a = R() * 7, l = 3 + R() * 10, px = R() * 256, py = R() * 256; x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke(); }
+    for (let i = 0; i < 1600; i++) { x.fillStyle = rgba(R() < 0.5 ? P[5] : P[0], 0.06); x.fillRect(R() * 256, R() * 256, 1.5, 1.5); }
+  }
+  c.save(); c.fillStyle = c.createPattern(paperTile, 'repeat'); c.fillRect(0, 0, W, H); c.restore();
+}
+const key = () => [W, H, S.cellars, S.unlocked.volts ? 1 : 0, S.scraps, crateN(), binN()].join(',');
+
+// ---------- Scene state ----------
+let T = 0;
+let rubT = 0, rubProgress = 0, rubbing = false, lastPt = null, lastDir = 0, lastRasp = 0;
+const RUB_LEN = 520; // canvas units of rubbing per sorted handful
+let flying = [], floaters = [], crates = [], seedN = 1, current = { dud: false, seed: 1 };
+let spin = null; // the fruit machine's reels, while spinning
+let reels = ['lemon', 'lemon', 'lemon'];
+let fitchSays = null;
+
+function drawScene() {
+  if (bgDirty || bgKey !== key()) { drawBackdrop(); bgDirty = false; }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(bg, 0, 0);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const st = E.stats(S);
+
+  // Crates riding the dumbwaiter up, faster as the cellar ships more.
+  for (const cr of crates) {
+    const s = L.shaft.w * 0.7;
+    if (ART.crate) ctx.drawImage(ART.crate, L.shaft.x + L.shaft.w * 0.15, cr.y - s, s, s);
+  }
+  // Bulbs on cords, and batteries on the shelf.
+  drawBulbs(st);
+  drawShelf();
+  // Fitch, when he's around.
+  if (fitchSays || !L.narrow) drawFitch(ctx, W * (L.narrow ? 0.64 : 0.765), L.floor + H * 0.06, L.m / 800);
+  // The fruit machine.
+  drawMachine();
+  const t = L.table;
+  // The mole behind its lemon.
+  drawMole(ctx, L.mole.x, L.mole.y, L.mole.k * 0.95, rubT);
+  if (S.owned.clock) {
+    const cl = ART['alarm clock']; if (cl) ctx.drawImage(cl, t.x + t.w * 0.3, t.y - cl.height * 0.75, cl.width * 0.75, cl.height * 0.75);
+  }
+  if (S.owned.radio) drawRadio(t.x - t.w * 0.48, t.y - L.m * 0.05);
+  // The lemon on the table, glowing a little more as you rub.
+  const lm = L.lemon;
+  const wob = rubbing && !reduced ? Math.sin(T * 40) * 0.04 : 0;
+  drawLemon(ctx, lm.x + Math.sin(rubT * Math.PI * 2) * 2, lm.y, lm.r, { dud: false, seed: current.seed, tilt: -0.15 + wob, glow: 0.4 + rubProgress });
+  drawPaws(ctx, L.mole.x, L.mole.y, L.mole.k * 0.95, rubT);
+  // Progress: a ring of pale wash filling round the lemon.
+  if (rubProgress > 0) {
+    ctx.save(); ctx.strokeStyle = rgba(P[5], 0.7); ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(lm.x, lm.y, lm.r * 1.55, -Math.PI / 2, -Math.PI / 2 + rubProgress * Math.PI * 2); ctx.stroke(); ctx.restore();
+  }
+  // Lemons flying to the crate or the bin.
+  for (const f of flying) {
+    const k = f.t, x = f.x0 + (f.x1 - f.x0) * k, y = f.y0 + (f.y1 - f.y0) * k - Math.sin(k * Math.PI) * L.m * 0.15;
+    drawLemon(ctx, x, y, f.r * (1 - k * 0.4), { dud: f.dud, seed: f.seed, tilt: k * 4 });
+  }
+  // The crew along the front.
+  drawCritters();
+  // Light: the cellar is dark, and gets brighter as your eyes can stand more.
+  drawDark(st);
+  for (const fl of floaters) {
+    ctx.globalAlpha = Math.max(0, 1 - fl.t / fl.life);
+    ctx.fillStyle = fl.color || P[5]; ctx.font = `${fl.size || 16}px "Special Elite", monospace`; ctx.textAlign = 'center';
+    ctx.fillText(fl.text, fl.x, fl.y - fl.t * 30);
+  }
+  ctx.globalAlpha = 1; ctx.textAlign = 'left';
+  if (fitchSays) drawBubble(fitchSays.text);
+  grain(ctx, W, H, { amount: 0.07 });
+}
+
+function drawMap(ctx) {
+  const m = L.map, n = E.CELLARS.length - 1;
+  if (S.scraps <= 0) return;
+  const pw = m.w / 3, ph = m.h / 2;
+  for (let i = 0; i < Math.min(S.scraps, n); i++) {
+    const x = m.x - m.w / 2 + (i % 3) * pw, y = m.y + Math.floor(i / 3) * ph;
+    const R = rng(70 + i);
+    glaze(ctx, cc => { cc.beginPath(); cc.moveTo(x + R() * 4, y + R() * 4); cc.lineTo(x + pw - R() * 4, y + R() * 3); cc.lineTo(x + pw - R() * 3, y + ph - R() * 4); cc.lineTo(x + R() * 3, y + ph - R() * 3); cc.closePath(); }, P[4], { R, layers: 2, alpha: 0.6, rim: 0.7 });
+    ctx.strokeStyle = rgba(P[1], 0.8); ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(x + pw * 0.2, y + ph * 0.8); ctx.quadraticCurveTo(x + pw * 0.6, y + ph * 0.7, x + pw * 0.5, y + ph * 0.25); ctx.stroke();
+    ctx.fillStyle = rgba(P[0], 0.85); ctx.font = `${Math.round(ph * 0.3)}px "Special Elite", monospace`; ctx.fillText('UP', x + pw * 0.48, y + ph * 0.3);
+    ctx.fillStyle = P[0]; ctx.beginPath(); ctx.arc(x + pw / 2, y + 4, 2.2, 0, 7); ctx.fill();
+  }
+}
+
+function drawBulbs(st) {
+  const kinds = E.BULBS.map(b => [b.id, S.owned[b.id] || 0]).filter(([, n]) => n > 0);
+  if (!kinds.length) return;
+  let i = 0;
+  const slots = [];
+  for (const [id, n] of kinds) for (let j = 0; j < Math.min(n, 3); j++) slots.push(id);
+  const nb = Math.min(slots.length, 12);
+  for (let s = 0; s < nb; s++) {
+    const x = W * 0.16 + (W * 0.7) * (s + 0.5) / nb, len = H * (0.06 + ((s * 37) % 5) * 0.018);
+    const id = slots[s], big = 1 + E.BULBS.findIndex(b => b.id === id) * 0.35;
+    ctx.strokeStyle = rgba(P[3], 0.8); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, len); ctx.stroke();
+    const flick = reduced ? 1 : 0.9 + Math.sin(T * 3 + s) * 0.05;
+    softSpot(ctx, x, len + 8 * big, 30 * big * flick, P[5], 0.25);
+    if (ART.bulb) ctx.drawImage(ART.bulb, x - 10 * big, len - 2, 20 * big, 20 * big);
+    i++;
+  }
+}
+
+function drawShelf() {
+  if (!S.unlocked.volts) return;
+  const items = [];
+  for (const b of E.BATTERIES) for (let j = 0; j < Math.min(S.owned[b.id] || 0, 4); j++) items.push(b.id);
+  const per = L.narrow ? 4 : 6, n = Math.min(items.length, per * 2), sy = L.shelfY;
+  for (let i = 0; i < n; i++) {
+    const [a, b] = L.shelves[i < per ? 0 : 1], j = i % per;
+    const x = a + 14 + (b - a - 28) * (j + 0.5) / per, id = items[i], tier = E.BATTERIES.findIndex(bb => bb.id === id);
+    if (tier === 0 && ART.cell) ctx.drawImage(ART.cell, x - 16, sy - 26, 32, 28);
+    else if (tier === 1) for (let k = 0; k < 3; k++) ctx.drawImage(ART.cell, x - 18 + k * 10, sy - 24, 22, 20);
+    else if (ART.crate) {
+      const s = 22 + tier * 5;
+      ctx.drawImage(ART.crate, x - s / 2, sy - s, s, s);
+      ctx.strokeStyle = rgba(P[5], 0.6); ctx.beginPath(); ctx.moveTo(x - 4, sy - s); ctx.quadraticCurveTo(x, sy - s - 10, x + 4, sy - s); ctx.stroke();
+    }
+    // A spark, now and then.
+    if (!reduced && Math.sin(T * 5 + i * 1.7) > 0.97) softSpot(ctx, x, sy - 28, 10, P[5], 0.6);
+  }
+}
+
+function drawCrate(ctx) {
+  const c = L.crate;
+  if (ART.crate) ctx.drawImage(ART.crate, c.x - c.s / 2, c.y - c.s / 2, c.s, c.s);
+  const R = rng(41), n = crateN();
+  for (let i = 0; i < n; i++) drawLemon(ctx, c.x - c.s * 0.3 + R() * c.s * 0.6, c.y - c.s * 0.48 - R() * c.s * 0.12, c.s * 0.13, { seed: 50 + i, tilt: R() - 0.5 });
+}
+function drawBin(ctx) {
+  const b = L.bin, R = rng(43);
+  glaze(ctx, cc => { cc.beginPath(); cc.moveTo(b.x - b.s * 0.5, b.y - b.s * 0.4); cc.lineTo(b.x + b.s * 0.5, b.y - b.s * 0.4); cc.lineTo(b.x + b.s * 0.4, b.y + b.s * 0.5); cc.lineTo(b.x - b.s * 0.4, b.y + b.s * 0.5); cc.closePath(); }, P[2], { R, layers: 2, alpha: 0.8, rim: 0.7 });
+  const n = binN();
+  for (let i = 0; i < n; i++) drawLemon(ctx, b.x - b.s * 0.3 + R() * b.s * 0.6, b.y - b.s * 0.45, b.s * 0.14, { dud: true, seed: 60 + i, tilt: R() });
+  ctx.fillStyle = rgba(P[4], 0.8); ctx.font = `${Math.round(b.s * 0.18)}px "Special Elite", monospace`; ctx.textAlign = 'center'; ctx.fillText('DUDS', b.x, b.y + b.s * 0.15); ctx.textAlign = 'left';
+}
+function drawRadio(x, y) {
+  const m = memo('radio', 56, 40, cc => glaze(cc, q => { q.beginPath(); q.roundRect(5, 6, 46, 28, 8); }, P[2], { R: rng(91), layers: 2, alpha: 0.85, rim: 0.7 }));
+  ctx.drawImage(m, x - 5, y - 30, 56, 40);
+  ctx.fillStyle = rgba(P[4], 0.8); for (let i = 0; i < 4; i++) ctx.fillRect(x + 6, y - 18 + i * 5, 18, 2);
+  ctx.fillStyle = P[5]; ctx.beginPath(); ctx.arc(x + 35, y - 10, 4, 0, 7); ctx.fill();
+  if (!reduced) for (let i = 0; i < 2; i++) { const k = (T * 0.6 + i * 0.5) % 1; ctx.globalAlpha = 1 - k; ctx.fillStyle = P[5]; ctx.font = '12px serif'; ctx.fillText('♪', x + 40 + k * 14, y - 28 - k * 20); }
+  ctx.globalAlpha = 1;
+}
+
+const SYMS = ['lemon', 'cherry', 'bell', 'bar', 'map'];
+function drawSym(c, s, x, y, r) {
+  const z = Math.round(r * 2.4);
+  const m = memo(`Y${s}${z}`, z, z, cc => paintSym(cc, s, z / 2, z / 2, r));
+  c.drawImage(m, x - z / 2, y - z / 2, z, z);
+}
+function paintSym(c, s, x, y, r) {
+  if (s === 'lemon') drawLemon(c, x, y, r * 0.7, { seed: 12, tilt: -0.2 });
+  else if (s === 'cherry') { c.strokeStyle = P[4]; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x - r * 0.4, y + r * 0.2); c.quadraticCurveTo(x, y - r, x + r * 0.2, y - r * 0.8); c.moveTo(x + r * 0.4, y + r * 0.2); c.lineTo(x + r * 0.2, y - r * 0.8); c.stroke(); for (const s2 of [-1, 1]) glaze(c, cc => { cc.beginPath(); cc.arc(x + s2 * r * 0.4, y + r * 0.35, r * 0.38, 0, 7); }, P[4], { layers: 2, alpha: 0.8, rim: 0.6 }); }
+  else if (s === 'bell') glaze(c, cc => { cc.beginPath(); cc.moveTo(x - r * 0.7, y + r * 0.5); cc.quadraticCurveTo(x - r * 0.6, y - r * 0.9, x, y - r * 0.8); cc.quadraticCurveTo(x + r * 0.6, y - r * 0.9, x + r * 0.7, y + r * 0.5); cc.closePath(); }, P[5], { layers: 2, alpha: 0.7, rim: 0.6 });
+  else if (s === 'bar') { glaze(c, cc => { cc.beginPath(); cc.rect(x - r * 0.8, y - r * 0.35, r * 1.6, r * 0.7); }, P[2], { layers: 2, alpha: 0.9, rim: 0.6 }); c.fillStyle = P[5]; c.font = `${Math.round(r * 0.55)}px "Special Elite"`; c.textAlign = 'center'; c.fillText('BAR', x, y + r * 0.2); c.textAlign = 'left'; }
+  else if (s === 'map') { if (ART['map scrap']) c.drawImage(ART['map scrap'], x - r * 0.8, y - r * 0.8, r * 1.6, r * 1.6); }
+}
+function drawMachine() {
+  const m = L.machine;
+  const rx = m.x - m.w * 0.42, ry = m.y + m.h * 0.28, rw = m.w * 0.7, rh = m.h * 0.24;
+  const bw = m.w * 1.4, bh = m.h * 1.4, bx = m.x - m.w * 0.7, by = m.y - m.h * 0.1;
+  const body = memo(`MB${W}`, bw, bh, cc => {
+    cc.translate(-bx, -by);
+    if (ART['fruit machine']) cc.drawImage(ART['fruit machine'], m.x - m.w * 0.62, m.y - m.h * 0.05, m.w * 1.25, m.h * 1.25);
+    // Reel window over the painted one.
+    glaze(cc, q => { q.beginPath(); q.roundRect(rx, ry, rw, rh, 6); }, P[0], { R: rng(13), layers: 2, alpha: 0.95, rim: 0.7, rimColor: P[4] });
+  });
+  ctx.drawImage(body, bx, by, bw, bh);
+  for (let i = 0; i < 3; i++) {
+    const cx = rx + rw * (i + 0.5) / 3, cy = ry + rh / 2;
+    let sym = reels[i];
+    if (spin && spin.t < spin.stops[i]) sym = SYMS[Math.floor((T * 18 + i * 2)) % SYMS.length];
+    ctx.save(); ctx.beginPath(); ctx.rect(rx + rw * i / 3 + 2, ry + 2, rw / 3 - 4, rh - 4); ctx.clip();
+    drawSym(ctx, sym, cx, cy + (spin && spin.t < spin.stops[i] && !reduced ? Math.sin(T * 40 + i) * 3 : 0), rh * 0.38);
+    ctx.restore();
+  }
+  // Lever.
+  const pulled = spin && spin.t < 0.35;
+  const lx = m.x + m.w * 0.52, ly = m.y + m.h * 0.45;
+  ctx.strokeStyle = P[4]; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 6, pulled ? ly + m.h * 0.2 : ly - m.h * 0.28); ctx.stroke();
+  ctx.fillStyle = P[5]; ctx.beginPath(); ctx.arc(lx + 6, pulled ? ly + m.h * 0.2 : ly - m.h * 0.28, 7, 0, 7); ctx.fill();
+  // The nephew, on his stool, if hired.
+  if (S.owned.lever) drawCritter(ctx, 'vole', m.x + m.w * 0.62, L.floor + H * 0.12, 0.9);
+  if (spin) softSpot(ctx, rx + rw / 2, ry + rh / 2, rw * 0.7, P[5], 0.12);
+}
+
+function drawCritters() {
+  const list = [];
+  for (const h of E.HELPERS) { const n = S.owned[h.id] || 0; for (let j = 0; j < Math.min(n, 4); j++) list.push(h.id); }
+  const n = Math.min(list.length, L.narrow ? 12 : 18);
+  const x0 = L.critters.x0 + W * 0.12, w = (L.narrow ? W * 0.6 : W * 0.62);
+  for (let i = 0; i < n; i++) {
+    const x = x0 + w * (i + 0.5) / n, y = L.critters.y + ((i * 7) % 3) * 4;
+    const hop = reduced ? 0 : Math.max(0, Math.sin(T * 3 + i * 1.3)) * 3;
+    drawCritter(ctx, list[i], x, y - hop, L.m / 700);
+  }
+}
+
+// The darkness, with holes of light. More eyes, less dark.
+const dark = document.createElement('canvas'), dkx = dark.getContext('2d');
+function drawDark(st) {
+  if (S.ended) return;
+  const amount = 0.42 * (1 - S.eyes / E.EYES.length) + 0.06;
+  if (dark.width !== W || dark.height !== H) { dark.width = W; dark.height = H; } else dkx.clearRect(0, 0, W, H);
+  dkx.fillStyle = rgba(P[0], amount); dkx.fillRect(0, 0, W, H);
+  dkx.globalCompositeOperation = 'destination-out';
+  const hole = (x, y, r, a) => { const g = dkx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(1, 'rgba(0,0,0,0)'); dkx.fillStyle = g; dkx.fillRect(x - r, y - r, r * 2, r * 2); };
+  hole(L.lemon.x, L.lemon.y, L.m * (0.3 + rubProgress * 0.1), 0.85);
+  hole(L.machine.x, L.machine.y + L.machine.h * 0.4, L.m * 0.2, 0.6);
+  hole(L.shaft.x + L.shaft.w / 2, H * 0.3, L.m * 0.2, 0.4);
+  if (S.unlocked.light) hole(W / 2, H * 0.15, L.m * (0.3 + Math.min(0.6, Math.log10(st.lightRate + 1) * 0.1)), 0.7);
+  dkx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(dark, 0, 0, W, H);
+}
+
+function drawBubble(text) {
+  const m = memo(`B${W}${text}`, W, H, cc => paintBubble(cc, text));
+  ctx.drawImage(m, 0, 0, W, H);
+}
+function paintBubble(ctx, text) {
+  const x = W * (L.narrow ? 0.62 : 0.74), y = L.floor - H * 0.26;
+  ctx.font = `${L.narrow ? 15 : 14}px "Special Elite", monospace`;
+  const maxW = L.narrow ? W * 0.6 : W * 0.32;
+  const words = text.split(' '), lines = []; let line = '';
+  for (const w of words) { const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; }
+  lines.push(line);
+  const lh = 18, bw = Math.max(...lines.map(l => ctx.measureText(l).width)) + 22, bh = lines.length * lh + 14;
+  const bx = Math.min(W - bw - 8, Math.max(8, x - bw / 2)), by = y - bh;
+  glaze(ctx, cc => { cc.beginPath(); cc.roundRect(bx, by, bw, bh, 10); cc.moveTo(x - 6, by + bh - 1); cc.lineTo(x + 2, by + bh + 12); cc.lineTo(x + 10, by + bh - 1); }, P[5], { R: rng(77), layers: 2, alpha: 0.9, rim: 0.6 });
+  ctx.fillStyle = P[0];
+  lines.forEach((l, i) => ctx.fillText(l, bx + 11, by + 19 + i * lh));
+}
+
+// ---------- The ending scene: topside, before dawn, then dawn ----------
+function drawTopside(k) {
+  // k: 0 (3 a.m.) .. 1 (sun up). The sky warms through the palette; frost and fog lift.
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const R = rng(99);
+  const sky = ctx.createLinearGradient(0, 0, 0, H * 0.75);
+  const top = k < 0.5 ? P[0] : P[1], mid = k < 0.3 ? P[1] : k < 0.7 ? P[2] : P[3], low = k < 0.3 ? P[2] : k < 0.7 ? P[4] : P[5];
+  sky.addColorStop(0, top); sky.addColorStop(0.6, mid); sky.addColorStop(1, low);
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 14; i++) softSpot(ctx, R() * W, R() * H * 0.6, 80 + R() * 160, [P[1], P[2], P[3]][i % 3], 0.25);
+  // Stars fade as it gets light.
+  ctx.fillStyle = P[5];
+  for (let i = 0; i < 50; i++) { ctx.globalAlpha = Math.max(0, 0.8 - k * 1.6) * R(); ctx.beginPath(); ctx.arc(R() * W, R() * H * 0.5, R() * 1.5 + 0.4, 0, 7); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  // The sun: it looks like a lemon. A big one.
+  const sunY = H * 0.78 - k * H * 0.42, sx = W * 0.62;
+  if (k > 0.35) {
+    softSpot(ctx, sx, sunY, L.m * 0.6, P[5], 0.5 * (k - 0.35) / 0.65);
+    drawLemon(ctx, sx, sunY, L.m * 0.1, { seed: 9, tilt: 0, glow: 1 });
+  }
+  // The grove itself doesn't move: painted once.
+  ctx.drawImage(memo(`TOP${W}`, W, H, ctx => {
+    const R = rng(98);
+    glaze(ctx, cc => { cc.beginPath(); cc.moveTo(0, H * 0.66); for (let x = 0; x <= W; x += 40) cc.lineTo(x, H * 0.66 + Math.sin(x * 0.02) * 6); cc.lineTo(W, H); cc.lineTo(0, H); cc.closePath(); }, P[2], { R, layers: 2, alpha: 0.95, rim: 0.5 });
+    speckle(ctx, 0, H * 0.66, W, H * 0.34, P[5], 500, R, 1.2);
+    // Lemon trees in rows, washes of dark.
+    for (let row = 0; row < 3; row++) {
+      const y = H * (0.62 + row * 0.08), col = [P[2], P[1], P[0]][row];
+      for (let i = -1; i < 7; i++) {
+        const x = (i + (row % 2) * 0.5) * W / 6 + (R() - 0.5) * 20, r = L.m * (0.08 + row * 0.025);
+        glaze(ctx, cc => trace(cc, blob(cc, x, y - r * 0.6, r, r * 0.8, R, 18, 0.15)), col, { R, layers: 2, alpha: 0.8, rim: 0.5 });
+        ctx.fillStyle = col; ctx.fillRect(x - 3, y - 2, 6, r * 0.6);
+        for (let j = 0; j < 4; j++) drawLemon(ctx, x + (R() - 0.5) * r * 1.3, y - r * 0.6 + (R() - 0.5) * r, r * 0.09, { seed: row * 50 + i * 5 + j, tilt: R() });
+      }
+    }
+    // Grass with frost on it.
+    glaze(ctx, cc => { cc.beginPath(); cc.rect(0, H * 0.84, W, H * 0.16); }, P[1], { R, layers: 2, alpha: 0.7, rim: 0 });
+    speckle(ctx, 0, H * 0.84, W, H * 0.16, P[5], 400, R, 1.3);
+  }), 0, 0, W, H);
+  // Fog in the rows, thinning as the sun climbs.
+  for (let i = 0; i < 8; i++) softSpot(ctx, (i / 7) * W + Math.sin(T * 0.2 + i) * 20, H * 0.72, L.m * 0.35, P[4], 0.35 * (1 - k * 0.8));
+  // The mole and Fitch on a crate by the hatch.
+  ctx.drawImage(memo(`TOPC${W}`, W, H, ctx => {
+    if (ART.crate) ctx.drawImage(ART.crate, W * 0.26, H * 0.82, L.m * 0.16, L.m * 0.16);
+    drawMole(ctx, W * 0.32, H * 0.92, L.m / 900, 0); drawPaws(ctx, W * 0.32, H * 0.92, L.m / 900, 0);
+    drawFitch(ctx, W * 0.14, H * 0.97, L.m / 900);
+  }), 0, 0, W, H);
+  // A clock in the corner, running toward 6:47.
+  const mins = Math.round(180 + k * 227), hh = Math.floor(mins / 60), mm = mins % 60;
+  ctx.fillStyle = rgba(P[5], 0.85); ctx.font = `${Math.round(L.m * 0.045)}px "Special Elite", monospace`;
+  ctx.fillText(`${hh}:${String(mm).padStart(2, '0')} a.m.`, 18, 36);
+  grain(ctx, W, H, { amount: 0.07 });
+}
+
+// ---------- UI: stats, meters, shop ----------
+const fmt = E.fmt;
+function rateText(v) { return v > 0 ? `+${fmt(v)}/s` : ''; }
+function refreshStats() {
+  const st = E.stats(S);
+  $('sLemons').textContent = fmt(Math.floor(S.lemons));
+  $('sLemonRate').textContent = st.lemonRate > 0 ? `${rateText(st.lemonRate)}${st.buff > 1 ? ` ×${st.buff}` : ''}` : `${fmt(st.perRub)} a rub`;
+  $('sDuds').textContent = fmt(Math.floor(S.duds));
+  $('statVolts').hidden = !S.unlocked.volts; $('sVolts').textContent = fmt(S.volts); $('sVoltRate').textContent = rateText(st.voltRate);
+  $('statLight').hidden = !S.unlocked.light; $('sLight').textContent = fmt(S.light); $('sLightRate').textContent = rateText(st.lightRate);
+  $('mOrder').textContent = `${fmt(S.shipped)} / 1 billion`;
+  $('bOrder').style.width = `${Math.min(100, Math.max(S.shipped > 0 ? 0.6 : 0, Math.log10(S.shipped + 1) / 9 * 100)).toFixed(1)}%`;
+  $('eyesMeter').hidden = !S.unlocked.light;
+  const lux = S.eyes ? E.EYES[S.eyes - 1].lux : 0;
+  $('mEyes').textContent = S.eyes ? `${E.EYES[S.eyes - 1].name} · ${fmt(lux)} lux` : 'pitch dark';
+  $('bEyes').style.width = `${(Math.log10(lux + 1) / 5 * 100).toFixed(1)}%`;
+  $('mMap').textContent = `${S.cellars} of ${E.CELLARS.length} cellars${S.scraps >= S.cellars && S.cellars < E.CELLARS.length ? ' · a scrap in hand' : ''}`;
+  const can = S.duds >= E.PULL_COST && !spin && !S.ended;
+  $('pullBtn').setAttribute('aria-disabled', String(!can));
+  $('machineNote').textContent = S.owned.lever ? `Fitch’s nephew pulls every ${Math.round(1 / st.auto)} seconds. You can still pull it yourself.` : 'It runs on fruit. Three lemons a pull. Fitch keeps the map in there. Says it’s safer.';
+}
+
+function effectText(u) {
+  const st = E.stats(S);
+  if (u.kind === 'helper') return `+${fmt(u.rate * E.RATE_K * (st.hmult[u.id] || 1) * st.global)} lemons/s each · have ${S.owned[u.id] || 0}`;
+  if (u.kind === 'battery') return `+${fmt(u.rate * E.RATE_K * st.bat)} volts/s each · have ${S.owned[u.id] || 0}`;
+  if (u.kind === 'bulb') return `+${fmt(u.rate * E.RATE_K * st.bulb)} light/s each · have ${S.owned[u.id] || 0}`;
+  if (u.helper) { const h = E.HELPERS.find(x => x.id === u.helper); return `${h.name}s ×${u.mult}`; }
+  if (u.rub && u.pct) return `rubs ×${u.rub}, +${Math.round(u.pct * 100)}% of a second`;
+  if (u.rub) return `rubs ×${u.rub}`;
+  if (u.pct) return `rubs +${Math.round(u.pct * 100)}% of a second of the crew`;
+  if (u.bat) return `batteries ×${u.bat}`;
+  if (u.bulb) return `bulbs ×${u.bulb}`;
+  if (u.luck) return `windfalls ×${u.luck}`;
+  return '';
+}
+function itemInfo(id) {
+  const u = E.BY_ID[id];
+  if (id === 'dig') {
+    const c = E.CELLARS[S.cellars];
+    return { name: `Dig: ${c.name}`, desc: 'Fitch’s map says this way is UP.', fx: `opens a new cellar · every crew sorts ×${E.CELLAR_MULT}`, goal: true };
+  }
+  if (id === 'eyes') {
+    const e = E.EYES[S.eyes];
+    return { name: `Eyes: ${e.name}`, desc: `Sit under the lamps until you can stand ${fmt(e.lux)} lux. You can see what you’re sorting.`, fx: `everything sorts ×${E.EYE_MULT}`, goal: true };
+  }
+  return { name: u.name, desc: u.desc, fx: effectText(u), silly: u.silly };
+}
+
+const shop = $('shop');
+let shopKey = '';
+function refreshShop() {
+  const vis = S.ended ? [] : E.SHOP_ORDER.filter(id => E.visible(S, id));
+  const k = vis.join(',') + '|' + vis.map(id => id === 'dig' ? S.cellars : id === 'eyes' ? S.eyes : (S.owned[id] || 0)).join(',');
+  if (k !== shopKey) {
+    shopKey = k;
+    const fresh = [];
+    shop.replaceChildren(...vis.map(id => {
+      const info = itemInfo(id), u = E.BY_ID[id];
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'up' + (info.silly ? ' silly' : '') + (info.goal ? ' goal' : ''); b.dataset.id = id;
+      const lvl = u.kind === 'helper' || u.kind === 'battery' || u.kind === 'bulb' ? `<span class="lvl">${S.owned[id] || 0}</span>` : '';
+      b.innerHTML = `<span class="name">${info.name}${lvl}</span><span class="cost">${E.fmtCost(E.costOf(S, id))}</span><span class="desc">${info.desc}</span>${info.fx ? `<span class="fx">${info.fx}</span>` : ''}`;
+      const seenKey = id === 'dig' ? `dig${S.cellars}` : id === 'eyes' ? `eyes${S.eyes}` : id;
+      if (!S.seen[seenKey]) {
+        S.seen[seenKey] = 1; if (id !== 'dig' && id !== 'eyes') S.seen[id] = 1;
+        b.classList.add('new');
+        const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = 'new'; b.append(tag);
+        setTimeout(() => { tag.remove(); b.classList.remove('new'); }, 7000);
+        fresh.push(id);
+      }
+      return b;
+    }));
+    if (fresh.length && started) sfx.unlock();
+  }
+  let n = 0;
+  for (const b of shop.children) { const can = E.canBuy(S, b.dataset.id); b.classList.toggle('can', can); b.setAttribute('aria-disabled', String(!can)); n += can; }
+  $('afford').textContent = n ? `${n} affordable` : '';
+}
+shop.addEventListener('click', e => {
+  const b = e.target.closest('.up'); if (!b) return;
+  buy(b.dataset.id);
+});
+function buy(id) {
+  const u = E.BY_ID[id];
+  const before = E.phase(S);
+  if (!E.buy(S, id)) return;
+  if (id === 'dig') {
+    sfx.dig(); bgDirty = true;
+    say(E.CELLARS[S.cellars - 1].fitch, 7000);
+    log(`You dig where the map says UP. ${E.CELLARS[S.cellars - 1].name}. It is full of lemons.`);
+    burst(W * 0.5, L.doors.y, 'more lemons');
+  } else if (id === 'eyes') {
+    sfx.eyes();
+    const e = E.EYES[S.eyes - 1];
+    log(EYE_LOGS[S.eyes - 1] || `${e.name}: ${fmt(e.lux)} lux. You can stand it.`);
+  } else {
+    sfx.buy();
+    if (u.log) log(u.log);
+    if (u.unlock === 'volts') bgDirty = true;
+    if (u.unlock === 'light' && music) music.update();
+    if (id === 'radio' && music) music.update();
+    if (u.kind === 'helper' && S.owned[id] === 1) log(HELPER_LOGS[id] || `${u.name} joins the night shift.`);
+  }
+  if (E.phase(S) !== before) phaseChanged();
+  save();
+  refreshShop(); refreshStats();
+}
+const EYE_LOGS = [
+  'Matchlight. One lux. It hurts. You keep looking. It hurts less.',
+  'Candlelight. You can see your own paws. They are bigger than you thought.',
+  'Oil lamp. You see Fitch’s face for the first time. You had pictured it about right.',
+  'Streetlamp. The cellar has corners. Who knew.',
+  'Parlor light. The lemons have a color. You don’t have a word for it yet.',
+  'Office light. You read the name tag. MOLE. It’s true.',
+  'Overcast day. The man on the radio says that’s what it’s like up there half the time. You can take it.',
+  'Shade. You stop squinting. Fitch hands you the tiny sunglasses. “Not yet,” he says.',
+  'Daylight. Thirty thousand lux. You sort a lemon by looking at it. It feels like cheating.',
+  'Noon. A hundred thousand lux. You could look at the sun now. If you ever got to.',
+];
+const HELPER_LOGS = {
+  beetle: 'A night beetle clocks in. It sniffs a lemon for a long time. Good. It puts it in the crate.',
+  vole: 'Your vole cousin shows up with an apron. “Heard there was work,” it says. There is always work.',
+  shrew: 'The shrew crew arrives, all three in one apron. They sort in shifts of about four seconds.',
+  badger: 'A badger stands in the middle of the cellar with its arms folded. Everyone works faster.',
+  starnose: 'A star-nosed mole reads a lemon with its twenty-two fingers. “Good,” it says. It was right.',
+  belt: 'The conveyor belt hums on. Lemons go by on their own now. It feels like the future.',
+  nose: 'The Electric Nose sniffs. A light goes on: GOOD. Fitch looks very pleased with himself.',
+};
+
+// ---------- Log and Fitch's bubble ----------
+const logEl = $('log');
+function log(text) {
+  logEl.textContent = text;
+  logEl.classList.remove('fresh'); void logEl.offsetWidth; logEl.classList.add('fresh');
+}
+function say(text, ms = 5000) { fitchSays = { text, until: T + ms / 1000 }; }
+function burst(x, y, text, color) { floaters.push({ x, y, text, t: 0, life: 1.6, color, size: 18 }); }
+
+// ---------- Rubbing ----------
+let started = false;
+function toCanvas(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
+function inLemon(p) { const lm = L.lemon; return Math.hypot((p.x - lm.x) / 1.4, p.y - lm.y) < lm.r * 2.1; }
+function inMachine(p) { const m = L.machine; return p.x > m.x - m.w * 0.6 && p.x < m.x + m.w * 0.7 && p.y > m.y && p.y < m.y + m.h * 1.2; }
+function addRub(dist) {
+  if (S.ended) return;
+  rubProgress += dist / RUB_LEN;
+  rubT += dist / 120;
+  if (T - lastRasp > 0.09) { lastRasp = T; sfx.rasp(); }
+  while (rubProgress >= 1) { rubProgress -= 1; finishRub(); }
+}
+function finishRub() {
+  const before = S.shipped;
+  const got = E.rub(S);
+  started = true;
+  // Every fourth or fifth handful, you feel a dud: it goes in the bin.
+  const dud = Math.random() < 0.2;
+  const lm = L.lemon, to = dud ? L.bin : L.crate;
+  flying.push({ x0: lm.x, y0: lm.y, x1: to.x, y1: to.y - (dud ? L.bin.s : L.crate.s) * 0.4, r: lm.r, t: 0, dud, seed: current.seed });
+  current = { seed: 1 + (++seedN % 6) };
+  if (dud) sfx.dud(); else sfx.sort();
+  burst(lm.x + (Math.random() - 0.5) * 40, lm.y - lm.r * 1.6, `+${fmt(got)}`);
+  if (S.rubs === 1) log('Firm. Oily. Good. Into the crate. Your paws are going to smell like this forever.');
+  else if (S.rubs === 6) log('A soft one. A dud. Into the bin. Fitch says the machine in the corner takes duds. Three a pull.');
+  else if (S.rubs === 25 && !S.owned.fedora) log('Fitch leans in the door. “Billion to go,” he says. “Minus twenty-five.”');
+  if (before < E.ORDER && S.shipped >= E.ORDER) triggerEnd();
+}
+cv.addEventListener('pointerdown', e => {
+  const p = toCanvas(e);
+  if (S.ended) return;
+  if (inMachine(p)) { pullMachine(); return; }
+  rubbing = true; lastPt = p; cv.classList.add('rubbing');
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  if (inLemon(p)) addRub(18); // a tap counts for a little
+});
+cv.addEventListener('pointermove', e => {
+  if (!rubbing) return;
+  const p = toCanvas(e);
+  if (inLemon(p) || inLemon(lastPt)) addRub(Math.min(80, Math.hypot(p.x - lastPt.x, p.y - lastPt.y)));
+  lastPt = p;
+});
+const stopRub = () => { rubbing = false; cv.classList.remove('rubbing'); };
+cv.addEventListener('pointerup', stopRub); cv.addEventListener('pointercancel', stopRub);
+cv.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); addRub(RUB_LEN / 3); rubbing = true; setTimeout(stopRub, 120); } });
+
+// ---------- The fruit machine ----------
+const pending = [];
+function pullMachine(auto = false, result = null) {
+  if (S.ended) return;
+  if (spin) { if (result) pending.push(result); return; }
+  if (!result) {
+    if (S.duds < E.PULL_COST) { log('The machine wants three duds. The bin is light. Rub some more.'); return; }
+    result = E.pull(S);
+    started = true;
+  }
+  sfx.lever();
+  spin = { t: 0, stops: [0.7, 0.95, 1.2], result, auto };
+  reels = result.reels;
+}
+$('pullBtn').addEventListener('click', () => pullMachine());
+function landed(r) {
+  if (r.kind === 'scrap') {
+    sfx.scrap(); log(`Three maps. The machine coughs up a scrap of Fitch’s map, folded small. A tunnel, marked UP.`);
+    say(SCRAP_LINES[S.scraps - 1] || '', 5000);
+    burst(L.machine.x, L.machine.y, 'a map scrap!');
+  } else if (r.kind === 'trinket') { sfx.win(); log(r.item.log); burst(L.machine.x, L.machine.y, r.item.name); }
+  else if (r.kind === 'rare') { sfx.rare(); log(r.item.log); burst(L.machine.x, L.machine.y, `×${r.item.mult}!`); }
+  else if (r.kind === 'lose') { if (!r.auto || Math.random() < 0.2) sfx.lose(); if (!spin.auto) log(LOSE_LOGS[Math.floor(Math.random() * LOSE_LOGS.length)]); }
+  else { sfx.win(); burst(L.machine.x, L.machine.y, `+${fmt(r.lemons)}`); }
+  if (S.shipped >= E.ORDER) triggerEnd();
+}
+const SCRAP_LINES = [
+  '“That’s the one,” says Fitch. “That’s the way up. Probably.”',
+  '“Another piece,” says Fitch. “This one’s definitely up.”',
+  '“See? Says UP right on it.”',
+  '“Keep it. Dig it. Don’t show it to anybody.”',
+  '“This is the good scrap. I can tell.”',
+  '“Last piece,” says Fitch. He doesn’t look at you. “Well. Go on.”',
+];
+const LOSE_LOGS = [
+  'Three lemons. The house wins. The house is a ferret.',
+  'Lemon, lemon, lemon. That’s why they call it a lemon.',
+  'Three lemons. You fed it lemons and it gave you lemons. Fair, technically.',
+  'Three lemons. Fitch doesn’t look up from his paper.',
+];
+
+// ---------- Offline ----------
+function welcomeBack() {
+  if (S.ended || !S.lastSeen) return;
+  const away = (Date.now() - S.lastSeen) / 1000;
+  const got = E.offline(S, away);
+  if (!got) return;
+  const h = Math.floor(got.secs / 3600), m = Math.round(got.secs % 3600 / 60);
+  const t = h ? `${h}h ${m}m` : `${m} minutes`;
+  const extra = [got.volts > 1 ? `${fmt(got.volts)} volts` : '', got.light > 1 ? `${fmt(got.light)} light` : ''].filter(Boolean).join(', ');
+  if (got.lemons > 0) log(`You were off shift for ${t}${away > E.OFFLINE_CAP ? ' (Fitch only counts the first eight hours)' : ''}. The crew kept at it, slower without you: ${fmt(got.lemons)} lemons sorted${extra ? ', ' + extra : ''}.`);
+}
+
+// ---------- Phases and the ending ----------
+function phaseChanged() {
+  N = scale('major pentatonic', KEYS[E.phase(S)]);
+  if (music) music.update();
+  const ph = E.phase(S);
+  if (ph === 2) $('shopnote').textContent = 'Fitch takes duds now, too. “Batteries,” he says, like it’s a dirty word.';
+  if (ph === 3) $('shopnote').textContent = 'Fitch takes volts. He has bulbs. He has always had bulbs.';
+  if (ph === 4) $('shopnote').textContent = 'Fitch takes everything now. He looks tired. It’s a big order.';
+}
+let endT = -1;
+function triggerEnd() {
+  if (endT >= 0) return;
+  S.ended = true; S.endedAt = S.time; S.finishPending = true; save();
+  endT = 0;
+  $('sub').textContent = 'Topside. The grove, before dawn.';
+  refreshShop();
+  N = scale('major pentatonic', KEYS.up);
+  if (music) music.update();
+  log('The last crate goes up. “Well,” says Fitch. “A promise is a promise.” He holds the dumbwaiter door for you.');
+  sfx.finale();
+}
+const ENDING_LINES = [
+  [0.0, 'Up past the crates, into the grove. It is three in the morning. It is dark. It is cold.'],
+  [0.18, 'There’s frost on the grass, Fitch says. You touch it. It’s like a dud, but sharper.'],
+  [0.36, '“So where is it?” you ask. “Give it a minute,” says Fitch. He sits on a crate. You sit on a crate.'],
+  [0.55, 'The fog in the rows goes pale. Then paler. The radio, down below, plays one more record.'],
+  [0.75, 'And there it is, coming up over the lemon trees.'],
+];
+const END_SECS = reduced ? 10 : 34;
+function showEnding(resumed) {
+  $('ending').hidden = false;
+  document.querySelector('.machine').hidden = true;
+  $('shopnote').textContent = 'The board’s wiped clean. Fitch is upstairs, watching the sun come up.';
+  if (resumed) log('It looks like a lemon, you think. A big one. Nobody’s sorted it.');
+  $('sub').textContent = 'Topside. The grove, at 6:47 a.m.';
+  if (!resumed) $('ending').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
+  if (S.finishPending && window.DailyGame) {
+    S.finishPending = false; save();
+    const t = S.endedAt || S.time, h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60);
+    DailyGame.finish({ lines: [`⏱ ${h ? h + 'h' : ''}${m}m`, '🍋 1 billion lemons sorted', `🎰 ${fmt(S.pulls)} pulls`, '🌅 coulda come up any morning'] });
+  }
+}
+$('shareBtn').addEventListener('click', () => window.DailyGame && DailyGame.share());
+
+// ---------- Main loop ----------
+let last = performance.now(), uiT = 0, crateT = 0;
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now; T += dt;
+  if (!S.ended) {
+    const events = E.step(S, dt);
+    for (const ev of events) {
+      if (ev.kind === 'end') triggerEnd();
+      else pullMachine(true, { ...ev, auto: true });
+    }
+  }
+  // Spin the reels.
+  if (spin) {
+    spin.t += dt;
+    if (spin.t >= spin.stops[2]) { const r = spin.result; landed(r); spin = null; if (pending.length) pullMachine(true, pending.shift()); if (pending.length > 4) pending.length = 0; }
+  }
+  for (const f of flying) f.t += dt * 2.2;
+  flying = flying.filter(f => f.t < 1);
+  for (const fl of floaters) fl.t += dt;
+  floaters = floaters.filter(fl => fl.t < fl.life);
+  if (fitchSays && T > fitchSays.until) fitchSays = null;
+  // Crates up the shaft.
+  const st = E.stats(S);
+  if (st.lemonRate > 0 && !reduced) {
+    crateT += dt * Math.min(2, 0.25 + Math.log10(st.lemonRate + 1) * 0.25);
+    if (crateT > 1) { crateT = 0; crates.push({ y: L.floor }); }
+  }
+  for (const c of crates) c.y -= dt * H * 0.25;
+  crates = crates.filter(c => c.y > -40);
+  if (!rubbing) rubT += (Math.round(rubT) - rubT) * Math.min(1, dt * 6);
+  // Draw.
+  if (endT >= 0 || S.ended) {
+    if (endT >= 0) {
+      endT += dt;
+      const k = Math.min(1, endT / END_SECS);
+      drawTopside(k);
+      for (const [at, text] of ENDING_LINES) if (k >= at && !shownLines.has(at)) { shownLines.add(at); log(text); }
+      if (k >= 1 && $('ending').hidden) { showEnding(false); log('It looks like a lemon. A big one. Nobody’s sorted it.'); }
+    } else drawTopside(1);
+  } else drawScene();
+  uiT += dt;
+  if (uiT > 0.25) { uiT = 0; refreshStats(); refreshShop(); }
+  requestAnimationFrame(frame);
+}
+const shownLines = new Set();
+
+// ---------- Start ----------
+resize();
+addEventListener('resize', () => { resize(); });
+await makeSprites();
+if (Sp.sheetRequested()) Sp.showSheet();
+welcomeBack();
+if (S.ended) { showEnding(true); }
+refreshStats(); refreshShop();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

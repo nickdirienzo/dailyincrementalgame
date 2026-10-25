@@ -198,7 +198,9 @@ def main():
             if key == "arc" and part == "initial":
                 continue
             def same(g):
-                old = g.get(key, {}).get(part) if part else g.get(key)
+                old = g.get(key)
+                if part:
+                    old = old.get(part) if isinstance(old, dict) else None
                 if isinstance(v, list):
                     return bool(set(v) & set(old if isinstance(old, list) else [old]))
                 return old == v
