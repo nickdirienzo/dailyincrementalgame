@@ -15,8 +15,11 @@ Every game should have these bones:
   localStorage key.
 - **Background music.** A quiet loop in the game's own style (lo-fi, chiptune, music box...),
   generated live with Web Audio rather than shipped as audio files: no network requests, no
-  licenses to track. Slow chord changes, light variation so it doesn't grate after ten minutes,
-  well under the sound effects in the mix. `public/shared/kit/audio.mjs` has the voices,
+  licenses to track. Never a short loop: a pattern that repeats every few seconds is obvious
+  within a minute. Make it a process that keeps changing (mutate the melody a note at a time,
+  move through a chord progression, change texture every few dozen bars) so nothing repeats
+  exactly for minutes, and let it shift subtly with the game: key, tempo or tone per phase,
+  layers that join as things grow. Keep it well under the sound effects in the mix. `public/shared/kit/audio.mjs` has the voices,
   scales and sequencer to build it on. It starts with the first gesture, pauses while the tab
   is hidden, and has its own toggle shared via `di:music-muted`; the sound mute silences it too.
 - **A clear upgrade path.** Upgrades sit in a column beside the play area (stacking below it on

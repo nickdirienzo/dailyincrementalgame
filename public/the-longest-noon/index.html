@@ -10,7 +10,7 @@
 <meta property="og:title" content="The Longest Noon">
 <meta property="og:description" content="It has been noon for 41 days. A penguin plants a forest to win a staring contest with the sun.">
 <meta property="og:url" content="https://dailyincrementalgame.com/the-longest-noon/">
-<meta property="og:image" content="https://dailyincrementalgame.com/the-longest-noon/og.png?v=e5f5617e">
+<meta property="og:image" content="https://dailyincrementalgame.com/the-longest-noon/og.png?v=ddc55f95">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="The Longest Noon: It has been noon for 41 days. A penguin plants a forest to win a staring contest with the sun.">
@@ -168,6 +168,16 @@ import { grain, vignette } from '/shared/kit/fx.mjs';
 import { createAudio, scale, loop } from '/shared/kit/audio.mjs';
 
 const P = ['#292418', '#524839', '#73654a', '#8b7d62', '#a48d6a', '#bda583', '#cdba94', '#e6ceac'];
+// The parchment is the stonework: lead, sand, frame, page. The glass gets jewel tones, warm near
+// Harold and cooler further out, like an old church window with the sun behind it.
+const GLASS = {
+  inner: ['#f5e3a8', '#f2d27a', '#ecc463'],
+  mid: ['#e8b85a', '#d98f4e', '#c9645a', '#e0a35a'],
+  outer: ['#c46a5f', '#4f9a92', '#5672a8', '#7f9a4a', '#80659a', '#d9a441', '#b8564f'],
+  night: ['#1d2a44', '#26304f', '#2e2342', '#1f3a3a', '#3a2a44', '#22263f'],
+  leaf: ['#5f7f3a', '#7f9a4a', '#3e5a2a', '#8fa856', '#6b8a40'],
+  sun: ['#f5e3a8', '#f2c35e', '#e8a94a', '#f2d27a'],
+};
 const LEAD = P[0];
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = id => document.getElementById(id);
@@ -187,7 +197,10 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) save(
 // ---------- Audio: phasing marimba in D major pentatonic ----------
 const A = createAudio({ sfxVolume: 0.5, musicVolume: 0.2 });
 A.bindToggles($('soundBtn'), $('musicBtn'));
-const N = scale('major pentatonic', 62);
+// Each phase has its own key and tempo; the music moves on the next downbeat after a phase starts.
+const KEYS = { 1: ['major pentatonic', 62, 96, 3400], 2: ['minor pentatonic', 59, 92, 2600], 3: ['major pentatonic', 57, 88, 2900], night: ['major pentatonic', 50, 72, 1600] };
+const keyFor = () => KEYS[S.ended ? 'night' : S.phase];
+let N = scale(keyFor()[0], keyFor()[1]), musicKey = keyFor();
 let noteIdx = 0;
 const marimba = (deg, o = {}) => A.tone({ type: 'pluck', freq: N(deg), dur: 0.08, vol: 0.22, ...o });
 const sfx = {
@@ -207,24 +220,61 @@ const sfx = {
   },
 };
 
-// Two marimbas play the same pattern at almost the same speed and slowly drift apart, Reich style.
-// Each phase adds a layer; after the ending only a slow, low line is left.
-const PATTERN = [0, 2, 4, 2, 5, 4, 2, 7, 4, 5, 2, 4];
-const lineA = loop(A, { bpm: 96, onStep(step, t) {
+// Process music, after Reich and Glass: a 12-note marimba cell that never stops changing.
+//  - every two bars one note of the cell moves a step or two (so it never repeats exactly)
+//  - 12 notes against 8-beat bars, so the cell keeps rotating against the downbeat
+//  - a four-chord progression, four bars each, shifts the whole cell and sets the bass
+//  - every 16 bars the texture changes: full, thinned, up high, sparse
+//  - phase 2 adds a second marimba drifting slowly out of sync; phase 3 a canon and low bells
+//  - at night only a slow, low line is left
+const cell = [0, 2, 4, 2, 5, 4, 2, 7, 4, 5, 2, 4];
+const PROG = [0, -2, 1, -1];            // chord shifts in scale degrees (I, vi-ish, IV-ish, V-ish)
+const TEXTURES = ['full', 'thin', 'high', 'full', 'sparse', 'high'];
+const M = { bar: 0, a: 0, b: 0, c: 0 };
+let cutoff = musicKey[3];
+const chord = () => PROG[Math.floor(M.bar / 4) % PROG.length];
+const texture = () => TEXTURES[Math.floor(M.bar / 16) % TEXTURES.length];
+function mutate() {
+  const i = (Math.random() * cell.length) | 0, d = Math.random() < 0.5 ? -1 : 1;
+  cell[i] = Math.max(-1, Math.min(9, cell[i] + d * (Math.random() < 0.7 ? 1 : 2)));
+}
+function playCell(idx, t, { vol, pan, detune = 0, lift = 2 }) {
+  const tex = texture(), n = idx % cell.length;
+  if (tex === 'thin' && n % 3 === 2) return;
+  if (tex === 'sparse' && n % 2 === 1) return;
+  const up = tex === 'high' ? 5 : 0;
+  A.tone({ type: 'pluck', freq: N(cell[n] + chord() + lift + up), dur: 0.08, vol, at: t, bus: A.music, cutoff, pan, detune });
+}
+const lineA = loop(A, { bpm: musicKey[2], onStep(step, t) {
+  if (step === 0) {
+    M.bar++;
+    if (keyFor() !== musicKey) { // a new phase: change key, tempo and tone on this downbeat
+      musicKey = keyFor(); N = scale(musicKey[0], musicKey[1]);
+      lineA.bpm = musicKey[2]; lineB.bpm = musicKey[2] * 1.00625; cutoff = musicKey[3];
+    }
+    if (S.phase >= 3 && !S.ended && M.bar % 4 === 0) // a soft drone under each chord in the oak phase
+      A.tone({ type: 'pad', freq: N(chord() - 5), dur: 6, vol: 0.035, attack: 1.5, release: 2, at: t, bus: A.music, cutoff: 1200 });
+    if (M.bar % 2 === 0) mutate();
+    if (!S.ended) { // bass on the downbeat, and a fifth on beat three
+      A.tone({ type: 'sine', freq: N(chord() - 10), dur: 0.5, vol: 0.16, at: t, bus: A.music, release: 0.4 });
+    }
+    if (S.phase >= 3 && !S.ended && M.bar % 4 === 0) A.tone({ type: 'bell', freq: N(chord() + 7), dur: 0.6, vol: 0.06, at: t, bus: A.music });
+  }
+  if (step === 8 && !S.ended && texture() !== 'sparse') A.tone({ type: 'sine', freq: N(chord() - 7), dur: 0.3, vol: 0.1, at: t, bus: A.music });
+  if (S.phase === 2 && !S.ended && step % 4 === 2) A.noiseHit('shaker', { at: t, vol: 0.025, bus: A.music });
   if (step % 2) return;
-  const i = (step / 2 + lineA.count++) % PATTERN.length;
-  if (S.ended) { if (step % 4 === 0) A.tone({ type: 'pluck', freq: N(PATTERN[i] - 5), dur: 0.1, vol: 0.12, at: t, bus: A.music, cutoff: 1800 }); return; }
-  A.tone({ type: 'pluck', freq: N(PATTERN[i] + 2), dur: 0.08, vol: 0.16, at: t, bus: A.music, cutoff: 3500, pan: -0.3 });
-  if (S.phase >= 3 && step % 8 === 0) A.tone({ type: 'sine', freq: N(PATTERN[i] - 10), dur: 0.3, vol: 0.18, at: t, bus: A.music });
+  if (S.ended) { // night: a slow, low line, one note a beat
+    if (step % 4 === 0) A.tone({ type: 'pluck', freq: N(cell[M.a++ % cell.length] - 5), dur: 0.12, vol: 0.12, at: t, bus: A.music, cutoff: 1600 });
+    return;
+  }
+  playCell(M.a++, t, { vol: 0.15, pan: -0.3 });
+  if (S.phase >= 3) playCell(M.c++ + 3, t + 0.001, { vol: 0.07, pan: 0.1, lift: 9 }); // canon, three notes behind, an octave up
 } });
-lineA.count = 0;
-const lineB = loop(A, { bpm: 96.6, onStep(step, t) {
+const lineB = loop(A, { bpm: musicKey[2] * 1.00625, onStep(step, t) {
   if (step % 2 || S.phase < 2 || S.ended) return;
-  const i = (step / 2 + lineB.count++) % PATTERN.length;
-  // A few cents flat: the drift that makes it slightly uncanny.
-  A.tone({ type: 'pluck', freq: N(PATTERN[i] + 7), dur: 0.07, vol: 0.1, at: t, bus: A.music, cutoff: 3000, detune: -14, pan: 0.35 });
+  // Slightly faster and a few cents flat: it drifts against line A, slowly and a little uncannily.
+  playCell(M.b++, t, { vol: 0.09, pan: 0.35, detune: -14, lift: 7 });
 } });
-lineB.count = 0;
 lineA.start(); lineB.start();
 
 // ---------- Canvas ----------
@@ -280,7 +330,7 @@ function drawBackdrop() {
   const hx = L.harold.x, hy = L.harold.y + night * H * 0.6;
   // Sky: rings and rays around the sun. Lighter close in, like light through old glass.
   c.save(); c.beginPath(); c.rect(0, 0, W, L.horizon); c.clip();
-  const sky = night > 0.5 ? [P[0], P[1], P[1], P[2]] : [P[7], P[6], P[6], P[5], P[5], P[4]];
+  const pick = arr => arr[(R() * arr.length) | 0];
   const maxR = Math.hypot(W, H) * 1.1;
   let r0 = L.harold.r * 1.25, ring = 0;
   while (r0 < maxR) {
@@ -292,8 +342,7 @@ function drawBackdrop() {
       const pts = [];
       for (let k = 0; k <= 4; k++) { const a = a0 + (a1 - a0) * k / 4; pts.push([hx + Math.cos(a) * r0, hy + Math.sin(a) * r0]); }
       for (let k = 4; k >= 0; k--) { const a = a0 + (a1 - a0) * k / 4; pts.push([hx + Math.cos(a) * r1, hy + Math.sin(a) * r1]); }
-      const base = Math.min(sky.length - 1, ring);
-      const col = sky[Math.max(0, Math.min(sky.length - 1, base + (R() < 0.3 ? 1 : 0) - (R() < 0.15 ? 1 : 0)))];
+      const col = night > 0.5 ? pick(GLASS.night) : ring === 0 ? pick(GLASS.inner) : ring === 1 ? pick(R() < 0.7 ? GLASS.mid : GLASS.inner) : pick(R() < 0.25 && ring < 4 ? GLASS.mid : GLASS.outer);
       pane(c, pts, col, lw);
     }
     r0 = r1; ring++;
@@ -338,7 +387,7 @@ async function glass(file, size, stops, lead = 3) {
 async function makeSprites() {
   const list = [
     ['acorn', 'game-icons--acorn.svg', 40, [P[5], P[3]]],
-    ['oak', 'game-icons--oak.svg', 90, [P[3], P[1]]],
+    ['oak', 'game-icons--oak.svg', 90, ['#8fa856', '#3e5a2a']],
     ['camel', 'game-icons--camel.svg', 110, [P[5], P[3]]],
     ['lizard', 'game-icons--gecko.svg', 46, [P[4], P[2]]],
     ['fox', 'game-icons--fox.svg', 54, [P[6], P[4]]],
@@ -401,14 +450,14 @@ function drawHarold(c, x, y, r, look, annoyed) {
   const spin = reduced ? 0 : T * 0.05;
   for (let i = 0; i < 12; i++) { // rays
     const a = spin + i / 12 * Math.PI * 2;
-    pane(c, [[Math.cos(a - 0.12) * r * 1.02, Math.sin(a - 0.12) * r * 1.02], [Math.cos(a) * r * 1.42, Math.sin(a) * r * 1.42], [Math.cos(a + 0.12) * r * 1.02, Math.sin(a + 0.12) * r * 1.02]], i % 2 ? P[6] : P[7], lw);
+    pane(c, [[Math.cos(a - 0.12) * r * 1.02, Math.sin(a - 0.12) * r * 1.02], [Math.cos(a) * r * 1.42, Math.sin(a) * r * 1.42], [Math.cos(a + 0.12) * r * 1.02, Math.sin(a + 0.12) * r * 1.02]], i % 2 ? GLASS.sun[2] : GLASS.sun[3], lw);
   }
   for (let i = 0; i < 8; i++) { // the disc, in wedges
     const a0 = i / 8 * Math.PI * 2, a1 = (i + 1) / 8 * Math.PI * 2;
     c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, r, a0, a1); c.closePath();
-    c.fillStyle = i % 2 ? P[7] : P[6]; c.fill(); c.lineWidth = lw; c.strokeStyle = LEAD; c.stroke();
+    c.fillStyle = i % 2 ? GLASS.sun[1] : GLASS.sun[3]; c.fill(); c.lineWidth = lw; c.strokeStyle = LEAD; c.stroke();
   }
-  c.beginPath(); c.arc(0, 0, r * 0.62, 0, Math.PI * 2); c.fillStyle = P[7]; c.fill(); c.lineWidth = lw; c.stroke();
+  c.beginPath(); c.arc(0, 0, r * 0.62, 0, Math.PI * 2); c.fillStyle = GLASS.sun[0]; c.fill(); c.lineWidth = lw; c.stroke();
   // Face. He has never blinked.
   const er = r * 0.17, L2 = { x: look.x - x, y: look.y - y };
   eye(c, -r * 0.27, -r * 0.08, er, L2, annoyed * 0.6); eye(c, r * 0.27, -r * 0.08, er, L2, annoyed * 0.6);
@@ -460,7 +509,7 @@ function drawOak(c, g) {
     for (let i = 0; i < 9; i++) {
       const ax = lean(1) + (R() - 0.5) * tw * 3.2, ay = -th - R() * m * 0.08, sz = m * (0.03 + R() * 0.02);
       const pts = []; for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + R(); pts.push([ax + Math.cos(a) * sz, ay + Math.sin(a) * sz * 0.8]); }
-      pane(c, pts, [P[3], P[2], P[4]][i % 3], lw);
+      pane(c, pts, GLASS.leaf[i % GLASS.leaf.length], lw);
     }
   }
   // Boughs: tapered arms that bend upward; the right ones reach toward Harold.
@@ -480,7 +529,7 @@ function drawOak(c, g) {
       const ax = -x + W * (0.06 + u * 0.98), ay = -y + H * (0.02 + v * 0.4) - Math.sin(u * Math.PI) * H * 0.04;
       const s = m * (0.055 + R() * 0.045) * Math.min(1, 0.4 + crown * 0.8);
       const pts = []; for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + R(); pts.push([ax + Math.cos(a) * s, ay + Math.sin(a) * s * 0.8]); }
-      pane(c, pts, [P[2], P[3], P[1], P[4], P[2]][i % 5], lw);
+      pane(c, pts, i % 11 === 0 ? '#d9a441' : GLASS.leaf[i % GLASS.leaf.length], lw);
     }
   }
   c.restore();
