@@ -10,16 +10,28 @@ Every game should have these bones:
 
 - **Pleasant sounds.** Synthesized with Web Audio, never harsh. Soft feedback on the core action,
   a chime or blip when the number goes up, a small fanfare for purchases and unlocks, something
-  special for the ending. Pentatonic scales keep rapid sounds musical. Include a mute toggle,
-  shared across games via the `di:sound-muted` localStorage key.
+  special for the ending. Keep rapid sounds on the game's scale (the rolled one, if rolled) so
+  they stay musical. Include a mute toggle, shared across games via the `di:sound-muted`
+  localStorage key.
+- **Background music.** A quiet loop in the game's own style (lo-fi, chiptune, music box...),
+  generated live with Web Audio rather than shipped as audio files: no network requests, no
+  licenses to track. Slow chord changes, light variation so it doesn't grate after ten minutes,
+  well under the sound effects in the mix. It starts with the first gesture, pauses while the tab
+  is hidden, and has its own toggle shared via `di:music-muted`; the sound mute silences it too.
 - **A clear upgrade path.** Upgrades sit in a column beside the play area (stacking below it on
   phones) so players notice unlocks. New unlocks pulse and get a "new" tag. Mix real upgrades
   with a few silly one-offs that do little but add story.
 - **Straightforward.** One core action you get within five seconds. No tutorial walls.
 - **Fairly cute.** A small premise with a character or two and a joke or two. Flavor text in a
   log line under the play area.
-- **Not torture.** 8–15 minutes to the ending. No dead stretches where you wait with nothing to
-  do. Idle helpers arrive around the 2–3 minute mark. It must have a real ending.
+- **Timeless, mostly.** Games live in the archive forever, so they never riff on trending memes,
+  news or real people. When the roll asks for a calendar nod, it's one small touch (an upgrade, a
+  log line, a hat), never the premise, and it must not repeat a topic from the last two weeks.
+- **Not torture.** Length varies by day, from 5-minute snacks to hour-long games (the rolled
+  `length`). Whatever the length, there are no dead stretches where you wait with nothing to do,
+  idle helpers arrive about a fifth of the way in, and there is a real ending. Games over 15
+  minutes need more than a longer cost curve: distinct phases or layers that change what you're
+  doing, saving often enough that a reload resumes mid-game, and something new every few minutes.
 
 ## Scale is a design choice
 
@@ -44,8 +56,11 @@ doesn't become the only kind of satisfaction.
 5. Give the ending a "Share result" button that calls `DailyGame.share()`. Keep the template's ids:
    `#ending` for the ending, `#shareBtn` for the button, and upgrades as buttons inside `#shop`.
 6. Add an entry to `public/games.json` with `n`, `slug`, `date` (YYYY-MM-DD, the day it goes live),
-   `title`, `tagline`, `emoji` (one or two), `scale`, `minutes`, plus `seed` and `interaction`
-   from `tools/roll.py` if the theme was rolled.
+   `title`, `tagline`, `emoji` (one or two), `scale`, `minutes`, plus, if the theme was
+   rolled, `seed` and every field from `tools/roll.py` except subject, verb and object
+   (`interaction`, `arc`, `length`, `structure`, `twist`, `ending`, `look`, `music`, `tone`,
+   `context`; for a calendar nod, add a `"topic"` saying what it was), so
+   the next roll can flag repeats. `minutes` comes from the rolled length.
 7. Run `npm run og` to render the game's social card (`public/<slug>/og.png`, the preview image in
    chat apps) and write its meta tags, and look at the card. It also refreshes the landing card.
 8. Run `npm run check -- <slug>` and look at the screenshots in `tests/screenshots/`. Then play it

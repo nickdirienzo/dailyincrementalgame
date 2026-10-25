@@ -59,17 +59,119 @@ INTERACTIONS = [
 
 SCALES = ["tens", "hundreds", "thousands", "millions", "billions", "absurd"]
 
+# The arc is what the progression is about. It's composed from small independent parts rather than
+# picked from one list of premises: an LLM asked for "a story" falls into the same few (every game
+# ending up about loneliness), but drive x obstacle x turn x initial gives thousands of combinations
+# and the pitch has to invent a story that fits all of them.
+DRIVES = [
+    "money", "escape", "fame", "revenge", "curiosity", "duty", "comfort", "mischief",
+    "rivalry", "a deadline", "a promise", "a dare", "hunger", "pride", "a bet", "legacy",
+]
+
+OBSTACLES = [
+    "a rival", "a strict rule", "the weather", "paperwork", "physics", "a landlord",
+    "their own clumsiness", "a ticking clock", "an inspector", "a critic", "gravity", "a bad map",
+    "the neighbors", "a broken machine", "a tiny budget", "a misunderstanding",
+]
+
+TURNS = [
+    "it works far too well", "it was the wrong goal all along", "they win and leave town",
+    "everyone else joins in", "it all collapses beautifully", "a quiet, smaller win",
+    "the obstacle switches sides", "a huge pointless spectacle",
+]
+
+INITIALS = "ABCDEFGHIJKLMNOPRSTVW"
+
+# How the game is built and how long it runs. Without these every game came out the same shape:
+# one currency, a straight line of upgrades, helpers at minute 2, done at minute 10.
+LENGTHS = ["short (5–8 min)", "standard (10–15 min)", "long (20–30 min)", "extended (45–60 min)"]
+# How many structures each length combines; longer games have room to layer or chain several.
+STRUCTURE_COUNTS = {"short": (1, 1), "standard": (1, 2), "long": (2, 3), "extended": (2, 4)}
+
+STRUCTURES = [
+    "straight line of upgrades", "reset loop (prestige for a permanent bonus)",
+    "stacked currencies (A makes B, B makes C)", "tech tree with exclusive choices",
+    "limited space to arrange (a grid, shelf or map)", "the core action goes obsolete; you manage automation",
+    "a mid-game rule change that reshapes everything", "distinct phases, each its own small economy",
+]
+
+TWISTS = [
+    "decay: things break or spoil", "random events", "gambling or loot drops", "combos and streaks",
+    "hard tradeoffs", "timed rushes", "a helper with opinions", "a day/night or weather cycle",
+    "nothing extra, keep it pure",
+]
+
+ENDINGS = [
+    "hit a target", "build one final thing", "choose between two endings", "a story reveal",
+    "an ending you have to be talked out of", "the game ends itself", "a final showdown",
+    "a send-off parade",
+]
+
+LOOKS = [
+    "pixel art", "paper cutout", "blueprint", "watercolor", "terminal / ASCII", "risograph print",
+    "felt and yarn", "soft clay", "stained glass", "1-bit classic Mac", "chalkboard", "vaporwave",
+    "woodcut", "neon signs",
+]
+
+MUSIC_STYLES = [
+    "lo-fi hip hop", "8-bit chiptune", "ambient pads", "music box lullaby", "bossa nova", "synthwave",
+    "jazzy walking bass", "marimba minimalism", "sea shanty", "baroque harpsichord", "dub", "kalimba folk",
+]
+
+MUSIC_SCALES = [
+    "major pentatonic", "minor pentatonic", "dorian", "lydian", "mixolydian", "blues", "in-sen",
+    "harmonic minor",
+]
+
+TONES = [
+    "cozy", "deadpan bureaucratic", "nature documentary", "sports commentary", "noir", "mild horror",
+    "epic fantasy", "corporate memo", "breathless gossip", "self-help guru", "mission control",
+    "cooking show",
+]
+
+# An optional nod to the release date. Mostly "none": a month of Halloween games would be a lot.
+CONTEXTS = ["none", "none", "calendar"]
+
+# What kind of date to nod to, so it isn't always the biggest holiday in sight.
+CALENDAR_KINDS = [
+    "a holiday or festival near the release date", "the season and its weather",
+    "an obscure observance day on the release date", "the night sky (moon phase, meteor shower, solstice)",
+    "a harmless historical anniversary on the release date", "a household ritual of that time of year",
+]
+
 
 def roll(seed):
     rng = random.Random(seed)
-    return {
+    r = {
         "seed": seed,
         "subject": rng.choice(SUBJECTS),
         "verb": rng.choice(VERBS),
         "object": rng.choice(OBJECTS),
         "interaction": rng.choice(INTERACTIONS),
         "scale": rng.choice(SCALES),
+        # Drawn last so seeds rolled before arcs existed keep their other fields.
+        "arc": {
+            "drive": rng.choice(DRIVES),
+            "obstacle": rng.choice(OBSTACLES),
+            "turn": rng.choice(TURNS),
+            "initial": rng.choice(INITIALS),
+        },
+        # Also drawn after everything older, for the same reason.
+        "length": rng.choice(LENGTHS),
     }
+    lo, hi = STRUCTURE_COUNTS[r["length"].split()[0]]
+    r.update({
+        "structure": rng.sample(STRUCTURES, rng.randint(lo, hi)),
+        "twist": rng.choice(TWISTS),
+        "ending": rng.choice(ENDINGS),
+        "look": rng.choice(LOOKS),
+        "music": {"style": rng.choice(MUSIC_STYLES), "scale": rng.choice(MUSIC_SCALES)},
+        "tone": rng.choice(TONES),
+    })
+    r["context"] = rng.choice(CONTEXTS)
+    if r["context"] == "calendar":
+        r["context"] = {"kind": "calendar", "nod": rng.choice(CALENDAR_KINDS)}
+    return r
 
 
 def main():
@@ -79,11 +181,22 @@ def main():
     # Flag repeats of recent games so the pitch can lean away from them. The roll itself never changes.
     games = json.loads((Path(__file__).resolve().parent.parent / "public" / "games.json").read_text())
     recent = games[-3:]
-    for key in ("interaction", "scale"):
-        clash = [g["n"] for g in recent if g.get(key) == r[key]]
-        if clash:
-            print(f"note: {key} '{r[key]}' was also used by game(s) {clash}", file=sys.stderr)
-
+    for key, value in r.items():
+        if key in ("seed", "subject", "verb", "object") or value == "none":
+            continue
+        parts = value.items() if isinstance(value, dict) else [(None, value)]
+        for part, v in parts:
+            if key == "arc" and part == "initial":
+                continue
+            def same(g):
+                old = g.get(key, {}).get(part) if part else g.get(key)
+                if isinstance(v, list):
+                    return bool(set(v) & set(old if isinstance(old, list) else [old]))
+                return old == v
+            clash = [g["n"] for g in recent if same(g)]
+            if clash:
+                name = f"{key} {part}" if part else key
+                print(f"note: {name} '{v}' was also used by game(s) {clash}", file=sys.stderr)
 
 if __name__ == "__main__":
     main()
