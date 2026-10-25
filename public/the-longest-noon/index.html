@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Longest Noon · Daily Incremental</title>
+<meta name="description" content="It has been noon for 41 days. A penguin plants a forest to win a staring contest with the sun. Daily Incremental.">
+<meta property="og:site_name" content="Daily Incremental">
+<meta property="og:type" content="website">
+<meta property="og:title" content="The Longest Noon">
+<meta property="og:description" content="It has been noon for 41 days. A penguin plants a forest to win a staring contest with the sun.">
+<meta property="og:url" content="https://dailyincrementalgame.com/the-longest-noon/">
+<meta property="og:image" content="https://dailyincrementalgame.com/the-longest-noon/og.png?v=e5f5617e">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Longest Noon: It has been noon for 41 days. A penguin plants a forest to win a staring contest with the sun.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+  /* Stained glass in the JustParchment8 palette (JustJimmy, Lospec): lead lines, amber panes. */
+  :root {
+    --p0: #292418; --p1: #524839; --p2: #73654a; --p3: #8b7d62;
+    --p4: #a48d6a; --p5: #bda583; --p6: #cdba94; --p7: #e6ceac;
+    --bg: var(--p0); --ink: var(--p7); --dim: var(--p5); --lead: var(--p0);
+    --display: "IM Fell English SC", "IM Fell English", Georgia, serif;
+    --fell: "IM Fell English", Georgia, serif;
+    --body: "Spectral", Georgia, serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--ink); }
+  /* Keep this: any display rule (flex, grid) would otherwise override the hidden attribute. */
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; font: 16px/1.45 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: max(14px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+    background:
+      radial-gradient(ellipse at 70% -10%, rgba(230,206,172,.10), transparent 60%),
+      var(--bg);
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  header { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px 18px; flex-wrap: wrap; }
+  h1 { margin: 0; font: 400 clamp(32px, 6vw, 52px)/0.95 var(--display); letter-spacing: .01em; color: var(--p7); }
+  .clock { margin: 4px 0 0; font: italic 15px/1.2 var(--fell); color: var(--p5); }
+  .clock b { font-style: normal; font-weight: 400; color: var(--p6); font-variant-numeric: tabular-nums; }
+  .toggles { display: flex; gap: 8px; }
+  .toggle {
+    all: unset; cursor: pointer; font: 14px/1 var(--fell); color: var(--p7);
+    padding: 7px 12px; border: 2px solid var(--p2); border-radius: 3px; background: var(--p1);
+  }
+  .toggle:hover { border-color: var(--p5); }
+  .toggle:focus-visible { outline: 2px solid var(--p7); outline-offset: 2px; }
+  .toggle[aria-pressed="false"] { color: var(--p4); background: transparent; }
+  .toggle:disabled { opacity: .45; cursor: default; }
+
+  .game { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .game { grid-template-columns: 1fr; } }
+  main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+  /* The window: a thick lead frame around the canvas. */
+  .window { position: relative; border: 6px solid var(--lead); outline: 2px solid var(--p2); border-radius: 10px 10px 4px 4px; overflow: hidden; background: var(--p1); }
+  #stage { display: block; width: 100%; height: auto; touch-action: none; cursor: grab; }
+  #stage.dragging { cursor: grabbing; }
+
+  .log { min-height: 3em; margin: 0; font: italic 17px/1.4 var(--fell); color: var(--p6); }
+  .log.fresh { animation: logIn .5s ease; }
+  @keyframes logIn { from { opacity: 0; transform: translateY(4px); } }
+
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; }
+  .stat { flex: 1 1 120px; padding: 8px 10px; background: var(--p1); border: 2px solid var(--lead); outline: 1px solid var(--p2); border-radius: 3px; }
+  .stat small { display: block; font: 13px/1.2 var(--fell); color: var(--p5); }
+  .stat b { font: 400 22px/1.15 var(--fell); color: var(--p7); font-variant-numeric: tabular-nums; }
+  .stat em { font: italic 13px var(--body); color: var(--p4); }
+
+  .meter { padding: 10px 12px; background: var(--p1); border: 2px solid var(--lead); outline: 1px solid var(--p2); border-radius: 3px; }
+  .meter-head { display: flex; justify-content: space-between; gap: 10px; font: 14px/1.3 var(--fell); color: var(--p6); }
+  .meter-head span:last-child { color: var(--p7); font-variant-numeric: tabular-nums; }
+  .bar { margin-top: 6px; height: 14px; background: var(--p0); border: 2px solid var(--lead); position: relative; overflow: hidden; }
+  .bar i { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(90deg, var(--p6) 0 18px, var(--p5) 18px 20px); transition: width .6s ease; }
+
+  aside { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  @media (max-width: 760px) { aside { position: static; } }
+  aside h2 { margin: 0; font: 400 24px/1.1 var(--display); color: var(--p7); display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  #afford { font: italic 14px var(--fell); color: var(--p5); }
+  .shopnote { margin: 0; font: italic 14px/1.35 var(--fell); color: var(--p4); }
+  #shop { display: flex; flex-direction: column; gap: 8px; }
+  .up {
+    all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px;
+    padding: 9px 11px; background: var(--p1); color: var(--p6);
+    border: 2px solid var(--lead); outline: 1px solid var(--p2); border-radius: 3px; position: relative;
+  }
+  .up .name { font: 400 17px/1.2 var(--fell); color: var(--p7); }
+  .up .cost { font: 14px/1.4 var(--fell); color: var(--p5); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .up .desc { grid-column: 1 / -1; font: 14px/1.35 var(--body); color: var(--p5); }
+  .up.silly .name::after { content: " ✦"; color: var(--p4); }
+  .up.can { background: var(--p2); outline-color: var(--p5); }
+  .up.can .cost { color: var(--p7); }
+  .up:not(.can) { cursor: default; }
+  .up:not(.can) .name { color: var(--p5); }
+  .up:focus-visible { outline: 2px solid var(--p7); outline-offset: 2px; }
+  .up.can:hover { background: var(--p3); }
+  .up .tag { position: absolute; top: -9px; right: 8px; padding: 1px 7px; font: 12px/1.4 var(--fell); background: var(--p7); color: var(--p0); border: 2px solid var(--lead); border-radius: 2px; }
+  .up.new { animation: pulse 1.6s ease-in-out 3; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 3px var(--p6), 0 0 18px rgba(230,206,172,.35); } }
+
+  #ending { padding: 20px; background: var(--p1); border: 3px solid var(--lead); outline: 2px solid var(--p3); border-radius: 4px; display: flex; flex-direction: column; gap: 10px; }
+  #ending h2 { margin: 0; font: 400 36px/1 var(--display); color: var(--p7); }
+  #ending p { margin: 0; max-width: 60ch; color: var(--p6); }
+  #ending .slip { font: italic 15px/1.45 var(--fell); color: var(--p5); border-left: 3px solid var(--p3); padding-left: 12px; }
+  #ending .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  #shareBtn { all: unset; cursor: pointer; padding: 10px 18px; font: 18px/1 var(--fell); background: var(--p7); color: var(--p0); border: 2px solid var(--lead); border-radius: 3px; }
+  #shareBtn:focus-visible { outline: 2px solid var(--p7); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh { animation: none; } .bar i { transition: none; } }
+</style>
+<script src="/shared/daily.js" data-day="4" data-credits></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>The Longest Noon</h1>
+      <p class="clock">Day <b id="day">41</b> · <b id="clock">12:00:00</b> <span id="ampm">noon</span></p>
+    </div>
+    <div class="toggles">
+      <button id="soundBtn" class="toggle" type="button"></button>
+      <button id="musicBtn" class="toggle" type="button"></button>
+    </div>
+  </header>
+  <div class="game">
+    <main>
+      <div class="window"><canvas id="stage" aria-label="A stained-glass desert. Drag cracked acorns from the dunes to the penguin's bench."></canvas></div>
+      <p class="log" id="log" aria-live="polite">It has been noon for forty-one days. The penguin has not blinked. Neither has Harold.</p>
+      <div class="stats">
+        <div class="stat"><small>Acorns in the bag</small><b id="sAcorns">0</b> <em id="sAcornRate"></em></div>
+        <div class="stat" id="statShade" hidden><small>Shade</small><b id="sShade">0</b> <em id="sShadeRate"></em></div>
+        <div class="stat" id="statSap" hidden><small>Sap</small><b id="sSap">0</b> <em id="sSapRate"></em></div>
+        <div class="stat" id="statTrees" hidden><small>Trees</small><b id="sTrees">0</b> <em id="sTreePrice"></em></div>
+      </div>
+      <div class="meter">
+        <div class="meter-head"><span>The staring contest · how much of you Harold can see</span><span id="mView">100%</span></div>
+        <div class="bar"><i id="mBar" style="width:100%"></i></div>
+      </div>
+    </main>
+    <aside id="side">
+      <h2>The Camel's Shop <span id="afford"></span></h2>
+      <p class="shopnote" id="shopnote">The camel who signed for you is open for business. It has been open for forty-one days.</p>
+      <div id="shop"></div>
+    </aside>
+  </div>
+  <section id="ending" hidden>
+    <h2>Night.</h2>
+    <p id="endText">Nobody blinked. Nobody could see anybody. Harold, who had been up for forty-one days, finally went home.</p>
+    <p>The desert got cold, the way deserts do at night. It never snowed. The penguin sat under the Great Oak in its scarf and mittens and shivered, delighted. It hadn’t needed snow. It had needed night.</p>
+    <p class="slip" id="slip">The camel unfolds the delivery slip. “Five billion acorns, one penguin (fragile),” it reads. “Harold only stays up while somebody’s watching him. I didn’t want to spoil it.” The squirrels have arrived for their acorns. They are moving into the oak.</p>
+    <div class="row"><button id="shareBtn" type="button">Share result</button></div>
+  </section>
+</div>
+<script type="module">
+import * as E from './economy.mjs';
+import * as Sp from '/shared/kit/sprites.mjs';
+import { grain, vignette } from '/shared/kit/fx.mjs';
+import { createAudio, scale, loop } from '/shared/kit/audio.mjs';
+
+const P = ['#292418', '#524839', '#73654a', '#8b7d62', '#a48d6a', '#bda583', '#cdba94', '#e6ceac'];
+const LEAD = P[0];
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+
+// ---------- Save ----------
+const KEY = window.DailyGame ? DailyGame.storageKey('save') : 'di:4:save';
+let S = E.defaults();
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(E.defaults(), JSON.parse(raw)); } catch (e) {}
+S.owned ||= {}; S.seen ||= {};
+// A finished save shows the finished world, even one that's just { ended: true }.
+if (S.ended) { S.phase = 3; S.trees = E.GROVE_MAX; for (const id of ['roots', 'trunk', 'boughs', 'crown', 'scarf', 'mittens', 'sunglasses', 'lizard', 'fox', 'scorpion', 'devil']) S.owned[id] ||= 1; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+setInterval(save, 3000);
+addEventListener('pagehide', save);
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+
+// ---------- Audio: phasing marimba in D major pentatonic ----------
+const A = createAudio({ sfxVolume: 0.5, musicVolume: 0.2 });
+A.bindToggles($('soundBtn'), $('musicBtn'));
+const N = scale('major pentatonic', 62);
+let noteIdx = 0;
+const marimba = (deg, o = {}) => A.tone({ type: 'pluck', freq: N(deg), dur: 0.08, vol: 0.22, ...o });
+const sfx = {
+  pick() { marimba(7 + (noteIdx++ % 3), { vol: 0.12 }); },
+  mend(big) { const d = 5 + (noteIdx++ % 5); marimba(d, { vol: 0.2 }); marimba(d + 2, { vol: 0.16, at: A.now + 0.07 }); A.noiseHit('shaker', { vol: 0.05 }); if (big) marimba(d + 5, { vol: 0.1, at: A.now + 0.14 }); },
+  drop() { marimba(1, { vol: 0.1 }); A.noiseHit('shaker', { vol: 0.04 }); },
+  plant() { A.tone({ type: 'sine', freq: N(-3), dur: 0.12, vol: 0.25, glide: 0.7 }); marimba(4, { vol: 0.15, at: A.now + 0.05 }); },
+  sap() { A.tone({ type: 'sine', freq: N(3), dur: 0.18, vol: 0.12, glide: 1.6 }); A.tone({ type: 'sine', freq: N(6), dur: 0.12, vol: 0.08, glide: 1.4, at: A.now + 0.09 }); },
+  buy() { [0, 2, 4, 7].forEach((d, i) => marimba(d + 3, { vol: 0.2, at: A.now + i * 0.07 })); },
+  unlock() { A.tone({ type: 'bell', freq: N(10), dur: 0.3, vol: 0.14 }); A.tone({ type: 'bell', freq: N(12), dur: 0.3, vol: 0.1, at: A.now + 0.12 }); },
+  phase() { [0, 4, 7, 9, 12].forEach((d, i) => A.tone({ type: 'bell', freq: N(d), dur: 0.5, vol: 0.12, at: A.now + i * 0.11 })); },
+  camel() { A.tone({ type: 'keys', freq: N(-5), dur: 0.25, vol: 0.12, cutoff: 900 }); },
+  finale() {
+    // Sunset: a slow fall down the scale, then a low, warm night chord.
+    for (let i = 0; i < 12; i++) marimba(14 - i, { vol: 0.18, at: A.now + i * 0.22 });
+    [-5, -3, 0, 2, 4].forEach(d => A.tone({ type: 'pad', freq: N(d), dur: 4, vol: 0.06, attack: 1.2, release: 3, at: A.now + 2.8, cutoff: 1400 }));
+  },
+};
+
+// Two marimbas play the same pattern at almost the same speed and slowly drift apart, Reich style.
+// Each phase adds a layer; after the ending only a slow, low line is left.
+const PATTERN = [0, 2, 4, 2, 5, 4, 2, 7, 4, 5, 2, 4];
+const lineA = loop(A, { bpm: 96, onStep(step, t) {
+  if (step % 2) return;
+  const i = (step / 2 + lineA.count++) % PATTERN.length;
+  if (S.ended) { if (step % 4 === 0) A.tone({ type: 'pluck', freq: N(PATTERN[i] - 5), dur: 0.1, vol: 0.12, at: t, bus: A.music, cutoff: 1800 }); return; }
+  A.tone({ type: 'pluck', freq: N(PATTERN[i] + 2), dur: 0.08, vol: 0.16, at: t, bus: A.music, cutoff: 3500, pan: -0.3 });
+  if (S.phase >= 3 && step % 8 === 0) A.tone({ type: 'sine', freq: N(PATTERN[i] - 10), dur: 0.3, vol: 0.18, at: t, bus: A.music });
+} });
+lineA.count = 0;
+const lineB = loop(A, { bpm: 96.6, onStep(step, t) {
+  if (step % 2 || S.phase < 2 || S.ended) return;
+  const i = (step / 2 + lineB.count++) % PATTERN.length;
+  // A few cents flat: the drift that makes it slightly uncanny.
+  A.tone({ type: 'pluck', freq: N(PATTERN[i] + 7), dur: 0.07, vol: 0.1, at: t, bus: A.music, cutoff: 3000, detune: -14, pan: 0.35 });
+} });
+lineB.count = 0;
+lineA.start(); lineB.start();
+
+// ---------- Canvas ----------
+const cv = $('stage'), ctx = cv.getContext('2d');
+let W = 960, H = 600, DPR = 1;
+function resize() {
+  const narrow = cv.parentElement.clientWidth < 560;
+  W = narrow ? 600 : 960; H = narrow ? 600 : 600;
+  DPR = Math.min(2, devicePixelRatio || 1);
+  cv.width = W * DPR; cv.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  layout(); drawBackdrop();
+}
+// Places, as fractions of the canvas so phones (square) and desktops (wide) both work.
+const L = {};
+function layout() {
+  const m = Math.min(W, H);
+  Object.assign(L, {
+    horizon: H * 0.6,
+    harold: { x: W * 0.8, y: H * 0.19, r: m * 0.1 },
+    penguin: { x: W * 0.8, y: H * 0.8 },
+    bench: { x: W * 0.64, y: H * 0.83, w: W * 0.14, h: H * 0.07 },
+    bag: { x: W * 0.55, y: H * 0.88 },
+    oak: { x: W * 0.47, y: H * 0.6 },
+    // Drag zones: [x0, y0, x1, y1].
+    dunes: [0, H * 0.64, W * 0.4, H],
+    dunesEarly: [0, H * 0.42, W * 0.42, H],
+    benchZone: [W * 0.58, H * 0.56, W, H],
+    bagZone: [W * 0.49, H * 0.8, W * 0.6, H],
+    groveZone: [0, H * 0.4, W * 0.36, H * 0.64],
+    oakZone: [W * 0.37, H * 0.12, W * 0.58, H * 0.64],
+    m,
+  });
+}
+const inZone = (z, x, y) => x >= z[0] && x <= z[2] && y >= z[1] && y <= z[3];
+
+// Seeded randomness so the glass and the grove look the same every frame and every visit.
+function rng(seed) { return () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; }
+
+// ---------- The backdrop: a rose window around Harold, dunes cut into panes ----------
+const bg = document.createElement('canvas'), bgx = bg.getContext('2d');
+let night = 0; // 0 noon .. 1 night (drawn during and after the ending)
+function pane(c, pts, fill, lw) {
+  c.beginPath(); c.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]);
+  c.closePath(); c.fillStyle = fill; c.fill();
+  c.lineWidth = lw; c.strokeStyle = LEAD; c.lineJoin = 'round'; c.stroke();
+}
+function drawBackdrop() {
+  bg.width = W * DPR; bg.height = H * DPR;
+  const c = bgx; c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const R = rng(41), lw = Math.max(2, L.m * 0.006);
+  const hx = L.harold.x, hy = L.harold.y + night * H * 0.6;
+  // Sky: rings and rays around the sun. Lighter close in, like light through old glass.
+  c.save(); c.beginPath(); c.rect(0, 0, W, L.horizon); c.clip();
+  const sky = night > 0.5 ? [P[0], P[1], P[1], P[2]] : [P[7], P[6], P[6], P[5], P[5], P[4]];
+  const maxR = Math.hypot(W, H) * 1.1;
+  let r0 = L.harold.r * 1.25, ring = 0;
+  while (r0 < maxR) {
+    const r1 = r0 + L.m * (0.07 + ring * 0.035);
+    const rays = 10 + ring * 4;
+    const off = R() * Math.PI;
+    for (let j = 0; j < rays; j++) {
+      const a0 = off + j / rays * Math.PI * 2, a1 = off + (j + 1) / rays * Math.PI * 2;
+      const pts = [];
+      for (let k = 0; k <= 4; k++) { const a = a0 + (a1 - a0) * k / 4; pts.push([hx + Math.cos(a) * r0, hy + Math.sin(a) * r0]); }
+      for (let k = 4; k >= 0; k--) { const a = a0 + (a1 - a0) * k / 4; pts.push([hx + Math.cos(a) * r1, hy + Math.sin(a) * r1]); }
+      const base = Math.min(sky.length - 1, ring);
+      const col = sky[Math.max(0, Math.min(sky.length - 1, base + (R() < 0.3 ? 1 : 0) - (R() < 0.15 ? 1 : 0)))];
+      pane(c, pts, col, lw);
+    }
+    r0 = r1; ring++;
+  }
+  if (night > 0.5) { // stars: little cream panes
+    for (let i = 0; i < 46; i++) {
+      const x = R() * W, y = R() * L.horizon * 0.95, s = 1.5 + R() * 2.5;
+      c.fillStyle = P[7 - (i % 2)]; c.beginPath();
+      for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2, rr = k % 2 ? s * 0.4 : s; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+      c.fill();
+    }
+  }
+  c.restore();
+  // Dunes: bands of panes, darker toward the front.
+  const bands = 4, dune = night > 0.5 ? [P[2], P[1], P[1], P[0]] : [P[5], P[4], P[4], P[3]];
+  for (let b = 0; b < bands; b++) {
+    const top = L.horizon + (H - L.horizon) * (b / bands) * 0.9, bot = b === bands - 1 ? H + 4 : L.horizon + (H - L.horizon) * ((b + 1) / bands) * 0.9;
+    const amp = (H - L.horizon) * 0.06, ph = R() * 6;
+    const yT = x => top + Math.sin(x / W * 5 + ph) * amp * (b ? 1 : 0.4);
+    const yB = x => b === bands - 1 ? bot : bot + Math.sin(x / W * 5 + ph + 1.7) * amp;
+    // Each seam leans a little; neighbors share the seam so no gaps open between panes.
+    let x0 = -10, sk0 = 0;
+    while (x0 < W + 10) {
+      const x1 = x0 + W * (0.09 + R() * 0.1), sk1 = (R() - 0.5) * W * 0.04;
+      const pts = [];
+      for (let k = 0; k <= 4; k++) { const x = x0 + (x1 - x0) * k / 4; pts.push([x, yT(x)]); }
+      for (let k = 4; k >= 0; k--) { const f = k / 4, x = x0 + (x1 - x0) * f + sk0 + (sk1 - sk0) * f; pts.push([x, yB(x)]); }
+      const col = dune[Math.min(3, b + (R() < 0.25 ? 1 : 0))];
+      pane(c, pts, col, lw);
+      x0 = x1; sk0 = sk1;
+    }
+  }
+}
+
+// ---------- Sprites: icons recolored to the palette and leaded like glass ----------
+const ART = {};
+async function glass(file, size, stops, lead = 3) {
+  const svg = await Sp.loadSvg(`art/${file}`);
+  const c = await Sp.svgToCanvas(Sp.gradient(Sp.recolor(svg, P[6]), stops), size);
+  return Sp.outline(c, LEAD, lead);
+}
+async function makeSprites() {
+  const list = [
+    ['acorn', 'game-icons--acorn.svg', 40, [P[5], P[3]]],
+    ['oak', 'game-icons--oak.svg', 90, [P[3], P[1]]],
+    ['camel', 'game-icons--camel.svg', 110, [P[5], P[3]]],
+    ['lizard', 'game-icons--gecko.svg', 46, [P[4], P[2]]],
+    ['fox', 'game-icons--fox.svg', 54, [P[6], P[4]]],
+    ['scorpion', 'game-icons--scorpion.svg', 44, [P[2], P[1]]],
+    ['jar', 'game-icons--honey-jar.svg', 48, [P[6], P[4]]],
+    ['bag', 'game-icons--knapsack.svg', 60, [P[4], P[2]]],
+    ['squirrel', 'game-icons--squirrel.svg', 40, [P[5], P[3]]],
+    ['devil', 'game-icons--tornado.svg', 70, [P[6], P[4]]],
+    ['barrow', 'game-icons--wheelbarrow.svg', 56, [P[4], P[2]]],
+    ['shades', 'game-icons--sunglasses.svg', 40, [P[1], P[0]]],
+  ];
+  await Promise.all(list.map(async ([name, file, size, stops]) => { ART[name] = Sp.register(name, await glass(file, size, stops)); }));
+  // A cracked acorn: the mended one with lead lines across it.
+  const ck = Sp.canvas(ART.acorn.width, ART.acorn.height), k = ck.getContext('2d');
+  k.drawImage(ART.acorn, 0, 0); k.strokeStyle = LEAD; k.lineWidth = 2.5; k.lineCap = 'round';
+  k.beginPath(); k.moveTo(ck.width * 0.42, ck.height * 0.4); k.lineTo(ck.width * 0.55, ck.height * 0.58); k.lineTo(ck.width * 0.48, ck.height * 0.72); k.lineTo(ck.width * 0.6, ck.height * 0.88); k.stroke();
+  ART.cracked = Sp.register('cracked acorn', ck);
+  // The penguin and Harold are drawn live (their eyes follow each other); register stills for the sheet.
+  const pc = Sp.canvas(140, 160), px = pc.getContext('2d'); drawPenguin(px, 70, 140, 1, { x: 200, y: -200 }, true); ART.penguinStill = Sp.register('penguin (live)', pc);
+  const hc = Sp.canvas(200, 200), hxx = hc.getContext('2d'); drawHarold(hxx, 100, 100, 70, { x: 0, y: 300 }, 0); Sp.register('harold (live)', hc);
+}
+
+// ---------- Characters ----------
+function eye(c, x, y, r, look, lid = 0) {
+  c.fillStyle = P[7]; c.strokeStyle = LEAD; c.lineWidth = Math.max(1.5, r * 0.25);
+  c.beginPath(); c.ellipse(x, y, r, r * (0.8 - lid * 0.5), 0, 0, Math.PI * 2); c.fill(); c.stroke();
+  const a = Math.atan2(look.y - y, look.x - x), d = r * 0.38;
+  c.fillStyle = P[0]; c.beginPath(); c.arc(x + Math.cos(a) * d, y + Math.sin(a) * d * 0.7, r * 0.42, 0, Math.PI * 2); c.fill();
+  c.fillStyle = P[6]; c.beginPath(); c.arc(x + Math.cos(a) * d - r * 0.15, y + Math.sin(a) * d * 0.7 - r * 0.15, r * 0.12, 0, Math.PI * 2); c.fill();
+}
+function drawPenguin(c, x, y, k, look, sheet = false) {
+  const lw = Math.max(2, 3 * k);
+  c.save(); c.translate(x, y); c.scale(k, k); c.lineJoin = 'round';
+  const bob = sheet || reduced ? 0 : Math.sin(T * 2) * 1.2;
+  c.translate(0, bob);
+  const leaded = (f, path) => { c.beginPath(); path(); c.fillStyle = f; c.fill(); c.lineWidth = lw / k * 1.1; c.strokeStyle = LEAD; c.stroke(); };
+  leaded(P[3], () => { c.ellipse(-14, -2, 9, 5, 0, 0, Math.PI * 2); c.ellipse(14, -2, 9, 5, 0, 0, Math.PI * 2); }); // feet
+  leaded(P[1], () => c.ellipse(0, -48, 32, 46, 0, 0, Math.PI * 2)); // body
+  leaded(P[7], () => c.ellipse(0, -40, 21, 34, 0, 0, Math.PI * 2)); // belly
+  leaded(P[2], () => { c.ellipse(-31, -46, 8, 24, 0.25, 0, Math.PI * 2); }); // flippers
+  leaded(P[2], () => { c.ellipse(31, -46, 8, 24, -0.25, 0, Math.PI * 2); });
+  if (S.owned.mittens) { leaded(P[5], () => c.ellipse(-35, -26, 8, 7, 0, 0, Math.PI * 2)); leaded(P[5], () => c.ellipse(35, -26, 8, 7, 0, 0, Math.PI * 2)); }
+  leaded(P[1], () => c.arc(0, -86, 24, 0, Math.PI * 2)); // head
+  leaded(P[7], () => c.ellipse(0, -80, 15, 13, 0, 0, Math.PI * 2)); // face
+  const L2 = { x: (look.x - x) / k, y: (look.y - y) / k };
+  if (S.owned.sunglasses && !sheet) {
+    c.fillStyle = P[0]; c.beginPath(); c.ellipse(-8, -88, 8, 5.5, 0, 0, Math.PI * 2); c.ellipse(8, -88, 8, 5.5, 0, 0, Math.PI * 2); c.fill();
+    c.fillRect(-2, -90, 4, 2);
+  } else { eye(c, -7, -88, 5.5, L2); eye(c, 7, -88, 5.5, L2); }
+  leaded(P[4], () => { c.moveTo(-6, -79); c.lineTo(6, -79); c.lineTo(0, -71); c.closePath(); }); // beak
+  if (S.owned.scarf) {
+    leaded(P[4], () => { c.rect(-22, -68, 44, 9); });
+    leaded(P[4], () => { c.rect(10, -62, 9, 22); });
+  }
+  c.restore();
+}
+function drawHarold(c, x, y, r, look, annoyed) {
+  const lw = Math.max(2, r * 0.05);
+  c.save(); c.translate(x, y);
+  const spin = reduced ? 0 : T * 0.05;
+  for (let i = 0; i < 12; i++) { // rays
+    const a = spin + i / 12 * Math.PI * 2;
+    pane(c, [[Math.cos(a - 0.12) * r * 1.02, Math.sin(a - 0.12) * r * 1.02], [Math.cos(a) * r * 1.42, Math.sin(a) * r * 1.42], [Math.cos(a + 0.12) * r * 1.02, Math.sin(a + 0.12) * r * 1.02]], i % 2 ? P[6] : P[7], lw);
+  }
+  for (let i = 0; i < 8; i++) { // the disc, in wedges
+    const a0 = i / 8 * Math.PI * 2, a1 = (i + 1) / 8 * Math.PI * 2;
+    c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, r, a0, a1); c.closePath();
+    c.fillStyle = i % 2 ? P[7] : P[6]; c.fill(); c.lineWidth = lw; c.strokeStyle = LEAD; c.stroke();
+  }
+  c.beginPath(); c.arc(0, 0, r * 0.62, 0, Math.PI * 2); c.fillStyle = P[7]; c.fill(); c.lineWidth = lw; c.stroke();
+  // Face. He has never blinked.
+  const er = r * 0.17, L2 = { x: look.x - x, y: look.y - y };
+  eye(c, -r * 0.27, -r * 0.08, er, L2, annoyed * 0.6); eye(c, r * 0.27, -r * 0.08, er, L2, annoyed * 0.6);
+  c.strokeStyle = LEAD; c.lineWidth = lw * 1.2; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(-r * 0.45, -r * (0.33 - annoyed * 0.06)); c.lineTo(-r * 0.12, -r * (0.27 + annoyed * 0.05)); c.stroke();
+  c.beginPath(); c.moveTo(r * 0.45, -r * (0.33 - annoyed * 0.06)); c.lineTo(r * 0.12, -r * (0.27 + annoyed * 0.05)); c.stroke();
+  c.beginPath(); c.moveTo(-r * 0.2, r * 0.3); c.lineTo(r * 0.2, r * (0.3 + annoyed * 0.03)); c.stroke();
+  c.restore();
+}
+
+// The Great Oak, by part. g = growth 0..4 (eases toward the number of parts owned).
+function drawOak(c, g) {
+  const { x, y } = L.oak, m = L.m, lw = Math.max(2, m * 0.006);
+  if (S.phase < 3) return;
+  if (g < 0.05) { // a sapling with a little sign
+    c.save(); c.translate(x, y); pane(c, [[-2, 0], [2, 0], [2, -m * 0.06], [-2, -m * 0.06]], P[1], lw * 0.6);
+    pane(c, [[0, -m * 0.06], [m * 0.03, -m * 0.08], [0, -m * 0.09], [-m * 0.03, -m * 0.08]], P[3], lw * 0.6); c.restore();
+    return;
+  }
+  const roots = Math.min(1, g), trunk = Math.max(0, Math.min(1, g - 1)), boughs = Math.max(0, Math.min(1, g - 2)), crown = Math.max(0, Math.min(1, g - 3));
+  c.save(); c.translate(x, y);
+  // Roots: spread below the horizon.
+  for (let i = 0; i < 7; i++) {
+    const a = Math.PI * (0.15 + i / 6 * 0.7), len = m * (0.12 + (i % 3) * 0.05) * roots;
+    pane(c, [[-6, 0], [6, 0], [Math.cos(a) * len + 3, Math.sin(a) * len * 0.5 + 4], [Math.cos(a) * len - 3, Math.sin(a) * len * 0.5]], P[2], lw);
+  }
+  const th = H * 0.5 * (0.15 + trunk * 0.85), tw = m * 0.06 * (0.45 + trunk * 0.55);
+  // Trunk: curved sides, a flared base, and long vertical bark panes of uneven width.
+  const rowsN = 4, splits = [-1, -0.45, 0.1, 0.6, 1];
+  const halfW = f => tw * (0.62 + 0.75 * Math.pow(1 - f, 3)) * (1 - f * 0.25);
+  const lean = f => f * f * tw * 0.5;
+  for (let i = 0; i < rowsN; i++) {
+    const f0 = i / rowsN, f1 = (i + 1) / rowsN, y0 = -th * f0, y1 = -th * f1;
+    for (let j = 0; j < splits.length - 1; j++) {
+      const a = splits[j] + (i % 2 ? 0.08 : -0.08) * (j > 0), b = splits[j + 1] + ((i + 1) % 2 ? 0.08 : -0.08) * (j + 1 < splits.length - 1);
+      const pts = [];
+      for (let k = 0; k <= 3; k++) { const f = f0 + (f1 - f0) * k / 3; pts.push([lean(f) + halfW(f) * a, -th * f]); }
+      for (let k = 3; k >= 0; k--) { const f = f0 + (f1 - f0) * k / 3; pts.push([lean(f) + halfW(f) * b, -th * f]); }
+      pane(c, pts, [P[1], P[2], P[1], P[3]][(i + j * 3) % 4], lw);
+    }
+  }
+  // Stubby branches and a tuft of leaves, so it reads as a tree before the boughs come in.
+  if (trunk > 0.2 && boughs < 1) {
+    for (const [dir, f] of [[-1, 0.62], [1, 0.78]]) {
+      const bx = lean(f) + dir * halfW(f), by = -th * f, l = m * 0.07;
+      pane(c, [[bx, by + 5], [bx + dir * l, by - l * 0.55 + 2], [bx + dir * l, by - l * 0.55 - 3], [bx, by - 6]], P[1], lw);
+    }
+    const R = rng(11);
+    for (let i = 0; i < 9; i++) {
+      const ax = lean(1) + (R() - 0.5) * tw * 3.2, ay = -th - R() * m * 0.08, sz = m * (0.03 + R() * 0.02);
+      const pts = []; for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + R(); pts.push([ax + Math.cos(a) * sz, ay + Math.sin(a) * sz * 0.8]); }
+      pane(c, pts, [P[3], P[2], P[4]][i % 3], lw);
+    }
+  }
+  // Boughs: tapered arms that bend upward; the right ones reach toward Harold.
+  if (boughs > 0) {
+    const arms = [[-1, 0.5, 0.36], [1, 0.58, 0.52], [-1, 0.74, 0.28], [1, 0.82, 0.42], [-1, 0.92, 0.18], [1, 0.97, 0.3]];
+    for (const [dir, at, len] of arms) {
+      const by = -th * at, reach = W * len * boughs, thick = m * 0.03 * (1 - at * 0.4);
+      const mx = dir * reach * 0.55, my = by - reach * 0.12, ex = dir * reach, ey = by - reach * 0.38;
+      pane(c, [[dir * tw * 0.3, by + thick], [mx, my + thick * 0.6], [ex, ey + 2], [ex, ey - 2], [mx, my - thick * 0.6], [dir * tw * 0.3, by - thick]], P[1], lw);
+    }
+  }
+  // Crown: leaf panes across the upper sky, landing between the penguin and Harold.
+  if (crown > 0) {
+    const R = rng(7), n = Math.round(90 * crown);
+    for (let i = 0; i < n; i++) {
+      const u = R(), v = R();
+      const ax = -x + W * (0.06 + u * 0.98), ay = -y + H * (0.02 + v * 0.4) - Math.sin(u * Math.PI) * H * 0.04;
+      const s = m * (0.055 + R() * 0.045) * Math.min(1, 0.4 + crown * 0.8);
+      const pts = []; for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + R(); pts.push([ax + Math.cos(a) * s, ay + Math.sin(a) * s * 0.8]); }
+      pane(c, pts, [P[2], P[3], P[1], P[4], P[2]][i % 5], lw);
+    }
+  }
+  c.restore();
+}
+
+// ---------- State for the scene ----------
+let T = 0, oakG = S.ended ? 4 : E.PARTS.filter(p => S.owned[p]).length, endT = -1, drag = null, pointer = { x: 0, y: 0 };
+const fx = []; // floating numbers and bits
+const hintSeen = { 1: false, 2: false, 3: false };
+const grove = []; { const R = rng(500); for (let i = 0; i < 70; i++) grove.push({ u: R(), v: R(), s: 0.55 + R() * 0.5 }); grove.sort((a, b) => a.v - b.v); }
+const pile = []; { const R = rng(3); for (let i = 0; i < 26; i++) pile.push({ u: R(), v: R(), a: R() * 6.3 }); }
+
+// The display font draws straight quotes as closing quotes on both sides; curl them.
+const curl = t => t.replace(/(^|[\s(—])"/g, '$1\u201c').replace(/"/g, '\u201d').replace(/'/g, '\u2019');
+function say(text) { text = curl(text); const el = $('log'); el.textContent = text; el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); }
+function float(x, y, text, big = false) { fx.push({ x, y, text, t: 0, big }); if (fx.length > 40) fx.shift(); }
+
+// ---------- Drag and drop ----------
+function local(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
+function sourceAt(x, y) {
+  if (S.ended) return null;
+  if (S.phase >= 3 && inZone(L.groveZone, x, y)) return 'sap';
+  if (S.phase >= 2 && inZone(L.bagZone, x, y)) return 'bag';
+  if (inZone(S.phase < 2 ? L.dunesEarly : L.dunes, x, y)) return 'acorn';
+  return null;
+}
+cv.addEventListener('pointerdown', e => {
+  const p = local(e); pointer = p;
+  const kind = sourceAt(p.x, p.y);
+  if (!kind) {
+    if (Math.hypot(p.x - L.harold.x, p.y - L.harold.y) < L.harold.r * 1.4 && !S.ended) say(['Harold stares.', 'Harold does not blink. Harold has never blinked.', 'You poke at the sun. The sun keeps staring.'][(T | 0) % 3]);
+    return;
+  }
+  if (kind === 'bag' && S.acorns < E.treePrice(S)) { say(`Not enough acorns for a tree yet. One costs ${E.fmt(E.treePrice(S))}.`); return; }
+  cv.setPointerCapture(e.pointerId);
+  drag = { kind, x: p.x, y: p.y, x0: p.x, y0: p.y };
+  cv.classList.add('dragging'); sfx.pick();
+});
+cv.addEventListener('pointermove', e => { const p = local(e); pointer = p; if (drag) { drag.x = p.x; drag.y = p.y; } });
+function drop() {
+  if (!drag) return;
+  const { kind, x, y } = drag; drag = null; cv.classList.remove('dragging');
+  if (kind === 'acorn' && inZone(L.benchZone, x, y)) {
+    const g = E.haul(S); sfx.mend(g > 1e6); hintSeen[1] = true;
+    float(L.bench.x + L.bench.w / 2, L.bench.y - 10, '+' + E.fmt(g));
+    if (S.mended === g) say('Mended. The penguin holds it up to the light. Harold watches.');
+  } else if (kind === 'bag' && inZone(L.groveZone, x, y)) {
+    const n = E.plant(S);
+    if (n) { sfx.plant(); hintSeen[2] = true; float(x, y - 10, `+${n} tree${n > 1 ? 's' : ''}`); if (S.trees === n) say('The first tree. It casts a shadow the size of a dinner plate. The penguin stands in it.'); }
+    else say(S.trees >= E.GROVE_MAX ? 'The grove is full. Every patch of sand has a tree.' : 'Not enough acorns for a tree.');
+  } else if (kind === 'sap' && inZone(L.oakZone, x, y)) {
+    const g = E.carry(S); sfx.sap(); hintSeen[3] = true; float(L.oak.x, L.oak.y - 40, '+' + E.fmt(g) + ' sap');
+  } else sfx.drop();
+  save(); refreshShop();
+}
+cv.addEventListener('pointerup', drop);
+cv.addEventListener('pointercancel', () => { drag = null; cv.classList.remove('dragging'); });
+
+// ---------- Shop ----------
+const shop = $('shop');
+let shopKey = '';
+function refreshShop() {
+  const vis = E.UPGRADES.filter(u => E.visible(S, u));
+  const key = vis.map(u => u.id + ':' + (S.owned[u.id] || 0)).join(',');
+  if (key !== shopKey) {
+    shopKey = key;
+    shop.replaceChildren(...vis.map(u => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'up' + (u.silly ? ' silly' : ''); b.dataset.id = u.id;
+      const lvl = u.max > 1 ? ` (${S.owned[u.id] || 0}/${u.max})` : '';
+      b.innerHTML = `<span class="name"></span><span class="cost"></span><span class="desc"></span>`;
+      b.querySelector('.name').textContent = u.name + lvl;
+      b.querySelector('.cost').textContent = E.fmtCost(S, u);
+      b.querySelector('.desc').textContent = curl(u.desc);
+      if (!S.seen[u.id]) {
+        S.seen[u.id] = 1; b.classList.add('new');
+        const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = 'new'; b.append(tag);
+        setTimeout(() => { tag.remove(); b.classList.remove('new'); }, 6000);
+        if (Object.keys(S.seen).length > 1) sfx.unlock();
+      }
+      b.addEventListener('click', () => purchase(u.id));
+      return b;
+    }));
+  }
+  let n = 0;
+  for (const b of shop.children) { const can = E.canBuy(S, E.BY_ID[b.dataset.id]); b.classList.toggle('can', can); b.setAttribute('aria-disabled', String(!can)); n += can; }
+  $('afford').textContent = n ? `${n} affordable` : '';
+}
+function purchase(id) {
+  const u = E.BY_ID[id], before = S.phase;
+  if (!E.buy(S, id)) return;
+  sfx.buy(); setTimeout(sfx.camel, 300);
+  say(u.who);
+  if (S.phase !== before) {
+    setTimeout(sfx.phase, 500);
+    if (S.phase === 2) $('shopnote').textContent = 'The camel now accepts shade. "Everyone needs a little," it says. "Some more than others."';
+    if (S.phase === 3) $('shopnote').textContent = 'The camel now accepts sap. It has never once said where the water comes from.';
+  }
+  if (u.final) startEnding();
+  save(); refreshShop();
+}
+
+// ---------- Ending ----------
+function startEnding() {
+  endT = 0; sfx.finale(); save();
+  if (window.DailyGame) {
+    const m = Math.floor(S.time / 60), s = String(Math.floor(S.time % 60)).padStart(2, '0');
+    setTimeout(() => DailyGame.finish({ lines: [`⏱ ${m}m${s}s`, `🌰 ${E.fmt(S.mended)} acorns mended`, '🌙 nobody blinked'] }), 9000);
+  }
+  setTimeout(showEnding, 8500);
+}
+function showEnding() { $('ending').hidden = false; $('ending').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' }); }
+
+// ---------- Frame ----------
+let last = performance.now(), hud = 0, chatter = 0;
+const lizardLines = ['The lizards are whispering again.', 'One of the lizards says your name. You never told it your name.', 'The lizards stop when you look. They start when you look away.', '"Forty-one," whispers a lizard. Then: "forty-one."'];
+function frame(now) {
+  const dt = Math.min(0.25, (now - last) / 1000); last = now; T += dt;
+  if (!S.ended) E.step(S, dt);
+  const st = E.stats(S);
+  oakG += ((E.PARTS.filter(p => S.owned[p]).length) - oakG) * Math.min(1, dt * 1.5);
+  if (endT >= 0) { endT += dt; const n = Math.min(1, endT / 7); if (Math.abs(n - night) > 0.02) { night = n; drawBackdrop(); } }
+
+  // Scene.
+  ctx.clearRect(0, 0, W, H);
+  ctx.drawImage(bg, 0, 0, W, H);
+  const pen = { x: L.penguin.x, y: L.penguin.y - 90 };
+  const hY = L.harold.y + night * H * 0.62;
+  if (night < 0.98) {
+    // The staring line: dotted, from penguin to Harold, until the crown cuts it.
+    if (!S.ended || night < 0.2) {
+      ctx.save(); ctx.setLineDash([3, 9]); ctx.strokeStyle = 'rgba(41,36,24,.45)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(pen.x, pen.y); ctx.lineTo(L.harold.x, hY); ctx.stroke(); ctx.restore();
+    }
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, L.horizon + 2); ctx.clip();
+    drawHarold(ctx, L.harold.x, hY, L.harold.r, pen, Math.min(1, st.cover * 1.4));
+    ctx.restore();
+  }
+  // Grove.
+  const shown = Math.min(grove.length, Math.ceil(grove.length * S.trees / E.GROVE_MAX));
+  const gz = L.groveZone;
+  for (let i = 0; i < shown; i++) {
+    const t = grove[i], s = t.s * (0.6 + t.v * 0.6) * (L.m / 600);
+    const x = gz[0] + 10 + t.u * (gz[2] - gz[0] - 20), y = L.horizon - H * 0.01 + t.v * H * 0.06;
+    ctx.drawImage(ART.oak, x - ART.oak.width * s / 2, y - ART.oak.height * s, ART.oak.width * s, ART.oak.height * s);
+  }
+  if (S.phase >= 3 && ART.jar) ctx.drawImage(ART.jar, gz[2] - 56, gz[3] - 50);
+  drawOak(ctx, oakG);
+  // Camel at its stall, far right on the horizon.
+  if (ART.camel) { const k = L.m / 700; ctx.drawImage(ART.camel, W * 0.9 - ART.camel.width * k / 2, L.horizon - ART.camel.height * k * 0.9, ART.camel.width * k, ART.camel.height * k); }
+  // The dunes' cracked acorns.
+  if (!S.ended && ART.cracked) for (const a of pile) {
+    const z = S.phase < 2 ? L.dunesEarly : L.dunes, x = z[0] + 14 + a.u * (z[2] - z[0] - 40), y = Math.max(L.horizon + 30, z[1] + 20) + a.v * (H - Math.max(L.horizon + 30, z[1] + 20) - 30);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(a.a) * 0.6); ctx.drawImage(ART.cracked, -ART.cracked.width / 2, -ART.cracked.height / 2); ctx.restore();
+  }
+  // Critters.
+  const lz = S.owned.lizard || 0, fxn = S.owned.fox || 0, sc = S.owned.scorpion || 0;
+  for (let i = 0; i < lz && ART.lizard; i++) { const x = W * (0.06 + 0.05 * i) + Math.sin(T * 0.7 + i) * 18, y = H * (0.9 - (i % 2) * 0.06); ctx.drawImage(ART.lizard, x, y - 20); }
+  for (let i = 0; i < fxn && ART.fox; i++) { const ph = (T * 0.35 + i / fxn) % 1, tri = ph < 0.5 ? ph * 2 : 2 - ph * 2; const x = W * 0.2 + tri * W * 0.38; ctx.save(); ctx.translate(x, H * (0.78 + (i % 3) * 0.04)); if (ph >= 0.5) ctx.scale(-1, 1); ctx.drawImage(ART.fox, -27, -40); ctx.restore(); }
+  for (let i = 0; i < sc && ART.scorpion; i++) ctx.drawImage(ART.scorpion, gz[0] + 20 + i * 40 + Math.sin(T + i) * 6, gz[3] - 26);
+  if (S.owned.devil && ART.devil) { ctx.save(); ctx.translate(W * 0.3 + Math.sin(T * 0.6) * W * 0.08, H * 0.9); ctx.scale(1 + Math.sin(T * 9) * 0.05, 1); ctx.drawImage(ART.devil, -35, -70); ctx.restore(); }
+  // Bench, bag, penguin.
+  const b = L.bench, lw = Math.max(2, L.m * 0.006);
+  pane(ctx, [[b.x, b.y], [b.x + b.w, b.y], [b.x + b.w, b.y + b.h * 0.35], [b.x, b.y + b.h * 0.35]], P[3], lw);
+  pane(ctx, [[b.x + 6, b.y + b.h * 0.35], [b.x + 14, b.y + b.h * 0.35], [b.x + 14, b.y + b.h], [b.x + 6, b.y + b.h]], P[2], lw);
+  pane(ctx, [[b.x + b.w - 14, b.y + b.h * 0.35], [b.x + b.w - 6, b.y + b.h * 0.35], [b.x + b.w - 6, b.y + b.h], [b.x + b.w - 14, b.y + b.h]], P[2], lw);
+  if (ART.acorn) for (let i = 0; i < Math.min(5, 1 + Math.log10(1 + S.acorns)); i++) ctx.drawImage(ART.acorn, b.x + 10 + i * 18, b.y - 30, 30, 30);
+  if (S.phase >= 2 && ART.bag) ctx.drawImage(ART.bag, L.bag.x - 30, L.bag.y - 40);
+  drawPenguin(ctx, L.penguin.x, L.penguin.y, L.m / 640, S.ended ? { x: L.penguin.x - 100, y: L.penguin.y - 300 } : { x: L.harold.x, y: hY });
+  // Ending: squirrels arrive and climb into the oak.
+  if (endT > 4 && ART.squirrel) for (let i = 0; i < 6; i++) {
+    const t = Math.min(1, (endT - 4 - i * 0.4) / 3); if (t <= 0) continue;
+    const x = W * (-0.05 + 0.04 * i) + t * (L.oak.x - W * (-0.05 + 0.04 * i)), y = L.horizon + 20 - Math.max(0, t - 0.7) / 0.3 * H * (0.2 + i * 0.03);
+    ctx.drawImage(ART.squirrel, x - 20, y - 36);
+  }
+  if (S.ended && endT < 0 && ART.squirrel) for (let i = 0; i < 6; i++) ctx.drawImage(ART.squirrel, L.oak.x - W * 0.2 + i * W * 0.07, L.horizon - H * (0.25 + (i % 3) * 0.06) - 30);
+  // Drop-zone hint while dragging, and the dragged load.
+  if (drag) {
+    const z = drag.kind === 'acorn' ? L.benchZone : drag.kind === 'bag' ? L.groveZone : L.oakZone;
+    ctx.save(); ctx.setLineDash([8, 6]); ctx.lineWidth = 3; ctx.strokeStyle = P[7]; ctx.globalAlpha = 0.5 + 0.3 * Math.sin(T * 6);
+    ctx.strokeRect(z[0] + 6, z[1] + 6, z[2] - z[0] - 12, z[3] - z[1] - 12); ctx.restore();
+    const icon = drag.kind === 'sap' ? ART.jar : drag.kind === 'bag' ? ART.bag : S.owned.avalanche ? ART.devil : (S.owned.wheelbarrow ? ART.barrow : ART.cracked);
+    if (icon) ctx.drawImage(icon, drag.x - icon.width / 2, drag.y - icon.height / 2);
+    if (drag.kind === 'acorn' && !S.owned.wheelbarrow && S.owned.scoop && ART.cracked) { ctx.drawImage(ART.cracked, drag.x - 30, drag.y - 8); ctx.drawImage(ART.cracked, drag.x + 4, drag.y - 4); }
+  } else if (!S.ended) {
+    // A ghost acorn shows the move until the player has made it once in this phase.
+    const need = !hintSeen[1] && S.mended === 0 ? ['acorn', L.dunesEarly, L.benchZone] : !hintSeen[2] && S.phase === 2 && S.trees === 0 ? ['bag', L.bagZone, L.groveZone] : !hintSeen[3] && S.phase === 3 && S.sap < 1 ? ['sap', L.groveZone, L.oakZone] : null;
+    if (need && T > 1.2) {
+      const [kind, a, z] = need, ph = reduced ? 0.6 : (T * 0.45) % 1;
+      const ax = (a[0] + a[2]) / 2, ay = (a[1] + a[3]) / 2 + 20, zx = (z[0] + z[2]) / 2, zy = (z[1] + z[3]) / 2;
+      const x = ax + (zx - ax) * ph, y = ay + (zy - ay) * ph - Math.sin(ph * Math.PI) * 60;
+      const icon = kind === 'acorn' ? ART.cracked : kind === 'bag' ? ART.bag : ART.jar;
+      ctx.save(); ctx.globalAlpha = 0.65 * Math.sin(Math.max(0.15, ph) * Math.PI); if (icon) ctx.drawImage(icon, x - icon.width / 2, y - icon.height / 2); ctx.restore();
+    }
+  }
+  // Floating numbers.
+  for (let i = fx.length - 1; i >= 0; i--) {
+    const f = fx[i]; f.t += dt; if (f.t > 1.4) { fx.splice(i, 1); continue; }
+    ctx.save(); ctx.globalAlpha = 1 - f.t / 1.4; ctx.font = `${f.big ? 30 : 22}px "IM Fell English", Georgia, serif`; ctx.textAlign = 'center';
+    ctx.lineWidth = 4; ctx.strokeStyle = LEAD; ctx.fillStyle = P[7];
+    const y = f.y - (reduced ? 0 : f.t * 36); ctx.strokeText(f.text, f.x, y); ctx.fillText(f.text, f.x, y); ctx.restore();
+  }
+  // Light through glass, then age.
+  if (night < 0.9) { const g = ctx.createRadialGradient(L.harold.x, hY, 0, L.harold.x, hY, W * 0.7); g.addColorStop(0, `rgba(230,206,172,${0.18 * (1 - night)})`); g.addColorStop(1, 'rgba(230,206,172,0)'); ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore(); }
+  grain(ctx, W, H, { amount: 0.07 });
+  vignette(ctx, W, H, { strength: 0.35 + night * 0.25, color: '41,36,24' });
+
+  // HUD, five times a second.
+  hud += dt;
+  if (hud > 0.2) {
+    hud = 0;
+    $('sAcorns').textContent = E.fmt(S.acorns);
+    $('sAcornRate').textContent = st.acornRate ? `+${E.fmt(st.acornRate)}/s` : '';
+    $('statShade').hidden = S.phase < 2; $('statTrees').hidden = S.phase < 2; $('statSap').hidden = S.phase < 3;
+    $('sShade').textContent = E.fmt(S.shade); $('sShadeRate').textContent = st.shadeRate ? `+${E.fmt(st.shadeRate)}/s` : '';
+    $('sSap').textContent = E.fmt(S.sap); $('sSapRate').textContent = st.sapRate ? `+${E.fmt(st.sapRate)}/s` : '';
+    $('sTrees').textContent = `${S.trees}/${E.GROVE_MAX}`; $('sTreePrice').textContent = S.trees < E.GROVE_MAX ? `next: ${E.fmt(E.treePrice(S))} acorns` : 'full';
+    const view = S.ended ? 0 : Math.round((1 - st.cover) * 100);
+    $('mView').textContent = view + '%'; $('mBar').style.width = view + '%';
+    // The clock never gets past noon. The seconds tick; the minute doesn't.
+    if (S.ended) { $('clock').textContent = '7:41'; $('ampm').textContent = 'pm'; }
+    else { $('clock').textContent = `12:00:${String(Math.floor(S.time % 60)).padStart(2, '0')}`; $('ampm').textContent = 'noon'; }
+    refreshShop();
+    chatter += 0.2;
+    if (chatter > 70 && (S.owned.lizard || 0) > 2 && !S.ended) { chatter = 0; say(lizardLines[(S.time / 70 | 0) % lizardLines.length]); }
+  }
+  requestAnimationFrame(frame);
+}
+
+// ---------- Start ----------
+addEventListener('resize', resize);
+resize();
+await makeSprites();
+if (Sp.sheetRequested()) Sp.showSheet();
+if (S.ended) { night = 1; drawBackdrop(); $('ending').hidden = false; }
+else if (S.time > 0) say('The penguin is right where you left it. Still staring. So is Harold.');
+refreshShop();
+requestAnimationFrame(t => { last = t; frame(t); });
+$('shareBtn').addEventListener('click', () => window.DailyGame && DailyGame.share());
+</script>
+</body>
+</html>

@@ -34,5 +34,38 @@
     "minutes": "9–13",
     "seed": 3508230676,
     "interaction": "tap"
+  },
+  {
+    "n": 4,
+    "slug": "the-longest-noon",
+    "date": "2026-10-26",
+    "title": "The Longest Noon",
+    "tagline": "It has been noon for 41 days. A penguin plants a forest to win a staring contest with the sun.",
+    "emoji": "🐧🌰",
+    "scale": "billions",
+    "minutes": "20–35",
+    "seed": 2811419831,
+    "interaction": "drag-and-drop",
+    "arc": {
+      "drive": "rivalry",
+      "obstacle": "the weather",
+      "turn": "it was the wrong goal all along",
+      "initial": "H"
+    },
+    "length": "mini (10–60 min)",
+    "structure": [
+      "straight line of upgrades",
+      "distinct phases, each its own small economy"
+    ],
+    "twist": "a helper with opinions",
+    "ending": "build one final thing",
+    "look": "stained glass",
+    "music": {
+      "style": "marimba minimalism",
+      "scale": "major pentatonic"
+    },
+    "tone": "mild horror",
+    "context": "none",
+    "palette": "justparchment8"
   }
 ]

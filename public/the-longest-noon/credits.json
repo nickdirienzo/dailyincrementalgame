@@ -1,0 +1,93 @@
+{
+  "libs": [],
+  "art": [
+    {
+      "set": "Game Icons",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+      "home": "https://github.com/game-icons/icons",
+      "support": "https://game-icons.net",
+      "icons": [
+        {
+          "icon": "game-icons:acorn",
+          "author": "Lorc",
+          "source": "https://game-icons.net/1x1/lorc/acorn.html"
+        },
+        {
+          "icon": "game-icons:oak",
+          "author": "Lorc",
+          "source": "https://game-icons.net/1x1/lorc/oak.html"
+        },
+        {
+          "icon": "game-icons:camel",
+          "author": "Delapouite",
+          "source": "https://game-icons.net/1x1/delapouite/camel.html"
+        },
+        {
+          "icon": "game-icons:gecko",
+          "author": "Lorc",
+          "source": "https://game-icons.net/1x1/lorc/gecko.html"
+        },
+        {
+          "icon": "game-icons:fox",
+          "author": "Caro Asercion",
+          "source": "https://game-icons.net/1x1/caro-asercion/fox.html"
+        },
+        {
+          "icon": "game-icons:scorpion",
+          "author": "Lorc",
+          "source": "https://game-icons.net/1x1/lorc/scorpion.html"
+        },
+        {
+          "icon": "game-icons:honey-jar",
+          "author": "Delapouite",
+          "source": "https://game-icons.net/1x1/delapouite/honey-jar.html"
+        },
+        {
+          "icon": "game-icons:knapsack",
+          "author": "Lorc",
+          "source": "https://game-icons.net/1x1/lorc/knapsack.html"
+        },
+        {
+          "icon": "game-icons:squirrel",
+          "author": "Delapouite",
+          "source": "https://game-icons.net/1x1/delapouite/squirrel.html"
+        },
+        {
+          "icon": "game-icons:tornado",
+          "author": "Lorc",
+          "source": "https://game-icons.net/1x1/lorc/tornado.html"
+        },
+        {
+          "icon": "game-icons:wheelbarrow",
+          "author": "Delapouite",
+          "source": "https://game-icons.net/1x1/delapouite/wheelbarrow.html"
+        },
+        {
+          "icon": "game-icons:sunglasses",
+          "author": "Delapouite",
+          "source": "https://game-icons.net/1x1/delapouite/sunglasses.html"
+        }
+      ]
+    }
+  ],
+  "fonts": [
+    {
+      "name": "IM Fell English SC",
+      "home": "https://fonts.google.com/specimen/IM+Fell+English+SC"
+    },
+    {
+      "name": "IM Fell English",
+      "home": "https://fonts.google.com/specimen/IM+Fell+English"
+    },
+    {
+      "name": "Spectral",
+      "home": "https://fonts.google.com/specimen/Spectral"
+    }
+  ],
+  "palette": {
+    "name": "JustParchment8",
+    "author": "JustJimmy",
+    "home": "https://lospec.com/palette-list/justparchment8"
+  }
+}

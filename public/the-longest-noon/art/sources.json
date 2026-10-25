@@ -1,0 +1,110 @@
+{
+  "game-icons--acorn.svg": {
+    "icon": "game-icons:acorn",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Lorc",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/lorc/acorn.html"
+  },
+  "game-icons--oak.svg": {
+    "icon": "game-icons:oak",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Lorc",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/lorc/oak.html"
+  },
+  "game-icons--camel.svg": {
+    "icon": "game-icons:camel",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Delapouite",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/delapouite/camel.html"
+  },
+  "game-icons--gecko.svg": {
+    "icon": "game-icons:gecko",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Lorc",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/lorc/gecko.html"
+  },
+  "game-icons--fox.svg": {
+    "icon": "game-icons:fox",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Caro Asercion",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/caro-asercion/fox.html"
+  },
+  "game-icons--scorpion.svg": {
+    "icon": "game-icons:scorpion",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Lorc",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/lorc/scorpion.html"
+  },
+  "game-icons--honey-jar.svg": {
+    "icon": "game-icons:honey-jar",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Delapouite",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/delapouite/honey-jar.html"
+  },
+  "game-icons--knapsack.svg": {
+    "icon": "game-icons:knapsack",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Lorc",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/lorc/knapsack.html"
+  },
+  "game-icons--squirrel.svg": {
+    "icon": "game-icons:squirrel",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Delapouite",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/delapouite/squirrel.html"
+  },
+  "game-icons--tornado.svg": {
+    "icon": "game-icons:tornado",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Lorc",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/lorc/tornado.html"
+  },
+  "game-icons--wheelbarrow.svg": {
+    "icon": "game-icons:wheelbarrow",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Delapouite",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/delapouite/wheelbarrow.html"
+  },
+  "game-icons--sunglasses.svg": {
+    "icon": "game-icons:sunglasses",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Delapouite",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/delapouite/sunglasses.html"
+  }
+}
