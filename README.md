@@ -11,6 +11,7 @@ public/
   shared/kit/         our helpers for games: audio + music, sprites, style passes
   shared/lib/         vendored third-party libraries, pinned by version (libs.json lists them)
   shared/palettes.json  Lospec palettes the roll picks from
+  shared/samples/, shared/soundfonts/  instruments for Strudel music, served locally
   moonshroom/         one folder per game, named by its slug (page, modules, art/, credits.json)
   _redirects          old /1/-style links → named URLs
   _headers            keeps games.json uncached so new days show up right away; caches shared/lib forever
@@ -22,6 +23,7 @@ tools/art.mjs         finds and fetches open-licensed SVG art (Iconify), license
 tools/credits.mjs     writes a game's credits.json (libraries, art, fonts, palette, support links)
 tools/vendor.mjs      copies pinned libraries from node_modules into public/shared/lib
 tools/palettes.mjs    adds Lospec palettes to public/shared/palettes.json
+tools/samples.mjs     copies Strudel instruments (VCSL, piano, soundfonts) into public/shared
 CLAUDE.md             the design bar and checklist for making a game
 ```
 
@@ -85,3 +87,7 @@ Everything is stored in the player's browser under the `di:` localStorage prefix
 `di:done` (completions, which drive streaks and checkmarks), `di:sound-muted`, and `di:<n>:save`
 for each game's own progress. `<n>` is the game's internal number from `games.json`, so renaming a
 game's slug doesn't lose anyone's progress.
+
+## License
+
+AGPL-3.0-or-later (see LICENSE), because the games' music runs on [Strudel](https://strudel.cc). Art, sounds, fonts and palettes keep their own licenses; each game's Credits panel lists them.

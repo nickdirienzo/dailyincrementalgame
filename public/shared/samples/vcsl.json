@@ -1,0 +1,45 @@
+{
+ "_base": "/shared/samples/vcsl/",
+ "marimba": {
+  "B2": "Idiophones/Struck%20Idiophones/Marimba/Marimba_hit_Outrigger_B2_soft_01.mp3",
+  "B4": "Idiophones/Struck%20Idiophones/Marimba/Marimba_hit_Outrigger_B4_soft_01.mp3",
+  "C2": "Idiophones/Struck%20Idiophones/Marimba/Marimba_hit_Outrigger_C2_soft_01.mp3",
+  "C4": "Idiophones/Struck%20Idiophones/Marimba/Marimba_hit_Outrigger_C4_soft_01.mp3",
+  "C6": "Idiophones/Struck%20Idiophones/Marimba/Marimba_hit_Outrigger_C6_soft_01.mp3",
+  "F1": "Idiophones/Struck%20Idiophones/Marimba/Marimba_hit_Outrigger_F1_soft_01.mp3",
+  "F3": "Idiophones/Struck%20Idiophones/Marimba/Marimba_hit_Outrigger_F3_soft_01.mp3",
+  "F5": "Idiophones/Struck%20Idiophones/Marimba/Marimba_hit_Outrigger_F5_soft_01.mp3",
+  "G2": "Idiophones/Struck%20Idiophones/Marimba/Marimba_hit_Outrigger_G2_soft_01.mp3",
+  "G4": "Idiophones/Struck%20Idiophones/Marimba/Marimba_hit_Outrigger_G4_soft_01.mp3"
+ },
+ "vibraphone_soft": {
+  "A2": "Idiophones/Struck%20Idiophones/Vibraphone/Soft%20Mallets/Vibes_soft_A2_v2_rr1_Main.mp3",
+  "A4": "Idiophones/Struck%20Idiophones/Vibraphone/Soft%20Mallets/Vibes_soft_A4_v2_rr1_Main.mp3",
+  "B3": "Idiophones/Struck%20Idiophones/Vibraphone/Soft%20Mallets/Vibes_soft_B3_v2_rr1_Main.mp3",
+  "C3": "Idiophones/Struck%20Idiophones/Vibraphone/Soft%20Mallets/Vibes_soft_C3_v2_rr1_Main.mp3",
+  "C5": "Idiophones/Struck%20Idiophones/Vibraphone/Soft%20Mallets/Vibes_soft_C5_v2_rr1_Main.mp3",
+  "D4": "Idiophones/Struck%20Idiophones/Vibraphone/Soft%20Mallets/Vibes_soft_D4_v2_rr1_Main.mp3",
+  "E3": "Idiophones/Struck%20Idiophones/Vibraphone/Soft%20Mallets/Vibes_soft_E3_v2_rr1_Main.mp3",
+  "E5": "Idiophones/Struck%20Idiophones/Vibraphone/Soft%20Mallets/Vibes_soft_E5_v2_rr1_Main.mp3",
+  "F2": "Idiophones/Struck%20Idiophones/Vibraphone/Soft%20Mallets/Vibes_soft_F2_v2_rr1_Main.mp3",
+  "F4": "Idiophones/Struck%20Idiophones/Vibraphone/Soft%20Mallets/Vibes_soft_F4_v2_rr1_Main.mp3",
+  "G3": "Idiophones/Struck%20Idiophones/Vibraphone/Soft%20Mallets/Vibes_soft_G3_v2_rr1_Main.mp3"
+ },
+ "balafon_soft": {
+  "C#3": "Idiophones/Struck%20Idiophones/Balafon/Soft%20Mallet/EthnicXylo_softM_C%233_vl3_rr1_Mid.mp3",
+  "C4": "Idiophones/Struck%20Idiophones/Balafon/Soft%20Mallet/EthnicXylo_softM_C4_vl3_rr2_Mid.mp3",
+  "C5": "Idiophones/Struck%20Idiophones/Balafon/Soft%20Mallet/EthnicXylo_softM_C5_vl3_rr1_Mid.mp3",
+  "F3": "Idiophones/Struck%20Idiophones/Balafon/Soft%20Mallet/EthnicXylo_softM_F3_vl3_rr1_Mid.mp3",
+  "F4": "Idiophones/Struck%20Idiophones/Balafon/Soft%20Mallet/EthnicXylo_softM_F4_vl3_rr1_Mid.mp3",
+  "F5": "Idiophones/Struck%20Idiophones/Balafon/Soft%20Mallet/EthnicXylo_softM_F5_vl3_rr1_Mid.mp3"
+ },
+ "glockenspiel": {
+  "C5": "Idiophones/Struck%20Idiophones/Glockenspiel/glock_soft_C5_02.mp3",
+  "C6": "Idiophones/Struck%20Idiophones/Glockenspiel/glock_soft_C6_01.mp3",
+  "C7": "Idiophones/Struck%20Idiophones/Glockenspiel/glock_soft_C7_03.mp3",
+  "G#6": "Idiophones/Struck%20Idiophones/Glockenspiel/glock_loud_G%236_01.mp3",
+  "G4": "Idiophones/Struck%20Idiophones/Glockenspiel/glock_soft_G4_01.mp3",
+  "G5": "Idiophones/Struck%20Idiophones/Glockenspiel/glock_soft_G5_01.mp3",
+  "G6": "Idiophones/Struck%20Idiophones/Glockenspiel/glock_soft_G6_01.mp3"
+ }
+}

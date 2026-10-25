@@ -118,6 +118,14 @@
 
   @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh { animation: none; } .bar i { transition: none; } }
 </style>
+<script type="importmap">
+{ "imports": {
+  "@strudel/web": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/core": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/webaudio": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/soundfonts": "/shared/lib/@strudel/soundfonts@1.3.0/index.mjs"
+} }
+</script>
 <script src="/shared/daily.js" data-day="4" data-credits></script>
 </head>
 <body>
@@ -165,7 +173,8 @@
 import * as E from './economy.mjs';
 import * as Sp from '/shared/kit/sprites.mjs';
 import { grain, vignette } from '/shared/kit/fx.mjs';
-import { createAudio, scale, loop } from '/shared/kit/audio.mjs';
+import { createAudio, scale } from '/shared/kit/audio.mjs';
+import { createMusic } from '/shared/kit/music.mjs';
 
 const P = ['#292418', '#524839', '#73654a', '#8b7d62', '#a48d6a', '#bda583', '#cdba94', '#e6ceac'];
 // The parchment is the stonework: lead, sand, frame, page. The glass gets jewel tones, warm near
@@ -200,9 +209,12 @@ A.bindToggles($('soundBtn'), $('musicBtn'));
 // Each phase has its own key and tempo; the music moves on the next downbeat after a phase starts.
 const KEYS = { 1: ['major pentatonic', 62, 96, 3400], 2: ['minor pentatonic', 59, 92, 2600], 3: ['major pentatonic', 57, 88, 2900], night: ['major pentatonic', 50, 72, 1600] };
 const keyFor = () => KEYS[S.ended ? 'night' : S.phase];
-let N = scale(keyFor()[0], keyFor()[1]), musicKey = keyFor();
+let curKey = keyFor(), N = scale(curKey[0], curKey[1]);
 let noteIdx = 0;
-const marimba = (deg, o = {}) => A.tone({ type: 'pluck', freq: N(deg), dur: 0.08, vol: 0.22, ...o });
+const marimba = (deg, o = {}) => {
+  if (music) music.hit({ s: 'marimba', freq: N(deg), gain: (o.vol ?? 0.22) * 3.5 }, o.at ? Math.max(0, o.at - A.now) : 0);
+  else A.tone({ type: 'pluck', freq: N(deg), dur: 0.08, vol: 0.22, ...o });
+};
 const sfx = {
   pick() { marimba(7 + (noteIdx++ % 3), { vol: 0.12 }); },
   mend(big) { const d = 5 + (noteIdx++ % 5); marimba(d, { vol: 0.2 }); marimba(d + 2, { vol: 0.16, at: A.now + 0.07 }); A.noiseHit('shaker', { vol: 0.05 }); if (big) marimba(d + 5, { vol: 0.1, at: A.now + 0.14 }); },
@@ -220,62 +232,42 @@ const sfx = {
   },
 };
 
-// Process music, after Reich and Glass: a 12-note marimba cell that never stops changing.
-//  - every two bars one note of the cell moves a step or two (so it never repeats exactly)
-//  - 12 notes against 8-beat bars, so the cell keeps rotating against the downbeat
-//  - a four-chord progression, four bars each, shifts the whole cell and sets the bass
-//  - every 16 bars the texture changes: full, thinned, up high, sparse
-//  - phase 2 adds a second marimba drifting slowly out of sync; phase 3 a canon and low bells
-//  - at night only a slow, low line is left
-const cell = [0, 2, 4, 2, 5, 4, 2, 7, 4, 5, 2, 4];
-const PROG = [0, -2, 1, -1];            // chord shifts in scale degrees (I, vi-ish, IV-ish, V-ish)
-const TEXTURES = ['full', 'thin', 'high', 'full', 'sparse', 'high'];
-const M = { bar: 0, a: 0, b: 0, c: 0 };
-let cutoff = musicKey[3];
-const chord = () => PROG[Math.floor(M.bar / 4) % PROG.length];
-const texture = () => TEXTURES[Math.floor(M.bar / 16) % TEXTURES.length];
-function mutate() {
-  const i = (Math.random() * cell.length) | 0, d = Math.random() < 0.5 ? -1 : 1;
-  cell[i] = Math.max(-1, Math.min(9, cell[i] + d * (Math.random() < 0.7 ? 1 : 2)));
+// Music: Strudel, with recorded marimba, vibraphone, balafon and glockenspiel (VCSL) and a
+// soundfont pad. After Reich: one 12-note cell over 8-beat bars, a chord progression moving under
+// it, notes nudged and dropped at random, and in the grove a second line a hair faster than the
+// first so the two slowly drift apart and back. Each phase has its own key, tempo and band.
+let music = null;
+const CELL = '0 2 4 2 5 4 2 7 4 5 2 4';
+const PROG = '<0 -2 1 -1>/4';
+function song() {
+  const { n, stack } = music.strudel;
+  const key = S.ended ? 'night' : S.phase;
+  const process = (scaleName, sound) => n(CELL).add(n(PROG)).slow(1.5)
+    .sometimesBy(0.12, x => x.add(n(1))).degradeBy(0.08)
+    .scale(scaleName).s(sound);
+  if (key === 'night') return [key, stack(
+    process('D3:major:pentatonic', 'marimba').slow(2).degradeBy(0.4).gain(0.6).room(0.6),
+    n(PROG).scale('D2:major:pentatonic').s('gm_pad_warm').attack(1.5).release(3).gain(0.35),
+  ), 64 / 240];
+  if (key === 1) return [key, stack(
+    process('D4:major:pentatonic', 'marimba').gain(0.75).pan(0.4).room(0.25),
+    n(PROG).scale('D2:major:pentatonic').s('marimba').gain(0.9).room(0.2),
+  ), 96 / 240];
+  if (key === 2) return [key, stack(
+    process('B3:minor:pentatonic', 'marimba').gain(0.7).pan(0.35).room(0.3),
+    process('B4:minor:pentatonic', 'vibraphone_soft').fast(1.0125).gain(0.45).pan(0.7).room(0.4),
+    n(PROG).scale('B1:minor:pentatonic').s('balafon_soft').gain(0.9),
+  ), 92 / 240];
+  return [key, stack(
+    process('A3:major:pentatonic', 'marimba').gain(0.7).pan(0.35).room(0.35),
+    process('A4:major:pentatonic', 'vibraphone_soft').fast(1.0125).gain(0.4).pan(0.7).room(0.45),
+    process('A5:major:pentatonic', 'glockenspiel').late(0.375).degradeBy(0.5).gain(0.3).room(0.5),
+    n(PROG).scale('A1:major:pentatonic').s('balafon_soft').gain(0.9),
+    n(PROG).scale('A2:major:pentatonic').s('gm_pad_warm').attack(1.5).release(3).gain(0.25),
+  ), 88 / 240];
 }
-function playCell(idx, t, { vol, pan, detune = 0, lift = 2 }) {
-  const tex = texture(), n = idx % cell.length;
-  if (tex === 'thin' && n % 3 === 2) return;
-  if (tex === 'sparse' && n % 2 === 1) return;
-  const up = tex === 'high' ? 5 : 0;
-  A.tone({ type: 'pluck', freq: N(cell[n] + chord() + lift + up), dur: 0.08, vol, at: t, bus: A.music, cutoff, pan, detune });
-}
-const lineA = loop(A, { bpm: musicKey[2], onStep(step, t) {
-  if (step === 0) {
-    M.bar++;
-    if (keyFor() !== musicKey) { // a new phase: change key, tempo and tone on this downbeat
-      musicKey = keyFor(); N = scale(musicKey[0], musicKey[1]);
-      lineA.bpm = musicKey[2]; lineB.bpm = musicKey[2] * 1.00625; cutoff = musicKey[3];
-    }
-    if (S.phase >= 3 && !S.ended && M.bar % 4 === 0) // a soft drone under each chord in the oak phase
-      A.tone({ type: 'pad', freq: N(chord() - 5), dur: 6, vol: 0.035, attack: 1.5, release: 2, at: t, bus: A.music, cutoff: 1200 });
-    if (M.bar % 2 === 0) mutate();
-    if (!S.ended) { // bass on the downbeat, and a fifth on beat three
-      A.tone({ type: 'sine', freq: N(chord() - 10), dur: 0.5, vol: 0.16, at: t, bus: A.music, release: 0.4 });
-    }
-    if (S.phase >= 3 && !S.ended && M.bar % 4 === 0) A.tone({ type: 'bell', freq: N(chord() + 7), dur: 0.6, vol: 0.06, at: t, bus: A.music });
-  }
-  if (step === 8 && !S.ended && texture() !== 'sparse') A.tone({ type: 'sine', freq: N(chord() - 7), dur: 0.3, vol: 0.1, at: t, bus: A.music });
-  if (S.phase === 2 && !S.ended && step % 4 === 2) A.noiseHit('shaker', { at: t, vol: 0.025, bus: A.music });
-  if (step % 2) return;
-  if (S.ended) { // night: a slow, low line, one note a beat
-    if (step % 4 === 0) A.tone({ type: 'pluck', freq: N(cell[M.a++ % cell.length] - 5), dur: 0.12, vol: 0.12, at: t, bus: A.music, cutoff: 1600 });
-    return;
-  }
-  playCell(M.a++, t, { vol: 0.15, pan: -0.3 });
-  if (S.phase >= 3) playCell(M.c++ + 3, t + 0.001, { vol: 0.07, pan: 0.1, lift: 9 }); // canon, three notes behind, an octave up
-} });
-const lineB = loop(A, { bpm: musicKey[2] * 1.00625, onStep(step, t) {
-  if (step % 2 || S.phase < 2 || S.ended) return;
-  // Slightly faster and a few cents flat: it drifts against line A, slowly and a little uncannily.
-  playCell(M.b++, t, { vol: 0.09, pan: 0.35, detune: -14, lift: 7 });
-} });
-lineA.start(); lineB.start();
+createMusic(A, { packs: ['vcsl'], soundfonts: true, volume: 0.6, song }).then(m => { music = m; music.update(); })
+  .catch(e => console.warn('music unavailable', e));
 
 // ---------- Canvas ----------
 const cv = $('stage'), ctx = cv.getContext('2d');
@@ -769,6 +761,9 @@ function frame(now) {
     if (S.ended) { $('clock').textContent = '7:41'; $('ampm').textContent = 'pm'; }
     else { $('clock').textContent = `12:00:${String(Math.floor(S.time % 60)).padStart(2, '0')}`; $('ampm').textContent = 'noon'; }
     refreshShop();
+    // Phase changes: sound effects move to the new key, and the music swaps its song.
+    if (keyFor() !== curKey) { curKey = keyFor(); N = scale(curKey[0], curKey[1]); }
+    if (music) music.update();
     chatter += 0.2;
     if (chatter > 70 && (S.owned.lizard || 0) > 2 && !S.ended) { chatter = 0; say(lizardLines[(S.time / 70 | 0) % lizardLines.length]); }
   }

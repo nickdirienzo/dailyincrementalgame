@@ -49,6 +49,12 @@ if (fs.existsSync(srcFile)) {
   if (unused.length) console.log(`not credited (the game doesn't reference them): ${unused.join(', ')}`);
 }
 
+// Sounds: sample packs and soundfonts loaded through the music kit (npm run samples).
+const { PACKS } = await import('./samples.mjs?list');
+const packs = [...code.matchAll(/packs:\s*\[([^\]]*)\]/g)].flatMap(m => [...m[1].matchAll(/'(\w+)'/g)].map(x => x[1]));
+if (/soundfonts:\s*true|gm_[a-z]/.test(code)) packs.push('gm');
+if (packs.length) credits.sounds = [...new Set(packs)].filter(p => PACKS[p]).map(p => ({ ...PACKS[p] }));
+
 // Google Fonts: all are under the SIL Open Font License or Apache 2.0.
 const fonts = [...code.matchAll(/fonts\.googleapis\.com\/css2\?([^"']+)/g)]
   .flatMap(m => [...m[1].matchAll(/family=([^:&]+)/g)].map(f => decodeURIComponent(f[1].replace(/\+/g, ' '))));

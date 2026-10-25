@@ -37,9 +37,12 @@ async function open(browser, url, { ctx = { viewport: DESKTOP }, storage = null 
   const errors = [];
   page.on('console', m => { if (m.type() === 'error' && !/fonts\.(googleapis|gstatic)\.com/.test(m.text() + (m.location().url || ''))) errors.push(m.text()); });
   page.on('pageerror', e => errors.push(String(e)));
+  // Everything is served from our own site; Google Fonts is the only outside host allowed.
+  const external = [];
+  page.on('request', r => { const h = new URL(r.url()).hostname; if (!['127.0.0.1', 'localhost', 'fonts.googleapis.com', 'fonts.gstatic.com'].includes(h) && !r.url().startsWith('data:')) external.push(r.url()); });
   await page.goto(url, { waitUntil: 'load' });
   await page.waitForTimeout(800);
-  return { page, context, errors };
+  return { page, context, errors, external };
 }
 
 const sideScroll = page => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -70,7 +73,7 @@ async function checkGame(browser, base, game) {
 
   // Fresh start: nothing finished, no upgrades yet. Then play the opening.
   {
-    const { page, context, errors } = await open(browser, url);
+    const { page, context, errors, external } = await open(browser, url);
     check('ending hidden at start', !(await page.locator('#ending').isVisible()));
     check('no upgrades showing at start', (await visibleCount(page, '#shop button, #side button')) === 0);
     await shot(page, `${slug}-start.png`);
@@ -92,6 +95,7 @@ async function checkGame(browser, base, game) {
       check('ending still hidden after the opening', !(await page.locator('#ending').isVisible()));
     }
     check('no console errors (opening)', errors.length === 0, errors.join(' | '));
+    check('no third-party requests (opening)', external.length === 0, [...new Set(external)].slice(0, 3).join(' | '));
     await context.close();
   }
 

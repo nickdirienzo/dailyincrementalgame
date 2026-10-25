@@ -24,10 +24,14 @@
   @media (max-width: 760px) { .game { grid-template-columns: 1fr; } }
   canvas { touch-action: none; }
 </style>
-<!-- Libraries from /shared/lib/libs.json, by version. List only what this game imports: the credits tool reads these. -->
+<!-- Libraries from /shared/lib/libs.json, by version. List only what this game imports: the credits tool reads these.
+     Strudel's soundfonts import @strudel/core and @strudel/webaudio, which are both inside the @strudel/web bundle. -->
 <script type="importmap">
 { "imports": {
-  "pixi.js": "/shared/lib/pixi.js@8.22.0/pixi.min.mjs"
+  "@strudel/web": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/core": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/webaudio": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/soundfonts": "/shared/lib/@strudel/soundfonts@1.3.0/index.mjs"
 } }
 </script>
 <!-- Shared site runtime: top bar, credits, share card, streaks. Set data-day to this game's "n" from games.json (an internal id, never shown). -->
@@ -50,7 +54,8 @@
   </section>
 </div>
 <script type="module">
-import { createAudio, scale, loop } from '/shared/kit/audio.mjs';
+import { createAudio, scale } from '/shared/kit/audio.mjs';
+import { createMusic } from '/shared/kit/music.mjs';
 import * as Sprites from '/shared/kit/sprites.mjs';
 
 const KEY = window.DailyGame ? DailyGame.storageKey('save') : 'di:N:save';
@@ -60,6 +65,17 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 
 const A = createAudio();
 A.bindToggles(document.getElementById('soundBtn'), document.getElementById('musicBtn'));
+
+// Music: a Strudel song per game state (fetch instruments first with npm run samples).
+let music = null;
+function song() {
+  const { n, stack } = music.strudel;
+  return ['main', stack(
+    n('0 2 4 <5 7>').scale('C4:major:pentatonic').s('gm_acoustic_guitar_nylon').sometimesBy(0.2, x => x.add(n(1))),
+    n('<0 -2>').scale('C2:major:pentatonic').s('gm_acoustic_bass'),
+  ), 100 / 240];
+}
+createMusic(A, { packs: [], soundfonts: true, song }).then(m => { music = m; music.update(); });
 
 // Sprites: make them all up front (Sprites.register each one), then:
 if (Sprites.sheetRequested()) Sprites.showSheet();

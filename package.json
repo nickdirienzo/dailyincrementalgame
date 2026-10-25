@@ -10,10 +10,15 @@
     "setup": "playwright install chromium",
     "vendor": "node tools/vendor.mjs",
     "art": "node tools/art.mjs",
-    "credits": "node tools/credits.mjs"
+    "credits": "node tools/credits.mjs",
+    "samples": "node tools/samples.mjs"
   },
   "devDependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@strudel/soundfonts": "^1.3.0",
+    "@strudel/web": "^1.3.0",
     "break_infinity.js": "^2.2.0",
+    "esbuild": "^0.28.2",
     "matter-js": "^0.20.0",
     "perfect-freehand": "^1.2.3",
     "pixi-filters": "^6.1.5",

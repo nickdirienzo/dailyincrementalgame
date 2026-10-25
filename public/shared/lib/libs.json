@@ -60,6 +60,30 @@
     "support": "https://github.com/liabru/matter-js"
   },
   {
+    "name": "@strudel/web",
+    "version": "1.3.0",
+    "license": "AGPL-3.0-or-later",
+    "what": "pattern music: synths, samples, Tidal mini-notation",
+    "path": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+    "import": "@strudel/web",
+    "also": [
+      "@strudel/core",
+      "@strudel/webaudio"
+    ],
+    "home": "https://strudel.cc",
+    "support": "https://opencollective.com/tidalcycles"
+  },
+  {
+    "name": "@strudel/soundfonts",
+    "version": "1.3.0",
+    "license": "AGPL-3.0-or-later",
+    "what": "General MIDI instruments for Strudel (guitars, strings, brass, winds…)",
+    "path": "/shared/lib/@strudel/soundfonts@1.3.0/index.mjs",
+    "import": "@strudel/soundfonts",
+    "home": "https://strudel.cc",
+    "support": "https://opencollective.com/tidalcycles"
+  },
+  {
     "name": "break_infinity.js",
     "version": "2.2.0",
     "license": "MIT",

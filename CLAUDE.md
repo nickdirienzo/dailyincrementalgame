@@ -19,8 +19,12 @@ Every game should have these bones:
   within a minute. Make it a process that keeps changing (mutate the melody a note at a time,
   move through a chord progression, change texture every few dozen bars) so nothing repeats
   exactly for minutes, and let it shift subtly with the game: key, tempo or tone per phase,
-  layers that join as things grow. Keep it well under the sound effects in the mix. `public/shared/kit/audio.mjs` has the voices,
-  scales and sequencer to build it on. It starts with the first gesture, pauses while the tab
+  layers that join as things grow. Keep it well under the sound effects in the mix. Write it in Strudel (TidalCycles in the browser) through
+  `public/shared/kit/music.mjs`: real instruments (125 General MIDI soundfonts including guitars,
+  strings, brass and winds; 128 recorded VCSL instruments; a grand piano; synths) and a pattern
+  language built for variation. Fetch the instruments a game uses with `npm run samples`; they're
+  served from our site. `public/shared/kit/audio.mjs` stays for the toggles and quick synth
+  sound effects. It starts with the first gesture, pauses while the tab
   is hidden, and has its own toggle shared via `di:music-muted`; the sound mute silences it too.
 - **A clear upgrade path.** Upgrades sit in a column beside the play area (stacking below it on
   phones) so players notice unlocks. New unlocks pulse and get a "new" tag. Mix real upgrades
@@ -88,7 +92,7 @@ doesn't become the only kind of satisfaction.
     pixel grids, outlines, the `?sprites` sheet), `fx.mjs` (grain, scanlines, halftone,
     misregistration, watercolor wash).
   - `public/shared/lib/`: vendored third-party libraries, pinned by version
-    (`public/shared/lib/libs.json` lists them): PixiJS and pixi-filters (WebGL scenes and
+    (`public/shared/lib/libs.json` lists them): Strudel and its soundfonts (music), PixiJS and pixi-filters (WebGL scenes and
     CRT/glitch/bloom filters), Rough.js (sketchy redraws), perfect-freehand (ink strokes), ZzFX
     (tiny sound effects), matter.js (physics), break_infinity.js (numbers past 1e308, for
     absurd-scale days). Load ES modules through an import map listing only what the game uses.
@@ -98,6 +102,11 @@ doesn't become the only kind of satisfaction.
   finished art: recolor them to the palette and restyle them to the rolled look so no game looks
   like the icon set. Main characters are often better hand-made (pixel grids or drawn live).
   Emoji only as small accents. Register every sprite and look at the `?sprites` sheet.
+- Sounds: `npm run samples -- list` shows every instrument; `npm run samples -- vcsl marimba`,
+  `-- piano` or `-- gm gm_acoustic_guitar_nylon` copies it into `public/shared/samples` or
+  `public/shared/soundfonts` (recordings transcoded to MP3). Never load sounds from elsewhere at
+  runtime; the browser check fails on third-party requests.
+- License: the site is AGPL-3.0 (Strudel is), with the source linked from every Credits panel.
 - Credits: run `npm run credits -- <slug>` whenever the game's libraries, art, fonts or palette
   change, and keep `data-credits` on the `daily.js` tag. The site shows a Credits panel with
   licenses and links to support each project.
