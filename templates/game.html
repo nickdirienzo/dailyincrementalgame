@@ -41,8 +41,6 @@
 <div class="wrap">
   <header>
     <h1>GAME TITLE</h1>
-    <button id="soundBtn" type="button"></button>
-    <button id="musicBtn" type="button"></button>
   </header>
   <div class="game">
     <main><canvas id="stage"></canvas><!-- log line, stats --></main>
@@ -63,8 +61,14 @@ let S = { n: 0, time: 0, ended: false };
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 
-const A = createAudio();
-A.bindToggles(document.getElementById('soundBtn'), document.getElementById('musicBtn'));
+// Volume comes from the site's Sound panel. Trims balance this game's mix: measure, then set.
+const A = createAudio({ sfxTrim: 1, musicTrim: 1 });
+
+// Sound effects, one function each. npm run mix plays them all through ?debug to balance the mix.
+const sfx = {
+  action() { A.tone({ type: 'pluck', freq: scale('major pentatonic', 60)(4), dur: 0.1, vol: 0.2 }); },
+};
+if (location.search.includes('debug')) window.__game = { A, sfx, long: [] };
 
 // Music: a Strudel song per game state (fetch instruments first with npm run samples).
 let music = null;

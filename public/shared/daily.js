@@ -169,20 +169,80 @@
     creditsEl.querySelector('.di-close').focus();
   }
 
+  // ---------- Sound settings ----------
+  // One panel for every game: effects and music volume plus mute, saved in localStorage and shared
+  // across games. Games on the audio kit (shared/kit/audio.mjs) listen for the di:audio event.
+  const audioKey = { sfx: 'di:volume-sfx', music: 'di:volume-music', muted: 'di:sound-muted' };
+  const raw = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const audioSettings = () => ({
+    sfx: Number(raw(audioKey.sfx) ?? 0.8),
+    music: raw('di:music-muted') === '1' ? 0 : Number(raw(audioKey.music) ?? 0.6),
+    muted: raw(audioKey.muted) === '1',
+  });
+  function setAudio(patch) {
+    const next = { ...audioSettings(), ...patch };
+    try {
+      localStorage.setItem(audioKey.sfx, String(next.sfx));
+      localStorage.setItem(audioKey.music, String(next.music));
+      localStorage.setItem(audioKey.muted, next.muted ? '1' : '0');
+      localStorage.removeItem('di:music-muted');
+    } catch (e) {}
+    window.dispatchEvent(new Event('di:audio'));
+    syncSound();
+  }
+  let soundEl = null, soundBtn = null;
+  function syncSound() {
+    const a = audioSettings();
+    if (soundBtn) soundBtn.textContent = a.muted ? '♪ Sound off' : '♪ Sound';
+    if (!soundEl) return;
+    soundEl.querySelector('#di-sfx').value = Math.round(a.sfx * 100);
+    soundEl.querySelector('#di-music').value = Math.round(a.music * 100);
+    soundEl.querySelector('#di-mute').checked = a.muted;
+    soundEl.querySelector('#di-sfx-v').textContent = Math.round(a.sfx * 100) + '%';
+    soundEl.querySelector('#di-music-v').textContent = Math.round(a.music * 100) + '%';
+  }
+  function toggleSound() {
+    if (!soundEl) {
+      soundEl = document.createElement('div');
+      soundEl.className = 'di-sound';
+      soundEl.setAttribute('role', 'dialog');
+      soundEl.setAttribute('aria-label', 'Sound settings');
+      soundEl.innerHTML = `
+        <label class="di-slider"><span>Effects</span><input id="di-sfx" type="range" min="0" max="100" step="1"><output id="di-sfx-v"></output></label>
+        <label class="di-slider"><span>Music</span><input id="di-music" type="range" min="0" max="100" step="1"><output id="di-music-v"></output></label>
+        <label class="di-mute"><input id="di-mute" type="checkbox"> Mute everything</label>
+        <p class="di-sound-note">Saved for every game.</p>`;
+      soundEl.querySelector('#di-sfx').addEventListener('input', e => setAudio({ sfx: e.target.value / 100 }));
+      soundEl.querySelector('#di-music').addEventListener('input', e => setAudio({ music: e.target.value / 100 }));
+      soundEl.querySelector('#di-mute').addEventListener('change', e => setAudio({ muted: e.target.checked }));
+      soundBtn.after(soundEl);
+      document.addEventListener('pointerdown', e => { if (!soundEl.hidden && !soundEl.contains(e.target) && e.target !== soundBtn) soundEl.hidden = true; });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') soundEl.hidden = true; });
+      soundEl.hidden = true;
+    }
+    soundEl.hidden = !soundEl.hidden;
+    soundBtn.setAttribute('aria-expanded', String(!soundEl.hidden));
+    syncSound();
+  }
+  addEventListener('storage', e => { if (e.key && e.key.startsWith('di:')) syncSound(); });
+
   // ---------- Top bar on game pages ----------
   function addBar() {
     if (DAY == null) return;
     const bar = document.createElement('nav');
     bar.className = 'di-bar';
-    bar.innerHTML = `<a href="/">← Daily Incremental</a>`;
+    bar.innerHTML = `<a href="/">← Daily Incremental</a><span class="di-right"><span class="di-sound-wrap"><button type="button" class="di-sound-btn" aria-expanded="false"></button></span></span>`;
     document.body.prepend(bar);
+    soundBtn = bar.querySelector('.di-sound-btn');
+    soundBtn.addEventListener('click', toggleSound);
+    syncSound();
     if (!script || !script.hasAttribute('data-credits')) return;
     fetch('credits.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(c => {
       if (!c || !((c.libs || []).length || (c.art || []).length || c.palette || (c.fonts || []).length)) return;
       const a = document.createElement('a');
       a.href = '#credits'; a.className = 'di-credits-link'; a.textContent = 'Credits';
       a.addEventListener('click', e => { e.preventDefault(); openCredits(c); });
-      bar.appendChild(a);
+      bar.querySelector('.di-right').prepend(a);
     }).catch(() => {});
   }
 

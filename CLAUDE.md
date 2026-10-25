@@ -11,8 +11,13 @@ Every game should have these bones:
 - **Pleasant sounds.** Synthesized with Web Audio, never harsh. Soft feedback on the core action,
   a chime or blip when the number goes up, a small fanfare for purchases and unlocks, something
   special for the ending. Keep rapid sounds on the game's scale (the rolled one, if rolled) so
-  they stay musical. Include a mute toggle, shared across games via the `di:sound-muted`
-  localStorage key.
+  they stay musical. Don't build sound buttons: the site's Sound panel (top bar, injected by
+  `daily.js`) has effects and music volume and mute for every game, and the audio kit follows it.
+- **A balanced mix.** Measure it with `npm run mix -- <slug>` (one save per phase): music around
+  -24 dBFS RMS, each sound effect peaking near -10 dBFS and within a few dB of the others. Fix
+  what's off with the game's `sfxTrim` / `musicTrim` and per-effect levels, not by ear-guessing.
+  The game exposes `window.__game = { A, sfx }` when loaded with `?debug` so the tool can play
+  every effect.
 - **Background music.** A quiet loop in the game's own style (lo-fi, chiptune, music box...),
   generated live with Web Audio rather than shipped as audio files: no network requests, no
   licenses to track. Never a short loop: a pattern that repeats every few seconds is obvious
@@ -23,9 +28,9 @@ Every game should have these bones:
   `public/shared/kit/music.mjs`: real instruments (125 General MIDI soundfonts including guitars,
   strings, brass and winds; 128 recorded VCSL instruments; a grand piano; synths) and a pattern
   language built for variation. Fetch the instruments a game uses with `npm run samples`; they're
-  served from our site. `public/shared/kit/audio.mjs` stays for the toggles and quick synth
-  sound effects. It starts with the first gesture, pauses while the tab
-  is hidden, and has its own toggle shared via `di:music-muted`; the sound mute silences it too.
+  served from our site. `public/shared/kit/audio.mjs` owns the mix (it follows the Sound panel)
+  and quick synth sound effects. Music starts with the first gesture and pauses while the tab is
+  hidden.
 - **A clear upgrade path.** Upgrades sit in a column beside the play area (stacking below it on
   phones) so players notice unlocks. New unlocks pulse and get a "new" tag. Mix real upgrades
   with a few silly one-offs that do little but add story.
@@ -66,8 +71,7 @@ doesn't become the only kind of satisfaction.
    (not again when a finished save is reloaded). The lines become the share card, joined with
    " · ". Keep them short and emoji-led: time, a headline number, one in-joke.
 5. Give the ending a "Share result" button that calls `DailyGame.share()`. Keep the template's ids:
-   `#ending` for the ending, `#shareBtn` for the button, upgrades as buttons inside `#shop`, and
-   `#soundBtn` / `#musicBtn` for the toggles.
+   `#ending` for the ending, `#shareBtn` for the button, and upgrades as buttons inside `#shop`.
 6. Add an entry to `public/games.json` with `n`, `slug`, `date` (YYYY-MM-DD, the day it goes live),
    `title`, `tagline`, `emoji` (one or two), `scale`, `minutes`, plus, if the theme was
    rolled, `seed` and every field from `tools/roll.py` except subject, verb and object

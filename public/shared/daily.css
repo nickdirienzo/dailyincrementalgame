@@ -6,6 +6,23 @@
   font: 500 13px/1.4 ui-monospace, Menlo, Consolas, monospace;
 }
 .di-bar a { color: inherit; opacity: .7; text-decoration: none; }
+.di-right { display: flex; align-items: center; gap: 14px; }
+.di-sound-wrap { position: relative; }
+.di-sound-btn { all: unset; cursor: pointer; color: inherit; opacity: .7; font: inherit; }
+.di-sound-btn:hover, .di-sound-btn:focus-visible, .di-sound-btn[aria-expanded="true"] { opacity: 1; text-decoration: underline; }
+.di-sound {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 1001; width: min(280px, calc(100vw - 32px));
+  display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 12px;
+  background: #f6f6fd; color: #191b33; box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.di-sound[hidden] { display: none !important; }
+.di-slider { display: grid; grid-template-columns: 62px 1fr 40px; align-items: center; gap: 8px; }
+.di-slider input { width: 100%; accent-color: #ff5a36; }
+.di-slider output { text-align: right; color: #62668a; font-variant-numeric: tabular-nums; }
+.di-mute { display: flex; align-items: center; gap: 8px; }
+.di-mute input { accent-color: #ff5a36; }
+.di-sound-note { margin: 0; color: #62668a; font-size: 12px; }
 .di-bar a:hover, .di-bar a:focus-visible { opacity: 1; text-decoration: underline; }
 
 .di-overlay {

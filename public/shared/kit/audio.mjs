@@ -1,77 +1,77 @@
-// Sound and music for Daily Incremental games, all synthesized with Web Audio (no audio files).
+// Sound and music for Daily Incremental games, synthesized with Web Audio (no audio files).
 //
-//   import { createAudio, scale, loop } from '/shared/kit/audio.mjs';
-//   const A = createAudio();                       // unlocks on the first pointerdown/keydown
-//   A.bindToggles(soundBtn, musicBtn);             // shared di:sound-muted / di:music-muted keys
+//   import { createAudio, scale } from '/shared/kit/audio.mjs';
+//   const A = createAudio({ sfxTrim: 1, musicTrim: 1 }); // unlocks on the first pointerdown/keydown
 //   const notes = scale('harmonic minor', 57);     // notes(degree) -> Hz, degrees past the scale go up octaves
 //   A.tone({ type: 'square', freq: notes(4), dur: 0.12 });   // a sound effect on the sfx bus
-//   const song = loop(A, { bpm: 104, onStep(step, t, bar) { ... A.tone({ ..., at: t, bus: A.music }) } });
 //
-// Music runs only while music is on, sound is on, and the tab is visible. The sound toggle mutes
-// everything; the music toggle only the music. Keep music well under the effects in the mix.
+// Volume is the player's, set in the site's Sound panel (daily.js) and shared by every game:
+// di:volume-sfx and di:volume-music (0..1) and di:sound-muted. Games don't draw their own sound
+// buttons. Trims balance one game's mix (measure it; see CLAUDE.md), the player's sliders sit on top.
+// Music goes through A.music: Strudel via kit/music.mjs, which shares this audio context.
 
-const SOUND_KEY = 'di:sound-muted', MUSIC_KEY = 'di:music-muted';
-const read = k => { try { return localStorage.getItem(k) === '1'; } catch (e) { return false; } };
-const write = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0'); } catch (e) {} };
+const read = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } };
+export const settings = () => ({
+  muted: read('di:sound-muted', '0') === '1',
+  sfx: Math.max(0, Math.min(1, Number(read('di:volume-sfx', '0.8')))),
+  music: read('di:music-muted', '0') === '1' ? 0 : Math.max(0, Math.min(1, Number(read('di:volume-music', '0.6')))),
+});
 
-export function createAudio({ sfxVolume = 0.55, musicVolume = 0.22 } = {}) {
-  let ctx = null, master, sfx, music, noiseBuf;
-  let soundMuted = read(SOUND_KEY), musicMuted = read(MUSIC_KEY);
+export function createAudio({ sfxTrim = 1, musicTrim = 1 } = {}) {
+  let ctx = null, master, sfx, music, noiseBuf, unlocked = false;
+  let cfg = settings();
   const listeners = new Set();
   const A = {
     get ctx() { return ctx; }, get sfx() { return sfx; }, get music() { return music; }, get noise() { return noiseBuf; },
     get ready() { return !!ctx && ctx.state === 'running'; },
-    get soundOn() { return !soundMuted; }, get musicOn() { return !musicMuted && !soundMuted; },
+    get unlocked() { return unlocked; },
+    get soundOn() { return !cfg.muted && cfg.sfx > 0; }, get musicOn() { return !cfg.muted && cfg.music > 0; },
     get now() { return ctx ? ctx.currentTime : 0; },
-    unlock, setSound, setMusic, bindToggles, tone, noiseHit, onChange: fn => (listeners.add(fn), () => listeners.delete(fn)),
+    ensure, unlock, tone, noiseHit, onChange: fn => (listeners.add(fn), () => listeners.delete(fn)),
   };
   const emit = () => listeners.forEach(fn => fn(A));
 
+  // Curve the sliders so the middle of the range sounds like the middle.
+  const curve = v => v * v;
+  function apply() {
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    master.gain.setTargetAtTime(cfg.muted ? 0 : 1, t, 0.02);
+    sfx.gain.setTargetAtTime(curve(cfg.sfx) * sfxTrim, t, 0.02);
+    music.gain.setTargetAtTime(curve(cfg.music) * musicTrim, t, 0.08);
+  }
+  // The context exists before the first gesture (suspended) so Strudel can share it.
+  function ensure() {
+    if (ctx) return ctx;
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return null;
+    ctx = new C();
+    master = ctx.createGain();
+    // A gentle compressor keeps stacked sounds from clipping.
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+    master.connect(comp).connect(ctx.destination);
+    sfx = ctx.createGain(); sfx.connect(master);
+    music = ctx.createGain(); music.connect(master);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    apply();
+    return ctx;
+  }
   function unlock() {
-    if (!ctx) {
-      const C = window.AudioContext || window.webkitAudioContext;
-      if (!C) return;
-      ctx = new C();
-      master = ctx.createGain(); master.gain.value = soundMuted ? 0 : 1;
-      // A gentle compressor keeps stacked sounds from clipping.
-      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
-      master.connect(comp).connect(ctx.destination);
-      sfx = ctx.createGain(); sfx.gain.value = sfxVolume; sfx.connect(master);
-      music = ctx.createGain(); music.gain.value = musicMuted ? 0 : musicVolume; music.connect(master);
-      noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
-      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-    }
+    if (!ensure()) return;
+    unlocked = true;
     if (ctx.state === 'suspended' && !document.hidden) ctx.resume().then(emit, () => {});
     emit();
   }
   ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, true));
   document.addEventListener('visibilitychange', () => {
-    if (!ctx) return;
+    if (!ctx || !unlocked) return;
     if (document.hidden) ctx.suspend().then(emit, () => {}); else ctx.resume().then(emit, () => {});
   });
-
-  function setSound(on) {
-    soundMuted = !on; write(SOUND_KEY, soundMuted);
-    if (master) master.gain.setTargetAtTime(on ? 1 : 0, ctx.currentTime, 0.02);
-    emit();
-  }
-  function setMusic(on) {
-    musicMuted = !on; write(MUSIC_KEY, musicMuted);
-    if (music) music.gain.setTargetAtTime(on ? musicVolume : 0, ctx.currentTime, 0.08);
-    emit();
-  }
-
-  // Wires two buttons as toggles: aria-pressed plus a label. labels: { sound: [on, off], music: [on, off] }.
-  function bindToggles(soundBtn, musicBtn, labels = {}) {
-    const L = { sound: ['♪ Sound on', '♪ Sound off'], music: ['♫ Music on', '♫ Music off'], ...labels };
-    const sync = () => {
-      if (soundBtn) { soundBtn.setAttribute('aria-pressed', String(!soundMuted)); soundBtn.textContent = L.sound[soundMuted ? 1 : 0]; }
-      if (musicBtn) { musicBtn.setAttribute('aria-pressed', String(!musicMuted)); musicBtn.textContent = L.music[musicMuted ? 1 : 0]; musicBtn.disabled = soundMuted; }
-    };
-    if (soundBtn) soundBtn.addEventListener('click', () => setSound(soundMuted));
-    if (musicBtn) musicBtn.addEventListener('click', () => setMusic(musicMuted));
-    A.onChange(sync); sync();
-  }
+  // The Sound panel (this tab) and other tabs.
+  const reload = () => { cfg = settings(); apply(); emit(); };
+  addEventListener('di:audio', reload);
+  addEventListener('storage', e => { if (e.key && e.key.startsWith('di:')) reload(); });
 
   // One synthesized note. type: any OscillatorType, 'pulse' (narrow square, chiptune), 'pluck'
   // (kalimba / harp), 'bell', 'keys' (soft detuned electric piano), 'pad' (slow swell).

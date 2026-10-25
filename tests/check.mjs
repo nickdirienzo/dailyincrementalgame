@@ -8,7 +8,7 @@
 // (di:<n>:save = { ended: true }) and checks the ending shows and Share opens the share card.
 // Every page is also loaded at 390px wide to check nothing scrolls sideways, and any console
 // error or uncaught exception fails the run. Games that use the shared kit also get their credits,
-// sprite sheet (?sprites) and sound/music toggles checked. Look at the screenshots too; this can't
+// sprite sheet (?sprites) checked, and every game's Sound panel. Look at the screenshots too; this can't
 // judge looks.
 import { chromium } from 'playwright';
 import fs from 'node:fs';
@@ -135,19 +135,23 @@ async function checkGame(browser, base, game) {
     await context.close();
   }
 
-  // Sound and music toggles, for games on the audio kit: both exist, and each flips its shared key.
-  if (html.includes('/shared/kit/audio.mjs')) {
+  // The site's Sound panel: opens from the top bar, and its sliders and mute save the shared keys.
+  {
     const { page, context, errors } = await open(browser, url);
-    for (const [id, key] of [['#soundBtn', 'di:sound-muted'], ['#musicBtn', 'di:music-muted']]) {
-      const btn = page.locator(id);
-      if (!(await btn.count())) { check(`has ${id}`, false); continue; }
-      const before = await page.evaluate(k => localStorage.getItem(k), key);
-      await btn.click(); await page.waitForTimeout(100);
-      const after = await page.evaluate(k => localStorage.getItem(k), key);
-      check(`${id} toggles ${key}`, after != null && after !== before, `${before} -> ${after}`);
+    const btn = page.locator('.di-sound-btn');
+    if (!(await btn.count())) check('Sound button in the top bar', false);
+    else {
       await btn.click();
+      const panel = page.locator('.di-sound');
+      check('Sound panel opens', await panel.isVisible());
+      await page.locator('#di-music').fill('25');
+      await page.locator('#di-sfx').fill('70');
+      await page.locator('#di-mute').check();
+      const saved = await page.evaluate(() => [localStorage.getItem('di:volume-music'), localStorage.getItem('di:volume-sfx'), localStorage.getItem('di:sound-muted')]);
+      check('Sound panel saves volume and mute', saved.join() === '0.25,0.7,1', saved.join());
+      await shot(page, `${slug}-sound.png`);
     }
-    check('no console errors (toggles)', errors.length === 0, errors.join(' | '));
+    check('no console errors (sound panel)', errors.length === 0, errors.join(' | '));
     await context.close();
   }
 

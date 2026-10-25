@@ -11,7 +11,8 @@
     "vendor": "node tools/vendor.mjs",
     "art": "node tools/art.mjs",
     "credits": "node tools/credits.mjs",
-    "samples": "node tools/samples.mjs"
+    "samples": "node tools/samples.mjs",
+    "mix": "node tools/mix.mjs"
   },
   "devDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

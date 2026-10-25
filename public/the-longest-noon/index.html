@@ -48,15 +48,6 @@
   h1 { margin: 0; font: 400 clamp(32px, 6vw, 52px)/0.95 var(--display); letter-spacing: .01em; color: var(--p7); }
   .clock { margin: 4px 0 0; font: italic 15px/1.2 var(--fell); color: var(--p5); }
   .clock b { font-style: normal; font-weight: 400; color: var(--p6); font-variant-numeric: tabular-nums; }
-  .toggles { display: flex; gap: 8px; }
-  .toggle {
-    all: unset; cursor: pointer; font: 14px/1 var(--fell); color: var(--p7);
-    padding: 7px 12px; border: 2px solid var(--p2); border-radius: 3px; background: var(--p1);
-  }
-  .toggle:hover { border-color: var(--p5); }
-  .toggle:focus-visible { outline: 2px solid var(--p7); outline-offset: 2px; }
-  .toggle[aria-pressed="false"] { color: var(--p4); background: transparent; }
-  .toggle:disabled { opacity: .45; cursor: default; }
 
   .game { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
   @media (max-width: 760px) { .game { grid-template-columns: 1fr; } }
@@ -135,10 +126,6 @@
       <h1>The Longest Noon</h1>
       <p class="clock">Day <b id="day">41</b> · <b id="clock">12:00:00</b> <span id="ampm">noon</span></p>
     </div>
-    <div class="toggles">
-      <button id="soundBtn" class="toggle" type="button"></button>
-      <button id="musicBtn" class="toggle" type="button"></button>
-    </div>
   </header>
   <div class="game">
     <main>
@@ -204,8 +191,7 @@ addEventListener('pagehide', save);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
 
 // ---------- Audio: phasing marimba in D major pentatonic ----------
-const A = createAudio({ sfxVolume: 0.5, musicVolume: 0.2 });
-A.bindToggles($('soundBtn'), $('musicBtn'));
+const A = createAudio({ sfxTrim: 4, musicTrim: 1.4 });
 // Each phase has its own key and tempo; the music moves on the next downbeat after a phase starts.
 const KEYS = { 1: ['major pentatonic', 62, 96, 3400], 2: ['minor pentatonic', 59, 92, 2600], 3: ['major pentatonic', 57, 88, 2900], night: ['major pentatonic', 50, 72, 1600] };
 const keyFor = () => KEYS[S.ended ? 'night' : S.phase];
@@ -215,22 +201,26 @@ const marimba = (deg, o = {}) => {
   if (music) music.hit({ s: 'marimba', freq: N(deg), gain: (o.vol ?? 0.22) * 3.5 }, o.at ? Math.max(0, o.at - A.now) : 0);
   else A.tone({ type: 'pluck', freq: N(deg), dur: 0.08, vol: 0.22, ...o });
 };
+// Levels set from npm run mix: core actions peak near -10 dBFS, the small ones a few dB under.
 const sfx = {
-  pick() { marimba(7 + (noteIdx++ % 3), { vol: 0.12 }); },
-  mend(big) { const d = 5 + (noteIdx++ % 5); marimba(d, { vol: 0.2 }); marimba(d + 2, { vol: 0.16, at: A.now + 0.07 }); A.noiseHit('shaker', { vol: 0.05 }); if (big) marimba(d + 5, { vol: 0.1, at: A.now + 0.14 }); },
-  drop() { marimba(1, { vol: 0.1 }); A.noiseHit('shaker', { vol: 0.04 }); },
-  plant() { A.tone({ type: 'sine', freq: N(-3), dur: 0.12, vol: 0.25, glide: 0.7 }); marimba(4, { vol: 0.15, at: A.now + 0.05 }); },
-  sap() { A.tone({ type: 'sine', freq: N(3), dur: 0.18, vol: 0.12, glide: 1.6 }); A.tone({ type: 'sine', freq: N(6), dur: 0.12, vol: 0.08, glide: 1.4, at: A.now + 0.09 }); },
-  buy() { [0, 2, 4, 7].forEach((d, i) => marimba(d + 3, { vol: 0.2, at: A.now + i * 0.07 })); },
-  unlock() { A.tone({ type: 'bell', freq: N(10), dur: 0.3, vol: 0.14 }); A.tone({ type: 'bell', freq: N(12), dur: 0.3, vol: 0.1, at: A.now + 0.12 }); },
-  phase() { [0, 4, 7, 9, 12].forEach((d, i) => A.tone({ type: 'bell', freq: N(d), dur: 0.5, vol: 0.12, at: A.now + i * 0.11 })); },
-  camel() { A.tone({ type: 'keys', freq: N(-5), dur: 0.25, vol: 0.12, cutoff: 900 }); },
+  pick() { marimba(7 + (noteIdx++ % 3), { vol: 0.6 }); },
+  mend(big) { const d = 5 + (noteIdx++ % 5); marimba(d, { vol: 0.4 }); marimba(d + 2, { vol: 0.3, at: A.now + 0.07 }); A.noiseHit('shaker', { vol: 0.05 }); if (big) marimba(d + 5, { vol: 0.16, at: A.now + 0.14 }); },
+  drop() { marimba(1, { vol: 0.07 }); A.noiseHit('shaker', { vol: 0.03 }); },
+  plant() { A.tone({ type: 'sine', freq: N(-3), dur: 0.12, vol: 0.1, glide: 0.7 }); marimba(4, { vol: 0.05, at: A.now + 0.05 }); },
+  sap() { A.tone({ type: 'sine', freq: N(3), dur: 0.18, vol: 0.08, glide: 1.6 }); A.tone({ type: 'sine', freq: N(6), dur: 0.12, vol: 0.05, glide: 1.4, at: A.now + 0.09 }); },
+  buy() { [0, 2, 4, 7].forEach((d, i) => marimba(d + 3, { vol: 0.12, at: A.now + i * 0.07 })); },
+  unlock() { A.tone({ type: 'bell', freq: N(10), dur: 0.3, vol: 0.085 }); A.tone({ type: 'bell', freq: N(12), dur: 0.3, vol: 0.06, at: A.now + 0.12 }); },
+  phase() { [0, 4, 7, 9, 12].forEach((d, i) => A.tone({ type: 'bell', freq: N(d), dur: 0.5, vol: 0.065, at: A.now + i * 0.11 })); },
+  camel() { A.tone({ type: 'keys', freq: N(-5), dur: 0.25, vol: 0.04, cutoff: 900 }); },
   finale() {
     // Sunset: a slow fall down the scale, then a low, warm night chord.
-    for (let i = 0; i < 12; i++) marimba(14 - i, { vol: 0.18, at: A.now + i * 0.22 });
-    [-5, -3, 0, 2, 4].forEach(d => A.tone({ type: 'pad', freq: N(d), dur: 4, vol: 0.06, attack: 1.2, release: 3, at: A.now + 2.8, cutoff: 1400 }));
+    for (let i = 0; i < 12; i++) marimba(14 - i, { vol: 0.12, at: A.now + i * 0.22 });
+    [-5, -3, 0, 2, 4].forEach(d => A.tone({ type: 'pad', freq: N(d), dur: 4, vol: 0.05, attack: 1.2, release: 3, at: A.now + 2.8, cutoff: 1400 }));
   },
 };
+
+// ?debug exposes the audio for the mix measurements (see CLAUDE.md).
+if (location.search.includes('debug')) window.__game = { A, sfx, long: ['finale'] };
 
 // Music: Strudel, with recorded marimba, vibraphone, balafon and glockenspiel (VCSL) and a
 // soundfont pad. After Reich: one 12-note cell over 8-beat bars, a chord progression moving under
@@ -250,8 +240,8 @@ function song() {
     n(PROG).scale('D2:major:pentatonic').s('gm_pad_warm').attack(1.5).release(3).gain(0.35),
   ), 64 / 240];
   if (key === 1) return [key, stack(
-    process('D4:major:pentatonic', 'marimba').gain(0.75).pan(0.4).room(0.25),
-    n(PROG).scale('D2:major:pentatonic').s('marimba').gain(0.9).room(0.2),
+    process('D4:major:pentatonic', 'marimba').gain(1).pan(0.4).room(0.25),
+    n(PROG).scale('D2:major:pentatonic').s('marimba').gain(1.2).room(0.2),
   ), 96 / 240];
   if (key === 2) return [key, stack(
     process('B3:minor:pentatonic', 'marimba').gain(0.7).pan(0.35).room(0.3),
@@ -266,7 +256,7 @@ function song() {
     n(PROG).scale('A2:major:pentatonic').s('gm_pad_warm').attack(1.5).release(3).gain(0.25),
   ), 88 / 240];
 }
-createMusic(A, { packs: ['vcsl'], soundfonts: true, volume: 0.6, song }).then(m => { music = m; music.update(); })
+createMusic(A, { packs: ['vcsl'], soundfonts: true, song }).then(m => { music = m; music.update(); if (location.search.includes('debug')) window.__game.music = m; })
   .catch(e => console.warn('music unavailable', e));
 
 // ---------- Canvas ----------

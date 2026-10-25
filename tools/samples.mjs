@@ -12,7 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import os from 'node:os';
 import ffmpeg from '@ffmpeg-installer/ffmpeg';
 
@@ -21,6 +21,8 @@ const SAMPLES = path.join(ROOT, 'public', 'shared', 'samples');
 const FONTS = path.join(ROOT, 'public', 'shared', 'soundfonts');
 const DOUGH = 'https://raw.githubusercontent.com/felixroos/dough-samples/main';
 const FONT_SRC = 'https://felixroos.github.io/webaudiofontdata/sound';
+// Every vendored instrument is normalized to peak here, so instruments start out level-matched.
+const PEAK = -3;
 
 export const PACKS = {
   vcsl: { name: 'Versilian Community Sample Library', license: 'CC0-1.0', home: 'https://github.com/sgossner/VCSL', author: 'Versilian Studios' },
@@ -50,30 +52,37 @@ async function sampleMap(pack, names) {
   for (const name of want) {
     const entry = map[name];
     if (!entry) { console.error(`✗ ${pack}: no instrument "${name}" (npm run samples -- list)`); continue; }
-    // Uncompressed recordings are transcoded to MP3 (VBR ~160 kbps): about a tenth of the size,
-    // and every browser decodes it.
-    const toMp3 = f => f.replace(/\.(wav|aif|aiff|flac)$/i, '.mp3');
+    // Recordings are level-matched and transcoded to MP3 (VBR ~160 kbps): about a tenth of the
+    // size, every browser decodes it, and every instrument peaks at the same level. The source
+    // packs aren't level-matched (VCSL's soft marimba peaks 34 dB below its vibraphone), so one
+    // gain is applied per instrument, which keeps the dynamics between its own notes.
+    const toMp3 = f => f.replace(/\.(wav|aif|aiff|flac|mp3|ogg)$/i, '.mp3');
     const files = Array.isArray(entry) ? entry : Object.values(entry).flat();
-    let bytes = 0;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'di-samples-'));
+    const raw = [];
     for (const f of files) {
+      const src = path.join(tmp, `${raw.length}${path.extname(decodeURIComponent(f))}`);
+      fs.writeFileSync(src, await get(map._base + f, 'buf')); // map paths are already URL-encoded
+      raw.push([f, src]);
+    }
+    let max = -Infinity;
+    for (const [, src] of raw) {
+      const r = spawnSync(ffmpeg.path, ['-hide_banner', '-i', src, '-af', 'volumedetect', '-f', 'null', '-'], { encoding: 'utf8' });
+      const m = (r.stderr || '').match(/max_volume: (-?[\d.]+) dB/);
+      if (m) max = Math.max(max, Number(m[1]));
+    }
+    const gain = Number.isFinite(max) ? PEAK - max : 0;
+    let bytes = 0;
+    for (const [f, src] of raw) {
       const dest = path.join(outDir, decodeURIComponent(toMp3(f)));
-      if (!fs.existsSync(dest)) {
-        // Map paths are already URL-encoded.
-        const buf = await get(map._base + f, 'buf');
-        fs.mkdirSync(path.dirname(dest), { recursive: true });
-        if (toMp3(f) === f) fs.writeFileSync(dest, buf);
-        else {
-          const tmp = path.join(os.tmpdir(), `di-sample-${process.pid}${path.extname(f)}`);
-          fs.writeFileSync(tmp, buf);
-          execFileSync(ffmpeg.path, ['-y', '-loglevel', 'error', '-i', tmp, '-codec:a', 'libmp3lame', '-q:a', '4', dest]);
-          fs.rmSync(tmp);
-        }
-      }
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      execFileSync(ffmpeg.path, ['-y', '-loglevel', 'error', '-i', src, '-af', `volume=${gain.toFixed(2)}dB`, '-codec:a', 'libmp3lame', '-q:a', '4', dest]);
       bytes += fs.statSync(dest).size;
     }
+    fs.rmSync(tmp, { recursive: true, force: true });
     const remap = e => (Array.isArray(e) ? e.map(toMp3) : typeof e === 'string' ? toMp3(e) : Object.fromEntries(Object.entries(e).map(([k, v]) => [k, remap(v)])));
     local[name] = remap(entry);
-    console.log(`  ${pack}:${name}  ${files.length} files, ${(bytes / 1e6).toFixed(1)} MB`);
+    console.log(`  ${pack}:${name}  ${files.length} files, ${(bytes / 1e6).toFixed(1)} MB, ${gain >= 0 ? '+' : ''}${gain.toFixed(1)} dB to peak at ${PEAK} dBFS`);
   }
   fs.mkdirSync(SAMPLES, { recursive: true });
   fs.writeFileSync(mapFile, JSON.stringify(local, null, 1) + '\n');
