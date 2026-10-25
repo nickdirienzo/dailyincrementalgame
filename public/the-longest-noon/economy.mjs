@@ -191,10 +191,11 @@ export function buy(S, id) {
   return true;
 }
 
-// An upgrade shows once its phase has begun and you have a third of its main price (or own it).
+// An upgrade shows once its phase has begun and you have a third of its price (or own it). Once
+// shown it stays shown until bought, even if spending drops you back below that.
 export function visible(S, u) {
   if (maxed(S, u) || S.phase < u.phase || (u.after && !has(S, u.after))) return false;
-  if (count(S, u.id) > 0) return true;
+  if (count(S, u.id) > 0 || (S.seen && S.seen[u.id])) return true;
   const c = costOf(S, u);
   return Object.entries(c).every(([r, v]) => S[r] >= v * 0.33 || (r === 'acorns' && S.mended >= v * 0.33));
 }

@@ -32,7 +32,9 @@ Every game should have these bones:
   and quick synth sound effects. Music starts with the first gesture and pauses while the tab is
   hidden.
 - **A clear upgrade path.** Upgrades sit in a column beside the play area (stacking below it on
-  phones) so players notice unlocks. New unlocks pulse and get a "new" tag. Mix real upgrades
+  phones) so players notice unlocks. New unlocks pulse and get a "new" tag. Once an upgrade has
+  shown up it stays until bought: never hide one again because the player spent resources, or
+  they lose the goal they were saving for. Mix real upgrades
   with a few silly one-offs that do little but add story.
 - **Straightforward.** One core action you get within five seconds. No tutorial walls.
 - **Fairly cute.** A small premise with a character or two and a joke or two. Flavor text in a
