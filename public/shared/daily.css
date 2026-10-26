@@ -63,15 +63,39 @@
   all: unset; cursor: pointer; position: absolute; top: 10px; right: 14px;
   font-size: 22px; line-height: 1; color: #62668a;
 }
-.di-credits { width: min(520px, 100%); max-height: calc(100vh - 32px); overflow: auto; }
-.di-credits h3 { margin: 6px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: #62668a; }
-.di-credits ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
-.di-credits li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 14px; }
-.di-credits a { color: #191b33; }
+/* Credits wear the site's own sketchbook look (landing and privacy pages): dotted paper, a wobbly
+   inked frame and handwriting, light or dark with the system. */
+.di-credits {
+  --paper: #fbf7ee; --dot: #e6dfcd; --ink: #2b2a33; --mute: #7a7466;
+  --hand: "Gaegu", "Patrick Hand", "Comic Sans MS", cursive;
+  --text: "Patrick Hand", "Comic Sans MS", cursive;
+  --c1: #ff6b6b; --c3: #ffd43b; --c5: #4dabf7; --hl: 70%;
+  width: min(520px, 100%); max-height: calc(100vh - 32px); overflow: auto;
+  padding: 26px clamp(18px, 5vw, 32px) 22px;
+  color: var(--ink); color-scheme: light;
+  background: var(--paper) radial-gradient(var(--dot) 1.4px, transparent 1.6px) 0 0 / 22px 22px;
+  border: 2px solid var(--ink);
+  border-radius: 255px 12px 225px 12px / 12px 225px 12px 255px;
+  box-shadow: 5px 6px 0 rgba(0, 0, 0, .25);
+  font: 18px/1.4 var(--text);
+}
+@media (prefers-color-scheme: dark) {
+  .di-credits { --paper: #23252b; --dot: #33363e; --ink: #f1ede4; --mute: #a39d8f; --hl: 30%; color-scheme: dark; }
+}
+.di-credits .di-eyebrow { font-family: var(--text); font-size: 15px; letter-spacing: .08em; color: var(--mute); }
+.di-credits .di-title { font-family: var(--hand); font-size: 46px; font-weight: 700; line-height: 1; color: var(--c1); }
+.di-credits h3 { margin: 8px 0 4px; font: 700 24px/1.1 var(--hand); color: var(--ink); }
+.di-credits h3 span { background: linear-gradient(transparent 58%, color-mix(in srgb, var(--c3) var(--hl), transparent) 58%); padding: 0 4px; }
+.di-credits ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.di-credits li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; font-size: 17px; }
+.di-credits a { color: inherit; text-decoration-color: var(--c5); text-underline-offset: 3px; }
 .di-credit-name { font-weight: 700; }
-.di-credit-meta { color: #62668a; font-size: 13px; flex: 1 1 200px; overflow-wrap: anywhere; }
+.di-credit-meta { color: var(--mute); font-size: 16px; flex: 1 1 200px; overflow-wrap: anywhere; }
 .di-credit-meta a { color: inherit; }
-.di-credits .di-support { font-size: 13px; font-weight: 700; color: #ff5a36; text-decoration: none; white-space: nowrap; }
+.di-credits .di-support { font-size: 16px; color: var(--c1); text-decoration: none; white-space: nowrap; }
 .di-credits .di-support:hover { text-decoration: underline; }
+.di-credits .di-streak { color: var(--mute); font-size: 16px; }
+.di-credits .di-close { font-family: var(--hand); font-size: 30px; top: 12px; right: 20px; color: var(--mute); }
+.di-credits .di-close:focus-visible { outline-color: var(--ink); }
 @keyframes di-fade { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .di-overlay { animation: none; } }

@@ -210,16 +210,16 @@
   function creditsHtml(c) {
     const item = (title, meta, support) => `<li><span class="di-credit-name">${title}</span><span class="di-credit-meta">${meta}</span>${support ? ` <a class="di-support" href="${esc(support)}" target="_blank" rel="noopener">Support ♥</a>` : ''}</li>`;
     const parts = [];
-    if (c.libs && c.libs.length) parts.push(`<h3>Code</h3><ul>${c.libs.map(l => item(link(l.home, l.name), `${esc(l.what)} · ${esc(l.license)}`, l.support)).join('')}</ul>`);
-    if (c.art && c.art.length) parts.push(`<h3>Art, redrawn for this game</h3><ul>${c.art.map(s => {
+    if (c.libs && c.libs.length) parts.push(`<h3><span>Code</span></h3><ul>${c.libs.map(l => item(link(l.home, l.name), `${esc(l.what)} · ${esc(l.license)}`, l.support)).join('')}</ul>`);
+    if (c.art && c.art.length) parts.push(`<h3><span>Art, redrawn for this game</span></h3><ul>${c.art.map(s => {
       const authors = [...new Set(s.icons.map(i => i.author))].join(', ');
       const icons = s.icons.map(i => link(i.source, i.icon.split(':')[1])).join(', ');
       return item(link(s.home, s.set), `${icons} · by ${esc(authors)} · ${link(s.licenseUrl, s.license)}`, s.support);
     }).join('')}</ul>`);
-    if (c.sounds && c.sounds.length) parts.push(`<h3>Sounds</h3><ul>${c.sounds.map(x => item(link(x.home, x.name), `by ${esc(x.author)} · ${esc(x.license)}`, '')).join('')}</ul>`);
-    if (c.palette) parts.push(`<h3>Palette</h3><ul>${item(link(c.palette.home, c.palette.name), c.palette.author ? `by ${esc(c.palette.author)} · Lospec` : 'Lospec', '')}</ul>`);
-    if (c.fonts && c.fonts.length) parts.push(`<h3>Fonts</h3><ul>${c.fonts.map(f => item(link(f.home, f.name), `Google Fonts · ${esc(LICENSES[f.license] || f.license || 'Open Font License')}`, '')).join('')}</ul>`);
-    parts.push(`<h3>This site</h3><ul>${item(link(SOURCE, 'Daily Incremental source code'), 'AGPL-3.0, like Strudel', '')}${item(link('/privacy/', 'Privacy'), 'what we count, and what stays in your browser', '')}</ul>`);
+    if (c.sounds && c.sounds.length) parts.push(`<h3><span>Sounds</span></h3><ul>${c.sounds.map(x => item(link(x.home, x.name), `by ${esc(x.author)} · ${esc(x.license)}`, '')).join('')}</ul>`);
+    if (c.palette) parts.push(`<h3><span>Palette</span></h3><ul>${item(link(c.palette.home, c.palette.name), c.palette.author ? `by ${esc(c.palette.author)} · Lospec` : 'Lospec', '')}</ul>`);
+    if (c.fonts && c.fonts.length) parts.push(`<h3><span>Fonts</span></h3><ul>${c.fonts.map(f => item(link(f.home, f.name), `Google Fonts · ${esc(LICENSES[f.license] || f.license || 'Open Font License')}`, '')).join('')}</ul>`);
+    parts.push(`<h3><span>This site</span></h3><ul>${item(link(SOURCE, 'Daily Incremental source code'), 'AGPL-3.0, like Strudel', '')}${item(link('/privacy/', 'Privacy'), 'what we count, and what stays in your browser', '')}</ul>`);
     return parts.join('');
   }
   function openCredits(c) {
@@ -322,11 +322,14 @@
     }).catch(() => {});
   }
 
-  // Stylesheet lives next to this script.
-  const css = document.createElement('link');
-  css.rel = 'stylesheet';
-  css.href = '/shared/daily.css';
-  document.head.appendChild(css);
+  // Stylesheet lives next to this script, plus the site's handwriting fonts for the Credits panel
+  // (declared only; the browser fetches them when the panel first shows).
+  for (const href of ['/shared/daily.css', '/shared/fonts/gaegu/font.css', '/shared/fonts/patrick-hand/font.css']) {
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = href;
+    document.head.appendChild(css);
+  }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addBar);
   else addBar();
