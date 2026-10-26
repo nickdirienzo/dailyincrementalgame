@@ -7,6 +7,7 @@
     "serve": "python3 -m http.server -d public 8080",
     "check": "node tests/check.mjs",
     "og": "node tools/og.mjs",
+    "stats": "node tools/stats.mjs",
     "setup": "playwright install chromium",
     "vendor": "node tools/vendor.mjs",
     "art": "node tools/art.mjs",

@@ -78,6 +78,24 @@ Everything lives in the player's browser under the `di:` localStorage prefix: `d
 each game's progress. `<n>` is the game's internal number from `games.json`, so renaming a slug
 doesn't lose anyone's progress.
 
+## Play stats
+
+On the live site only, `daily.js` keeps anonymous totals per game in `di:plays` and reports them to
+`/api/play` (a Pages Function in `functions/`) after the player's first tap or key: a random player
+id (`di:pid`), sittings, active seconds (tab visible, input in the last minute), visible seconds,
+and whether they reached the ending. One row per player per game lands in the D1 database
+`dailyincrementalgame-stats` (schema in `migrations/`). `npm run stats` shows players, finish rate
+and median minutes per game; `npm run stats -- --json` adds every `games.json` field for comparing
+rolls. Everything fits the free plan; if a daily limit is hit, only the reports fail.
+
+One-time setup, on the personal account that hosts the site:
+```
+npx wrangler d1 create dailyincrementalgame-stats
+npx wrangler d1 execute dailyincrementalgame-stats --remote --file migrations/0001_plays.sql
+```
+Then in the Pages project: Settings → Bindings → Add → D1 database, variable name `DB`, database
+`dailyincrementalgame-stats`, for Production. Redeploy (or push) so the function picks it up.
+
 ## License
 
 AGPL-3.0-or-later (see LICENSE), because the games' music runs on [Strudel](https://strudel.cc).
