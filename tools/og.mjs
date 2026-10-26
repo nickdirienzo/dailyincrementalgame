@@ -6,7 +6,7 @@
 // A game's card is its own canvas art and styled title, saved as public/<slug>/og.png. It's captured
 // from the game's save in tools/cards.json (a busy mid-game moment, so the card never spoils the
 // ending), or from a finished save when the game has none there. Game art can be random, so existing cards are
-// left alone unless named. The landing card (public/og.png) is just the site's name and tagline.
+// left alone unless named. The landing card (public/og.png) is the landing page's header.
 // Each page's og:/twitter: tags are replaced with a fresh set; the image URL carries a content hash
 // so chat apps refetch it when the card changes. Each card also gets a small public/<slug>/thumb.jpg
 // for the landing page grid; missing thumbs are made from existing cards on every run.
@@ -21,6 +21,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = path.join(ROOT, 'public');
 const SITE = 'https://dailyincrementalgame.com';
 const W = 1200, H = 630;
+const DESCRIPTION = "A new number-go-up game every day";
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 const dataUrl = buf => 'data:image/png;base64,' + buf.toString('base64');
@@ -117,25 +118,37 @@ async function gameCard(browser, base, game) {
   await thumb(browser, game.slug);
 }
 
-async function siteCard(browser) {
+// The landing card is the landing page's header, photographed in light mode: the wordmark, its
+// squiggle and tagline, and the doodles around them on dotted paper.
+async function siteCard(browser, base) {
   const out = path.join(PUBLIC, 'og.png');
-  await renderCard(browser, `<!doctype html><html><head>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&display=swap">
-<style>
-  body { margin: 0; width: ${W}px; height: ${H}px; background: #eef0fb; color: #1b1d33; font-family: "Bricolage Grotesque", system-ui, sans-serif;
-         display: flex; flex-direction: column; justify-content: center; padding: 0 84px; box-sizing: border-box; gap: 10px; }
-  h1 { margin: 0; font-size: 124px; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
-  p { margin: 0; font-size: 40px; color: #5c6080; }
-</style></head><body>
-  <h1>Daily Incremental</h1>
-  <p>Tiny incremental games.</p>
-</body></html>`, out);
+  const context = await browser.newContext({ viewport: { width: W, height: H }, colorScheme: 'light', reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  await page.goto(`${base}/`, { waitUntil: 'networkidle' });
+  await page.addStyleTag({ content: `
+    body { padding: 0; }
+    .wrap { justify-content: center; max-width: 1140px; }
+    .brand { gap: 14px; }
+    .brand h1 { font-size: 140px; }
+    .squiggle { width: 640px; height: 26px; }
+    .brand p { font-size: 40px; }
+    .doodle { font-size: 44px; }
+    .doodle:nth-of-type(1) { left: 6% !important; top: -42% !important; }
+    .doodle:nth-of-type(2) { left: 88% !important; top: -36% !important; }
+    .doodle:nth-of-type(3) { left: 91% !important; top: 118% !important; }
+    .doodle:nth-of-type(4) { left: 5% !important; top: 122% !important; }
+    .stats, footer, .grid, .empty { display: none !important; }
+  ` });
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(500); // let the wobbly frames redraw at their new size
+  await page.screenshot({ path: out });
+  await context.close();
   writeMeta(path.join(PUBLIC, 'index.html'), {
     title: 'Daily Incremental',
-    description: 'Tiny incremental games.',
+    description: DESCRIPTION,
     url: `${SITE}/`,
     image: `${SITE}/og.png?v=${hash(out)}`,
-    alt: 'Daily Incremental: tiny incremental games.',
+    alt: 'Daily Incremental, in bouncy rainbow letters on dotted paper.',
   });
   console.log(`  ${path.relative(ROOT, out)}`);
 }
@@ -150,7 +163,7 @@ const base = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch();
 try {
   console.log('social cards');
-  if (!only.length) await siteCard(browser);
+  if (!only.length) await siteCard(browser, base);
   for (const g of targets) await gameCard(browser, base, g);
   for (const g of games) {
     const dir = path.join(PUBLIC, g.slug);

@@ -4,16 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Daily Incremental</title>
-<meta name="description" content="Tiny incremental games.">
+<meta name="description" content="A new number-go-up game every day">
 <meta property="og:site_name" content="Daily Incremental">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Daily Incremental">
-<meta property="og:description" content="Tiny incremental games.">
+<meta property="og:description" content="A new number-go-up game every day">
 <meta property="og:url" content="https://dailyincrementalgame.com/">
-<meta property="og:image" content="https://dailyincrementalgame.com/og.png?v=add6550e">
+<meta property="og:image" content="https://dailyincrementalgame.com/og.png?v=4cde8de1">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Daily Incremental: tiny incremental games.">
+<meta property="og:image:alt" content="Daily Incremental, in bouncy rainbow letters on dotted paper.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#fbf7ee" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#23252b" media="(prefers-color-scheme: dark)">
@@ -116,7 +116,7 @@ a.card:active { transform: rotate(0deg) scale(.98); }
 /* Finished games get a gold star, the kind a teacher sticks on a good worksheet. */
 .star {
   position: absolute; z-index: 3; right: -16px; top: -18px; width: 62px; height: 62px;
-  transform: rotate(var(--sr, 12deg)); filter: drop-shadow(1px 2px 0 rgba(0, 0, 0, .25));
+  transform: rotate(var(--sr, 12deg)); filter: drop-shadow(2px 2px 0 rgba(43, 42, 51, .3));
   transition: transform .3s cubic-bezier(.3, 1.7, .5, 1);
 }
 .star svg { display: block; width: 100%; height: 100%; overflow: visible; }
@@ -156,7 +156,7 @@ footer a { color: inherit; }
   <header class="brand">
     <h1 id="wordmark" aria-label="Daily Incremental">Daily Incremental</h1>
     <svg class="squiggle" id="squiggle" aria-hidden="true"></svg>
-    <p>Every day, Claude builds a new tiny incremental game.</p>
+    <p>A new number-go-up game every day</p>
     <p class="stats" aria-label="Your stats">
       <span>finished: <b id="finished">0</b></span>
       <span>streak: <b id="streak">0</b> <span aria-hidden="true" style="all:unset">🔥</span></span>
@@ -244,25 +244,30 @@ function countdown(iso) {
   return `coming ${fmtDate(iso)}`;
 }
 
-// A five-point gold foil star, slightly lopsided like it was punched out by hand.
+// A gold star sticker, drawn in the same wobbly marker as the cards. Lopsided like it was cut out by hand.
 function goldStar(seed) {
   const pts = [];
   for (let i = 0; i < 10; i++) {
     const a = -Math.PI / 2 + i * Math.PI / 5;
     const r = (i % 2 ? 13 : 29) * (1 + (noise(seed, 10 + i) - .5) * .12);
-    pts.push(`${(32 + Math.cos(a) * r).toFixed(1)},${(33 + Math.sin(a) * r).toFixed(1)}`);
+    pts.push([32 + Math.cos(a) * r, 33 + Math.sin(a) * r]);
   }
-  const id = `g${seed}`;
   const wrap = el('span', 'star');
   wrap.setAttribute('role', 'img'); wrap.setAttribute('aria-label', 'finished');
   wrap.style.setProperty('--sr', `${(noise(seed, 9) - .5) * 40}deg`);
-  wrap.innerHTML = `<svg viewBox="0 0 64 64" aria-hidden="true">
-    <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fff3b0"/><stop offset=".35" stop-color="#ffd43b"/>
-      <stop offset=".7" stop-color="#f59f00"/><stop offset="1" stop-color="#ffe066"/></linearGradient></defs>
-    <polygon points="${pts.join(' ')}" fill="url(#${id})" stroke="#b07a00" stroke-width="2.2" stroke-linejoin="round"/>
-    <path d="M24 22 L29 15" stroke="#fffbe6" stroke-width="3" stroke-linecap="round" opacity=".85"/>
-  </svg><span class="twinkle" aria-hidden="true">✦</span><span class="twinkle" aria-hidden="true">✦</span>`;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 64 64'); svg.setAttribute('aria-hidden', 'true');
+  const rc = rough.svg(svg);
+  svg.append(
+    rc.polygon(pts, {
+      fill: css.getPropertyValue('--c3').trim(), fillStyle: 'solid',
+      stroke: ink(), strokeWidth: 2.2, roughness: 1.1, bowing: 1.5, seed: seed + 20,
+    }),
+    // A crayon highlight on the upper left, like the shine on the stickers.
+    rc.line(22, 25, 27, 17, { stroke: '#fff8d6', strokeWidth: 2.6, roughness: .8, seed: seed + 21 }),
+  );
+  wrap.append(svg);
+  for (let i = 0; i < 2; i++) { const t = el('span', 'twinkle', '✦'); t.setAttribute('aria-hidden', 'true'); wrap.append(t); }
   return wrap;
 }
 
