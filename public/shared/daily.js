@@ -217,7 +217,7 @@
       return item(link(s.home, s.set), `${icons} · by ${esc(authors)} · ${link(s.licenseUrl, s.license)}`, s.support);
     }).join('')}</ul>`);
     if (c.sounds && c.sounds.length) parts.push(`<h3><span>Sounds</span></h3><ul>${c.sounds.map(x => item(link(x.home, x.name), `by ${esc(x.author)} · ${esc(x.license)}`, '')).join('')}</ul>`);
-    if (c.palette) parts.push(`<h3><span>Palette</span></h3><ul>${item(link(c.palette.home, c.palette.name), c.palette.author ? `by ${esc(c.palette.author)} · Lospec` : 'Lospec', '')}</ul>`);
+    if (c.palette) parts.push(`<h3><span>Palette</span></h3><ul>${item(link(c.palette.home, c.palette.name), c.palette.author ? `by ${esc(c.palette.author)} · Lospec` : 'Lospec', 'https://lospec.com/supporters')}</ul>`);
     if (c.fonts && c.fonts.length) parts.push(`<h3><span>Fonts</span></h3><ul>${c.fonts.map(f => item(link(f.home, f.name), `Google Fonts · ${esc(LICENSES[f.license] || f.license || 'Open Font License')}`, '')).join('')}</ul>`);
     parts.push(`<h3><span>This site</span></h3><ul>${item(link(SOURCE, 'Daily Incremental source code'), 'AGPL-3.0, like Strudel', '')}${item(link('/privacy/', 'Privacy'), 'what we count, and what stays in your browser', '')}</ul>`);
     return parts.join('');
