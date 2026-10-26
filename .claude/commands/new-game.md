@@ -5,6 +5,23 @@ argument-hint: "[optional steering, e.g. \"Use seed 12345\" or \"Make the intera
 
 Make the next Daily Incremental game. Read CLAUDE.md first and follow it exactly; it's the design bar and checklist.
 
+Music uses `.agents/skills/slopwave/SKILL.md` automatically; read `docs/music.md`
+and `.slopwave/config.json`, setting up with `npm run music:setup` if needed. After
+the pitch, save the game description, rolled music style and musical scale, phase,
+and constraints as a brief in `.slopwave/work/<slug>/`. Keep gameplay number scale
+separate. Inspect existing sessions and confirmed project preferences, author a
+plan and explicit score, arrange/mix, and use `session render` for each listening
+candidate. Retain exact parents, changed briefs/plans, and all revision snapshots.
+Use the selected exported `song.mjs` through our existing Strudel adapter as shown
+in the template; the game owns playback and state changes. Start with a composed
+loop and develop it for the game's duration. Verify sampled adaptations separately
+if the rolled style needs them; the session renderer supports synth voices.
+Keep work, renders, feedback and preferences in this project's `.slopwave/`.
+Record user feedback against the heard revision with verbatim quotes separate from
+interpretations: acceptance is not pairwise preference, and only unambiguous human
+comparisons establish preferences. Never label tests, agent critiques or silence as
+human approval. Autonomous game delivery does not require inventing acceptance.
+
 1. Roll the theme. Run `python3 tools/roll.py`, or `python3 tools/roll.py <seed>` if a seed is given below. It picks everything from fixed lists, each part independently, because an LLM asked to "come up with a game" lands on the same few ideas every time (the first three games were all about something lonely). Use exactly what it rolls; don't reroll, swap words or pick your own, because the point is to get ideas you wouldn't choose. The only exception is steering written below, which overrides the parts it names. The roll gives:
    - **theme**: subject, verb, object. The subject describes the character, not the goal, so a "lonely" or "shy" subject is still a game about the rolled drive.
    - **arc**: a drive (what the character wants), an obstacle (what's in the way), a turn (how the story lands) and an initial (the first letter of the name of the key person, place or thing). The upgrades chase the drive, push past the obstacle, and the ending lands the turn. Don't drift back to finding friends, belonging or being less lonely unless the arc itself says so.
@@ -27,7 +44,7 @@ Make the next Daily Incremental game. Read CLAUDE.md first and follow it exactly
    - the rolled structure and twist as real mechanics, with saves that resume mid-game (phase, layer, resets and all)
    - for short and story games, offline progress: when a player comes back, credit the time away (capped, at a reduced rate) and tell them what happened while they were gone
    - pleasant synthesized Web Audio sounds for every action, an unlock chime, a purchase sound and a finale, all on the rolled musical scale, (no sound buttons of your own: the site's Sound panel handles volume and mute)
-   - background music in the rolled style, written in Strudel through public/shared/kit/music.mjs with instruments that suit the style (`npm run samples -- list`; fetch the ones you use): quiet and under the sound effects in the mix, and never a short loop: write it as a process that keeps changing (melody mutating a note at a time, a chord progression, texture changes every few dozen bars) so nothing repeats exactly for minutes, and shift key, tempo or tone subtly as the game moves through phases, starting on the first gesture, pausing while the tab is hidden.
+   - background music in the rolled style, composed with slopwave from the saved game brief and plan, exported through public/shared/kit/music.mjs with instruments that suit the style (`npm run samples -- list`; fetch sampled instruments you use): quiet and under the sound effects in the mix. Develop the initial composed loop with deliberate motif, harmony and texture variations so the finished soundtrack does not repeat every few seconds. Shift key, tempo or tone subtly as the game moves through phases; the existing adapter starts on the first gesture and pauses while the tab is hidden. Verify the exported module with `npm run music:check -- <revision/song.mjs>`, then listen over several returns in the game and check phase transitions; numerical checks alone cannot establish musical quality.
    - an upgrade column on the right (stacking below on phones) where new unlocks pulse with a "new" tag and the heading shows how many are affordable
    - a mix of real upgrades and a few silly one-offs that add story, a meter that tracks progress toward the arc's drive, and flavor text in a log line, all written in the rolled tone
    - a real ending in the rolled ending form that calls DailyGame.finish() once with short, emoji-led share lines, plus a Share button

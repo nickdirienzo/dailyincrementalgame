@@ -3,6 +3,7 @@
 //
 //   npm run mix -- <slug>                         fresh start
 //   npm run mix -- <slug> '{"phase":2}' ...       one or more saves to load (music per phase)
+//   npm run mix -- <slug> --music-only [save-json...]  recheck music without replaying unchanged effects
 //
 // The game must expose its audio when loaded with ?debug:
 //   window.__game = { A, sfx: { name: () => play it, ... }, long: ['finale'] }   (A from createAudio)
@@ -18,8 +19,10 @@ import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const [slug, ...saves] = process.argv.slice(2);
-if (!slug) { console.error('usage: npm run mix -- <slug> [save-json...]'); process.exit(1); }
+const [slug, ...args] = process.argv.slice(2);
+const musicOnly = args.includes('--music-only');
+const saves = args.filter(arg => arg !== '--music-only');
+if (!slug) { console.error('usage: npm run mix -- <slug> [--music-only] [save-json...]'); process.exit(1); }
 const n = Number((fs.readFileSync(path.join(ROOT, 'public', slug, 'index.html'), 'utf8').match(/data-day="(\d+)"/) || [])[1]);
 
 const MUSIC_TARGET = -24, SFX_TARGET = -10;
@@ -35,7 +38,7 @@ async function measure(save) {
   await page.mouse.click(5, 5);
   await page.waitForFunction(() => window.__game && window.__game.A && window.__game.A.ready, null, { timeout: 8000 });
   await page.waitForTimeout(2500); // let the music start and its samples load
-  const result = await page.evaluate(async () => {
+  const result = await page.evaluate(async musicOnly => {
     const { A, sfx } = window.__game;
     const tap = node => { const a = A.ctx.createAnalyser(); a.fftSize = 2048; node.connect(a); return a; };
     const listen = async (an, ms) => {
@@ -50,6 +53,7 @@ async function measure(save) {
       return { peak: db(peak), rms: db(Math.sqrt(sum / Math.max(1, count))) };
     };
     const music = await listen(tap(A.music), 8000);
+    if (musicOnly) return { music, effects: {} };
     const fxTap = tap(A.sfx), effects = {};
     // Play each effect once to load its samples, then measure three plays and keep the median
     // (sampled effects vary by note; long ones like a finale are measured over their first 1.2s).
@@ -66,7 +70,7 @@ async function measure(save) {
       effects[name] = takes[1];
     }
     return { music, effects };
-  });
+  }, musicOnly);
   await ctx.close();
   return result;
 }
@@ -90,6 +94,9 @@ const musicRms = avg(all.map(r => r.music.rms).filter(x => x > -100));
 const fxPeaks = all.flatMap(r => Object.values(r.effects).filter(e => !e.error && e.peak > -100).map(e => e.peak));
 const fxMid = avg(fxPeaks);
 const toGain = db => Math.pow(10, db / 20);
-console.log(`\nmusic sits ${(musicRms - MUSIC_TARGET).toFixed(1)} dB from target; effects average ${(fxMid - SFX_TARGET).toFixed(1)} dB from target, spread ${(Math.max(...fxPeaks) - Math.min(...fxPeaks)).toFixed(1)} dB`);
-console.log(`multiply musicTrim by ${toGain(MUSIC_TARGET - musicRms).toFixed(2)} and sfxTrim by ${toGain(SFX_TARGET - fxMid).toFixed(2)}; even out individual effects in the game.`);
+console.log(`\nmusic sits ${(musicRms - MUSIC_TARGET).toFixed(1)} dB from target; multiply musicTrim by ${toGain(MUSIC_TARGET - musicRms).toFixed(2)}.`);
+if (fxPeaks.length) {
+  console.log(`effects average ${(fxMid - SFX_TARGET).toFixed(1)} dB from target, spread ${(Math.max(...fxPeaks) - Math.min(...fxPeaks)).toFixed(1)} dB`);
+  console.log(`multiply sfxTrim by ${toGain(SFX_TARGET - fxMid).toFixed(2)}; even out individual effects in the game.`);
+}
 await browser.close(); server.close();

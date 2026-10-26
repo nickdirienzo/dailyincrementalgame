@@ -12,7 +12,11 @@
     "art": "node tools/art.mjs",
     "credits": "node tools/credits.mjs",
     "samples": "node tools/samples.mjs",
-    "mix": "node tools/mix.mjs"
+    "mix": "node tools/mix.mjs",
+    "music": "python3 tools/slopwave.py",
+    "music:setup": "python3 .agents/skills/slopwave/scripts/setup.py --project . --install --ref 6253c8a73ca6767d1f1280717f1057c3a534f972",
+    "music:check": "node tests/music.mjs",
+    "music:game-check": "node tests/game-music.mjs"
   },
   "devDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

@@ -61,6 +61,15 @@ You can queue games ahead of time; each one appears at midnight in the player's 
 Or, in Claude Code, run `/new-game` (optionally with steering like `/new-game Use seed 12345`). It rolls a
 theme, builds the game, checks pacing with a simulated player, tests it in a browser, and commits.
 
+Game music uses the repo-local slopwave skill, driven by each game's description
+and music brief. Run `mise install` then `npm run music:setup` once per checkout;
+see [the music workflow](docs/music.md) for composition, rendering and feedback.
+The separate toolchain, experiments, revision snapshots, listening feedback and
+preferences live under ignored `.slopwave/`; back it up with the project when needed.
+Only selected composition modules go into game assets, using the existing Strudel
+adapter and game-owned playback. `AGENTS.md` and `CLAUDE.md` enable this workflow
+for future agent sessions.
+
 ## Testing
 
 ```

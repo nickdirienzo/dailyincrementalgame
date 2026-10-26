@@ -4,6 +4,16 @@ dailyincrementalgame.com serves one small incremental game per day. Each game is
 self-contained HTML file, vibe-coded and then hand-tuned. There is no shared game engine on
 purpose: every day can be whatever it wants to be.
 
+For new or revised game music, automatically use `.agents/skills/slopwave/SKILL.md`
+and `docs/music.md`. Read `.slopwave/config.json` (run `npm run music:setup` if absent).
+Compose from the game's description, rolled music brief, musical scale, and phase;
+keep the gameplay number scale separate. Keep plans, experiments, revision snapshots,
+listening feedback, and preferences in this project's `.slopwave/`. Preserve exact
+feedback quotes and revision references; acceptance is not a preference comparison,
+and tests or agent judgments are not human labels. Deliver the selected `song.mjs`
+through our existing music adapter; the game owns playback. Preserve existing games
+and music unless their revision is part of the task.
+
 ## The bar (from the first game, Moonshroom)
 
 Every game should have these bones:

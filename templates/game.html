@@ -54,6 +54,9 @@
 <script type="module">
 import { createAudio, scale } from '/shared/kit/audio.mjs';
 import { createMusic } from '/shared/kit/music.mjs';
+// Copy the selected slopwave revision's module here before running the new game.
+// Compose from this game's brief; see docs/music.md. Research stays in .slopwave/.
+import { createPattern, cps } from './song.mjs';
 import * as Sprites from '/shared/kit/sprites.mjs';
 
 const KEY = window.DailyGame ? DailyGame.storageKey('save') : 'di:N:save';
@@ -70,16 +73,14 @@ const sfx = {
 };
 if (location.search.includes('debug')) window.__game = { A, sfx, long: [] };
 
-// Music: a Strudel song per game state (fetch instruments first with npm run samples).
+// The game owns playback; song.mjs only creates a pattern. Use its exported cps.
+// The composition can span many four-beat Strudel cycles.
+// For phases, select a stable key/pattern here and call music.update() on changes.
 let music = null;
 function song() {
-  const { n, stack } = music.strudel;
-  return ['main', stack(
-    n('0 2 4 <5 7>').scale('C4:major:pentatonic').s('gm_acoustic_guitar_nylon').sometimesBy(0.2, x => x.add(n(1))),
-    n('<0 -2>').scale('C2:major:pentatonic').s('gm_acoustic_bass'),
-  ), 100 / 240];
+  return ['main', createPattern(music.strudel), cps];
 }
-createMusic(A, { packs: [], soundfonts: true, song }).then(m => { music = m; music.update(); });
+createMusic(A, { song }).then(m => { music = m; music.update(); });
 
 // Sprites: make them all up front (Sprites.register each one), then:
 if (Sprites.sheetRequested()) Sprites.showSheet();

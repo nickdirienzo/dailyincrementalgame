@@ -7,14 +7,6 @@
       "what": "pattern music: synths, samples, Tidal mini-notation",
       "home": "https://strudel.cc",
       "support": "https://opencollective.com/tidalcycles"
-    },
-    {
-      "name": "@strudel/soundfonts",
-      "version": "1.3.0",
-      "license": "AGPL-3.0-or-later",
-      "what": "General MIDI instruments for Strudel (guitars, strings, brass, winds…)",
-      "home": "https://strudel.cc",
-      "support": "https://opencollective.com/tidalcycles"
     }
   ],
   "art": [
@@ -94,12 +86,6 @@
       "license": "CC0-1.0",
       "home": "https://github.com/sgossner/VCSL",
       "author": "Versilian Studios"
-    },
-    {
-      "name": "WebAudioFont (General MIDI soundfonts)",
-      "license": "MIT",
-      "home": "https://github.com/surikov/webaudiofontdata",
-      "author": "Sergey Surikov, from free SoundFont collections"
     }
   ],
   "fonts": [
