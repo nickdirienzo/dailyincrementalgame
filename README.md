@@ -91,7 +91,8 @@ sideways scroll at 390px, and fails on any console error. Screenshots go to `tes
 Each game has its own link preview: `public/<slug>/og.png` plus `og:`/`twitter:` meta tags in its
 page. `npm run og` renders cards for games that don't have one yet and refreshes the landing card;
 `npm run og -- <slug>` re-renders one game. Chat apps cache previews hard, so the image URL carries
-a content hash to make them refetch a changed card.
+a content hash to make them refetch a changed card. The card is drawn from the game's save in `tools/cards.json`, a mid-game
+moment chosen so the preview never spoils the ending (games without one fall back to a finished save).
 
 ## Local data
 

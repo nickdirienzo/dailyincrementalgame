@@ -81,7 +81,7 @@ doesn't become the only kind of satisfaction.
 3. Build the game. Save state as one JSON object under `DailyGame.storageKey('save')` (which is
    `di:<n>:save`), merged over defaults on load, so that a save of just `{ "ended": true }` opens
    straight into the ending, drawn as the finished world (everything built), not an empty
-   scene. The browser check and the social card both rely on this.
+   scene. The browser check relies on this.
 4. When the player reaches the ending, call `DailyGame.finish({ lines: [...] })` exactly once
    (not again when a finished save is reloaded). The lines become the share card, joined with
    " · ". Keep them short and emoji-led: time, a headline number, one in-joke.
@@ -94,8 +94,10 @@ doesn't become the only kind of satisfaction.
    `context`, `palette`; for a calendar nod, add a `"topic"` saying what it was), so
    the next roll can flag repeats. `minutes` comes from the rolled length.
 7. Run `npm run credits -- <slug>` to write the game's credits.
-8. Run `npm run og` to render the game's social card (`public/<slug>/og.png`, the preview image in
-   chat apps) and write its meta tags, and look at the card. It also refreshes the landing card.
+8. Add a save for the game's social card to `tools/cards.json`: a busy mid-game moment that
+   never shows the ending (the card is the first thing people see, so it must not spoil it).
+   Then run `npm run og -- <slug>` to render the card (`public/<slug>/og.png`, the preview image in
+   chat apps) and write its meta tags, and look at the card.
 9. Run `npm run check -- <slug>` and look at the screenshots in `tests/screenshots/`. Then play it
    yourself: `npm run serve`, open http://localhost:8080/<slug>/, and play all the way through once
    with sound on and once in a phone-width window.

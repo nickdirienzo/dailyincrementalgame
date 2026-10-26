@@ -3,8 +3,9 @@
 //   npm run og                 the landing page card + any game that doesn't have a card yet
 //   npm run og -- moonshroom   (re)render that game's card (several slugs allowed)
 //
-// A game's card is its own canvas art and styled title, captured from a finished save so the scene
-// is at its fullest, saved as public/<slug>/og.png. Game art can be random, so existing cards are
+// A game's card is its own canvas art and styled title, saved as public/<slug>/og.png. It's captured
+// from the game's save in tools/cards.json (a busy mid-game moment, so the card never spoils the
+// ending), or from a finished save when the game has none there. Game art can be random, so existing cards are
 // left alone unless named. The landing card (public/og.png) is just the site's name and tagline.
 // Each page's og:/twitter: tags are replaced with a fresh set; the image URL carries a content hash
 // so chat apps refetch it when the card changes.
@@ -54,13 +55,16 @@ async function renderCard(browser, html, out) {
   await page.close();
 }
 
+const CARDS = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'cards.json'), 'utf8'));
+
 async function gameCard(browser, base, game) {
+  const save = CARDS[game.slug] || { ended: true };
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2 });
-  await context.addInitScript(n => localStorage.setItem(`di:${n}:save`, JSON.stringify({ ended: true })), game.n);
+  await context.addInitScript(([n, s]) => localStorage.setItem(`di:${n}:save`, s), [game.n, JSON.stringify(save)]);
   const page = await context.newPage();
   await page.goto(`${base}/${game.slug}/`, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(4000); // let the finale animation settle
+  await page.waitForTimeout(4000); // let the scene (or the finale) settle
   const art = await page.locator('canvas').first().screenshot();
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   // Hide everything but the title so it's captured on its own, ready to lay over the art. Pad the
