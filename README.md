@@ -60,14 +60,15 @@ Cloudflare R2 bucket. Only the selected composition ships, as a module inside th
 
 ## Deploy
 
-**Git-connected (deploys on every push to `main`).** In the Cloudflare dashboard: Workers & Pages →
-Create → Pages → Connect to Git, pick the repo, framework preset **None**, build command empty,
-output directory `public`. Then add `dailyincrementalgame.com` under the project's Custom domains.
+The site is a Cloudflare Worker named `dailyincrementalgame` on the personal account, configured by
+`wrangler.jsonc`: everything in `public/` is served as static assets (with `_headers` and
+`_redirects`), and `worker/index.js` only runs for `/api/*`. Workers Builds deploys every push to
+`main`. To deploy by hand: `npx wrangler deploy`.
 
-**Direct upload.**
+Wrangler commands in this repo use the `dailyincrementalgame-site` login profile. On a new Mac:
 ```
-npx wrangler pages project create dailyincrementalgame --production-branch main
-npx wrangler pages deploy public --project-name dailyincrementalgame
+npx wrangler auth create dailyincrementalgame-site      # sign in to the personal account
+npx wrangler auth activate dailyincrementalgame-site .
 ```
 
 ## Player data
@@ -81,20 +82,15 @@ doesn't lose anyone's progress.
 ## Play stats
 
 On the live site only, `daily.js` keeps anonymous totals per game in `di:plays` and reports them to
-`/api/play` (a Pages Function in `functions/`) after the player's first tap or key: a random player
+`/api/play` (`worker/index.js`) after the player's first tap or key: a random player
 id (`di:pid`), sittings, active seconds (tab visible, input in the last minute), visible seconds,
 and whether they reached the ending. One row per player per game lands in the D1 database
 `dailyincrementalgame-stats` (schema in `migrations/`). `npm run stats` shows players, finish rate
 and median minutes per game; `npm run stats -- --json` adds every `games.json` field for comparing
 rolls. Everything fits the free plan; if a daily limit is hit, only the reports fail.
 
-One-time setup, on the personal account that hosts the site:
-```
-npx wrangler d1 create dailyincrementalgame-stats
-npx wrangler d1 execute dailyincrementalgame-stats --remote --file migrations/0001_plays.sql
-```
-Then in the Pages project: Settings → Bindings → Add → D1 database, variable name `DB`, database
-`dailyincrementalgame-stats`, for Production. Redeploy (or push) so the function picks it up.
+The database and its binding are in `wrangler.jsonc`. To change the schema, add a numbered file to
+`migrations/` and run `npx wrangler d1 migrations apply dailyincrementalgame-stats --remote`.
 
 ## License
 

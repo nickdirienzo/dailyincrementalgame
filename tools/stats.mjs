@@ -3,8 +3,8 @@
 //   npm run stats             a table per game
 //   npm run stats -- --json   the same per game with every games.json field (theme roll, length...)
 //
-// Reads with `wrangler d1 execute --remote`, so wrangler must be logged in to the personal
-// Cloudflare account that hosts the site (not a work login). Times are active minutes: tab visible
+// Reads with `wrangler d1 execute --remote` through the repo's dailyincrementalgame-site login
+// profile (see README, Deploy). Times are active minutes: tab visible
 // with input in the last minute, the closest thing to "time spent playing" for an idle game.
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';

@@ -1,0 +1,22 @@
+// The site: static files from public/, plus a small Worker for /api/* (play stats).
+// Deployed on every push to main by Workers Builds (`npx wrangler deploy`).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dailyincrementalgame",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-19",
+  "assets": {
+    "directory": "public",
+    "binding": "ASSETS",
+    // Only /api/* runs the script; every page, game and asset is served without it.
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dailyincrementalgame-stats",
+      "database_id": "2583c61b-a71c-41f3-bf1e-b7df57fe3120"
+    }
+  ],
+  "observability": { "enabled": true }
+}

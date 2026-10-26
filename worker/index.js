@@ -1,10 +1,13 @@
+// The site's Worker. Everything in public/ is served as static assets without running this script
+// (wrangler.jsonc); it only handles /api/*.
+//
 // POST /api/play: daily.js reports a player's totals for one game (see "Play stats" in daily.js).
 // Reports carry running totals, so the row keeps the largest of each and the first ending, and a
-// repeated or out-of-order report changes nothing. Needs the D1 binding DB (migrations/).
+// repeated or out-of-order report changes nothing. Rows go to the D1 binding DB (migrations/).
 const DAY = 86400;
 const int = (v, max) => (Number.isInteger(v) && v >= 0 && v <= max ? v : null);
 
-export async function onRequestPost({ request, env }) {
+async function play(request, env) {
   let b;
   try { b = await request.json(); } catch (e) { return new Response(null, { status: 400 }); }
   const pid = typeof b.pid === 'string' && /^[0-9a-f-]{36}$/.test(b.pid) ? b.pid : null;
@@ -35,3 +38,14 @@ export async function onRequestPost({ request, env }) {
   ).run();
   return new Response(null, { status: 204 });
 }
+
+export default {
+  async fetch(request, env) {
+    const { pathname } = new URL(request.url);
+    if (pathname === '/api/play') {
+      if (request.method !== 'POST') return new Response(null, { status: 405, headers: { Allow: 'POST' } });
+      return play(request, env);
+    }
+    return env.ASSETS.fetch(request);
+  },
+};

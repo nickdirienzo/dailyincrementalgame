@@ -2,3 +2,4 @@ node_modules/
 tests/screenshots/
 .slopwave/
 __pycache__/
+.wrangler/

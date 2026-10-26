@@ -130,7 +130,7 @@
   // Anonymous totals per game, so we can see what gets played, what gets finished and how long it
   // takes: a random player id, sittings, seconds active (tab visible, input in the last minute) and
   // seconds visible (idling included), and whether the ending was reached. Kept in di:plays and
-  // reported to /api/play (functions/api/play.js) every five minutes and when the tab hides.
+  // reported to /api/play (worker/index.js) every five minutes and when the tab hides.
   // Only on the live site, never in automated browsers, and only after the first tap or key.
   const stats = (() => {
     const on = DAY != null && location.hostname === SITE && !navigator.webdriver;
