@@ -15,187 +15,325 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Daily Incremental: tiny incremental games.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#eef0fb" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#12131f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#fbf7ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#23252b" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Patrick+Hand&display=swap">
 <style>
 [hidden] { display: none !important; }
-/* Layout: one narrow column. Wordmark, today's game card led by its big emoji, then the archive. */
+/* A sketchbook: dotted paper, crooked cards taped down with washi tape, wobbly hand-drawn frames
+   (Rough.js), and a bouncy wordmark. Cards straighten up when you point at them. */
 :root {
-  --bg: #eef0fb;
+  --paper: #fbf7ee;
+  --dot: #e6dfcd;
+  --ink: #2b2a33;
+  --mute: #7a7466;
   --card: #ffffff;
-  --ink: #191b33;
-  --mute: #62668a;
-  --line: #d5d8ef;
-  --hot: #ff5a36;
-  --done: #2f9e6b;
-  --display: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: "DM Mono", ui-monospace, Menlo, Consolas, monospace;
+  --hand: "Gaegu", "Patrick Hand", "Comic Sans MS", cursive;
+  --text: "Patrick Hand", "Comic Sans MS", cursive;
+  --c1: #ff6b6b; --c2: #ffa94d; --c3: #ffd43b; --c4: #69db7c; --c5: #4dabf7; --c6: #b197fc; --c7: #f783ac;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #12131f; --card: #1b1d2e; --ink: #eceefa; --mute: #9a9ec2; --line: #2c2f48; --hot: #ff7a5c; --done: #5fd39b;
+    --paper: #23252b; --dot: #33363e; --ink: #f1ede4; --mute: #a39d8f; --card: #2d3038;
     color-scheme: dark;
   }
 }
 * { box-sizing: border-box; }
-html, body { background: var(--bg); color: var(--ink); }
+html {
+  min-height: 100%; color: var(--ink);
+  background: var(--paper) radial-gradient(var(--dot) 1.4px, transparent 1.6px) 0 0 / 22px 22px;
+}
 body {
   margin: 0;
-  font-family: var(--display);
-  font-size: 16px; line-height: 1.5;
+  font-family: var(--text);
+  font-size: 19px; line-height: 1.4;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: max(32px, env(safe-area-inset-top, 0px)) max(56px, env(safe-area-inset-bottom, 0px));
+  padding-block: max(36px, env(safe-area-inset-top, 0px)) max(56px, env(safe-area-inset-bottom, 0px));
+  overflow-x: hidden;
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column;
 }
-.wrap { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
+/* The footer sits at the bottom of the window even when there are only a few games. */
+.wrap { flex: 1; width: 100%; max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
+footer { margin-top: auto; }
+footer p { margin: 0; }
 
-.brand { display: flex; flex-direction: column; gap: 6px; }
-.brand h1 { margin: 0; font-weight: 800; font-size: clamp(36px, 8vw, 60px); line-height: .95; letter-spacing: -.03em; text-wrap: balance; }
-.brand p { margin: 0; color: var(--mute); max-width: 52ch; }
-
-.today {
-  background: var(--card); border: 1px solid var(--line); border-radius: 20px;
-  padding: 24px; display: grid; gap: 4px 24px;
-  grid-template-columns: auto minmax(0, 1fr); align-items: end;
+/* Header */
+.brand { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.brand h1 {
+  margin: 0; font-family: var(--hand); font-weight: 700; line-height: .9;
+  font-size: clamp(46px, 11vw, 92px); letter-spacing: -.01em;
 }
-.emoji { font-size: clamp(56px, 14vw, 96px); line-height: 1; white-space: nowrap; }
-.emoji.pop { animation: pop .5s cubic-bezier(.3, 1.6, .5, 1) both; }
-@keyframes pop { from { transform: scale(.4) rotate(-12deg); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .emoji.pop { animation: none; } }
-.today .info { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding-bottom: 6px; }
-.eyebrow { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--mute); margin: 0; }
-.today h2 { margin: 0; font-size: clamp(26px, 5vw, 36px); line-height: 1.05; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
-.today .tagline { margin: 0; color: var(--mute); }
-.today .actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 18px; }
-.play {
-  display: inline-block; text-decoration: none;
-  padding: 13px 26px; border-radius: 12px;
-  background: var(--ink); color: var(--bg); font-weight: 800; font-size: 18px;
-  transition: transform .1s;
+.brand h1 .w { display: inline-block; white-space: nowrap; }
+.brand h1 .l { display: inline-block; transform: rotate(var(--r)) translateY(var(--y)); color: var(--c); }
+.brand h1 .l:hover { animation: boing .5s; }
+@keyframes boing { 30% { transform: rotate(calc(var(--r) * -2)) translateY(-14px) scale(1.12); } 60% { transform: rotate(var(--r)) translateY(3px); } }
+.squiggle { display: block; width: min(420px, 80vw); height: 18px; margin-top: -2px; }
+.brand p { margin: 0; color: var(--mute); text-wrap: balance; }
+.stats { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 6px !important; color: var(--ink) !important; }
+.stats span { display: inline-block; padding: 2px 14px; border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; border: 2px solid var(--ink); background: var(--card); }
+.stats span:nth-child(1) { transform: rotate(-2deg); }
+.stats span:nth-child(2) { transform: rotate(1.5deg); }
+.stats b { font-family: var(--hand); font-size: 24px; line-height: 1; }
+.doodle { position: absolute; pointer-events: none; font-family: var(--hand); color: var(--c); font-size: 34px; line-height: 1; animation: float 4s ease-in-out infinite; }
+@media (max-width: 760px) { .doodle { display: none; } }
+@keyframes float { 50% { transform: translateY(-6px) rotate(10deg); } }
+
+/* Grid of games */
+.grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: 40px 34px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
 }
-.play:hover { transform: translateY(-1px); }
-.play:focus-visible { outline: 3px solid var(--hot); outline-offset: 3px; }
-.meta { font-family: var(--mono); font-size: 13px; color: var(--mute); }
-.meta b { color: var(--done); font-weight: 500; }
-
-.stats { display: flex; gap: 32px; flex-wrap: wrap; }
-.stat .k { display: block; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--mute); }
-.stat .v { font-family: var(--mono); font-size: 28px; font-weight: 500; font-variant-numeric: tabular-nums; }
-
-.archive h3 { margin: 0 0 10px; font-size: 20px; font-weight: 800; }
-.archive ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-.archive li { border-bottom: 1px solid var(--line); }
-.archive a {
-  display: grid; grid-template-columns: 3em minmax(0, 1fr) auto; gap: 14px; align-items: baseline;
-  padding: 12px 4px; color: inherit; text-decoration: none;
+.card {
+  position: relative; display: flex; flex-direction: column; gap: 10px;
+  color: inherit; text-decoration: none; min-width: 0;
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform .25s cubic-bezier(.3, 1.7, .5, 1);
 }
-.archive a:hover .t, .archive a:focus-visible .t { text-decoration: underline; }
-.archive a:focus-visible { outline: 2px solid var(--hot); outline-offset: -2px; border-radius: 6px; }
-.archive .e { white-space: nowrap; }
-.archive .t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.archive .d { font-family: var(--mono); font-size: 13px; color: var(--mute); white-space: nowrap; }
-.archive .d.ok { color: var(--done); }
-.empty { color: var(--mute); margin: 0; }
-
-footer { color: var(--mute); font-size: 13px; }
-
-@media (max-width: 480px) {
-  .today { grid-template-columns: 1fr; }
-  .today .info { padding-bottom: 0; }
+a.card:hover, a.card:focus-visible { transform: rotate(0deg) translateY(-6px) scale(1.03); outline: none; }
+a.card:active { transform: rotate(0deg) scale(.98); }
+.frame { position: relative; aspect-ratio: 1200 / 630; padding: 7px; }
+.frame .bg { position: absolute; inset: 4px; background: var(--card); border-radius: 6px; }
+.frame img { position: relative; display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+.frame svg.rough { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.tape {
+  position: absolute; top: -12px; left: 50%; width: 76px; height: 24px; z-index: 2;
+  transform: translateX(-50%) rotate(var(--tt, -4deg));
+  background: var(--c); opacity: .78;
+  clip-path: polygon(0 8%, 4% 0, 9% 10%, 14% 0, 100% 4%, 96% 50%, 100% 94%, 92% 100%, 86% 90%, 80% 100%, 0 96%, 4% 50%);
 }
+.sticker {
+  position: absolute; z-index: 2; right: -10px; bottom: -12px;
+  font-family: var(--hand); font-weight: 700; font-size: 17px; line-height: 1;
+  padding: 7px 11px 5px; border-radius: 999px; transform: rotate(8deg);
+  background: var(--c3); color: #2b2a33; border: 2px solid #2b2a33;
+}
+/* Finished games get a gold star, the kind a teacher sticks on a good worksheet. */
+.star {
+  position: absolute; z-index: 3; right: -16px; top: -18px; width: 62px; height: 62px;
+  transform: rotate(var(--sr, 12deg)); filter: drop-shadow(1px 2px 0 rgba(0, 0, 0, .25));
+  transition: transform .3s cubic-bezier(.3, 1.7, .5, 1);
+}
+.star svg { display: block; width: 100%; height: 100%; overflow: visible; }
+a.card:hover .star { transform: rotate(calc(var(--sr, 12deg) + 20deg)) scale(1.15); }
+.star .twinkle { position: absolute; left: -6px; top: 2px; font-size: 16px; color: #ffd43b; animation: twinkle 2.2s ease-in-out infinite; }
+.star .twinkle + .twinkle { left: auto; right: -6px; top: auto; bottom: -2px; font-size: 12px; animation-delay: 1.1s; }
+@keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; transform: scale(1) rotate(20deg); } }
+a.card:focus-visible .frame .bg { outline: 3px dashed var(--c1); outline-offset: 8px; }
+.t { font-family: var(--hand); font-weight: 700; font-size: 27px; line-height: 1; letter-spacing: -.03em; padding: 0 6px; }
+.d { color: var(--mute); font-size: 17px; padding: 0 6px; }
+.label { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.soon .frame .bg { background: transparent; }
+.soon .q {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--hand); font-weight: 700; font-size: 64px; color: var(--mute);
+  animation: wobble 2.6s ease-in-out infinite;
+}
+@keyframes wobble { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg) translateY(-4px); } }
+.soon .t { color: var(--mute); font-weight: 400; font-size: 25px; }
+
+@media (max-width: 520px) { .soon .frame { aspect-ratio: auto; height: 110px; } }
+@media (prefers-reduced-motion: reduce) {
+  .card, .brand h1 .l { transition: none; animation: none !important; }
+  .doodle, .soon .q, .star .twinkle { animation: none; }
+}
+
+.empty { color: var(--mute); margin: 0; text-align: center; }
+footer { color: var(--mute); font-size: 16px; text-align: center; }
+footer a { color: inherit; }
 </style>
 <script src="/shared/daily.js" defer></script>
+<script type="importmap">{ "imports": { "roughjs": "/shared/lib/roughjs@4.6.6/rough.esm.js" } }</script>
 </head>
 <body>
 <main class="wrap">
   <header class="brand">
-    <h1>Daily Incremental</h1>
-    <p>Tiny incremental games.</p>
+    <h1 id="wordmark" aria-label="Daily Incremental">Daily Incremental</h1>
+    <svg class="squiggle" id="squiggle" aria-hidden="true"></svg>
+    <p>Every day, Claude builds a new tiny incremental game.</p>
+    <p class="stats" aria-label="Your stats">
+      <span>finished: <b id="finished">0</b></span>
+      <span>streak: <b id="streak">0</b> <span aria-hidden="true" style="all:unset">🔥</span></span>
+    </p>
   </header>
 
-  <section class="today" id="today" aria-live="polite">
-    <div class="emoji" id="emoji" aria-hidden="true"></div>
-    <div class="info">
-      <p class="eyebrow" id="todayDate">Loading today's game</p>
-      <h2 id="todayTitle">&nbsp;</h2>
-      <p class="tagline" id="todayTag"></p>
-    </div>
-    <div class="actions">
-      <a class="play" id="play" href="/1/">Play</a>
-      <span class="meta" id="todayMeta"></span>
-    </div>
-  </section>
+  <ol class="grid" id="games" aria-label="Games, newest first"></ol>
+  <p class="empty" id="empty" hidden>Nothing yet. The first game is on its way.</p>
 
-  <section class="stats" aria-label="Your stats">
-    <div class="stat"><span class="k">Streak</span><span class="v" id="streak">0</span></div>
-    <div class="stat"><span class="k">Finished</span><span class="v" id="finished">0</span></div>
-  </section>
-
-  <section class="archive">
-    <h3>Every game so far</h3>
-    <ol id="archive"></ol>
-    <p class="empty" id="archiveEmpty" hidden>Nothing yet. The first game is on its way.</p>
-  </section>
-
-  <footer>Progress lives in this browser.</footer>
+  <footer>
+    <p>See how it works on <a href="https://github.com/nickdirienzo/dailyincrementalgame">GitHub</a> (AGPL-3.0).</p>
+    <p>Each game credits the art and sounds it uses. Please support the human artists.</p>
+    <p>Your progress is saved in this browser. Wobbly lines by <a href="https://roughjs.com">Rough.js</a>.</p>
+  </footer>
 </main>
 
-<script>
-addEventListener('DOMContentLoaded', async () => {
-  const D = window.DailyGame;
-  const list = await D.manifest();
-  const games = D.released(list);
-  const done = D.completions();
-  const today = D.localDate();
+<script type="module">
+import rough from 'roughjs';
 
-  const fmtDate = iso => {
-    const [y, m, d] = iso.split('-').map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+const COLORS = ['--c1', '--c2', '--c3', '--c4', '--c5', '--c6', '--c7'].map(v => `var(${v})`);
+const css = getComputedStyle(document.documentElement);
+const ink = () => css.getPropertyValue('--ink').trim();
+// Small deterministic noise, so each card is crooked the same way on every visit.
+const noise = (n, k = 1) => { const x = Math.sin(n * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
+
+// Wordmark: every letter its own color and lean.
+{
+  const h1 = document.getElementById('wordmark');
+  const words = h1.textContent.split(' ');
+  h1.textContent = '';
+  let i = 0;
+  words.forEach((word, wi) => {
+    const w = document.createElement('span'); w.className = 'w'; w.setAttribute('aria-hidden', 'true');
+    for (const ch of word) {
+      const l = document.createElement('span'); l.className = 'l'; l.textContent = ch;
+      l.style.setProperty('--c', COLORS[i % COLORS.length]);
+      l.style.setProperty('--r', `${(noise(i, 3) - .5) * 14}deg`);
+      l.style.setProperty('--y', `${(noise(i, 4) - .5) * 8}px`);
+      w.append(l); i++;
+    }
+    h1.append(w);
+    if (wi < words.length - 1) h1.append(' ');
+  });
+  // A couple of doodles floating around the title.
+  const brand = h1.parentElement;
+  [['✦', '4%', '6%', '--c3', 0], ['☁', '88%', '0%', '--c5', 1.2], ['✿', '92%', '58%', '--c7', .6], ['〰', '2%', '62%', '--c4', 2]].forEach(([g, x, y, c, delay]) => {
+    const d = document.createElement('span'); d.className = 'doodle'; d.textContent = g; d.setAttribute('aria-hidden', 'true');
+    Object.assign(d.style, { left: x, top: y, animationDelay: `${delay}s` }); d.style.setProperty('--c', `var(${c})`);
+    brand.append(d);
+  });
+}
+
+// Redraws a sketchy frame inside an SVG whenever its box changes size.
+function sketch(svg, draw) {
+  const redraw = () => {
+    const { width: w, height: h } = svg.getBoundingClientRect();
+    if (!w || !h) return;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.replaceChildren(draw(rough.svg(svg), w, h));
   };
+  new ResizeObserver(redraw).observe(svg);
+}
 
-  const latest = games[games.length - 1];
+sketch(document.getElementById('squiggle'), (rc, w, h) => {
+  const pts = [];
+  for (let x = 4; x <= w - 4; x += 14) pts.push([x, h / 2 + Math.sin(x / 11) * (h / 3.2)]);
+  return rc.curve(pts, { stroke: css.getPropertyValue('--c1').trim(), strokeWidth: 3, roughness: 1.2, seed: 7 });
+});
 
-  if (!latest) {
-    document.getElementById('todayDate').textContent = 'Coming soon';
-    document.getElementById('todayTitle').textContent = 'The first game is almost ready';
-    document.getElementById('play').hidden = true;
-  } else {
-    document.getElementById('todayDate').textContent = latest.date === today ? `Today · ${fmtDate(latest.date)}` : `Latest · ${fmtDate(latest.date)}`;
-    document.getElementById('todayTitle').textContent = latest.title;
-    document.getElementById('todayTag').textContent = latest.tagline || '';
-    document.getElementById('play').href = `/${latest.slug}/`;
-    document.getElementById('play').textContent = done[latest.n] ? 'Play again' : 'Play';
-    const bits = [];
-    if (latest.minutes) bits.push(`${latest.minutes} min`);
-    if (latest.scale) bits.push(`numbers in the ${latest.scale}`);
-    document.getElementById('todayMeta').innerHTML = (done[latest.n] ? '<b>✓ finished</b> · ' : '') + bits.join(' · ');
+// daily.js is a deferred script ahead of this module, so it has already run.
+const D = window.DailyGame;
+const list = await D.manifest();
 
-    const emoji = document.getElementById('emoji');
-    emoji.textContent = latest.emoji || '🎲';
-    emoji.classList.add('pop');
+const parse = iso => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d); };
+const fmtDate = iso => parse(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+// Games release at local midnight on their date.
+function countdown(iso) {
+  const ms = parse(iso) - Date.now();
+  const mins = Math.max(1, Math.ceil(ms / 60000));
+  if (mins < 60) return `coming in ${mins} minute${mins === 1 ? '' : 's'}…`;
+  const hours = Math.ceil(mins / 60);
+  if (hours <= 24) return `coming in ${hours} hour${hours === 1 ? '' : 's'}…`;
+  return `coming ${fmtDate(iso)}`;
+}
+
+// A five-point gold foil star, slightly lopsided like it was punched out by hand.
+function goldStar(seed) {
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5;
+    const r = (i % 2 ? 13 : 29) * (1 + (noise(seed, 10 + i) - .5) * .12);
+    pts.push(`${(32 + Math.cos(a) * r).toFixed(1)},${(33 + Math.sin(a) * r).toFixed(1)}`);
   }
+  const id = `g${seed}`;
+  const wrap = el('span', 'star');
+  wrap.setAttribute('role', 'img'); wrap.setAttribute('aria-label', 'finished');
+  wrap.style.setProperty('--sr', `${(noise(seed, 9) - .5) * 40}deg`);
+  wrap.innerHTML = `<svg viewBox="0 0 64 64" aria-hidden="true">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff3b0"/><stop offset=".35" stop-color="#ffd43b"/>
+      <stop offset=".7" stop-color="#f59f00"/><stop offset="1" stop-color="#ffe066"/></linearGradient></defs>
+    <polygon points="${pts.join(' ')}" fill="url(#${id})" stroke="#b07a00" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M24 22 L29 15" stroke="#fffbe6" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+  </svg><span class="twinkle" aria-hidden="true">✦</span><span class="twinkle" aria-hidden="true">✦</span>`;
+  return wrap;
+}
 
-  document.getElementById('streak').textContent = D.streak(list);
+// A taped-down, slightly crooked card with a wobbly frame. `seed` keeps its quirks stable.
+function card(tag, seed, { dashed = false } = {}) {
+  const c = el(tag, 'card');
+  c.style.setProperty('--tilt', `${(noise(seed, 1) - .5) * 5}deg`);
+  const frame = el('div', 'frame');
+  frame.append(el('div', 'bg'));
+  const tape = el('span', 'tape');
+  tape.style.setProperty('--c', COLORS[(seed * 3) % COLORS.length]);
+  tape.style.setProperty('--tt', `${(noise(seed, 2) - .5) * 14}deg`);
+  tape.style.left = `${35 + noise(seed, 5) * 30}%`;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'rough'); svg.setAttribute('aria-hidden', 'true');
+  sketch(svg, (rc, w, h) => rc.rectangle(3, 3, w - 6, h - 6, {
+    stroke: ink(), strokeWidth: dashed ? 2 : 2.4, roughness: dashed ? 1.6 : 1.3, bowing: 2, seed: seed + 1,
+    ...(dashed ? { strokeLineDash: [10, 9], disableMultiStroke: true } : {}),
+  }));
+  frame.append(svg, tape);
+  c.append(frame);
+  return { c, frame };
+}
+
+let shownDay = null, next = null, soonLabel = null;
+function render() {
+  const today = D.localDate();
+  shownDay = today;
+  const games = D.released(list, today);
+  const done = D.completions();
+  next = list.filter(g => g.date > today).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+
+  document.getElementById('streak').textContent = D.streak(list, today);
   document.getElementById('finished').textContent = games.filter(g => done[g.n]).length;
 
-  const ol = document.getElementById('archive');
-  document.getElementById('archiveEmpty').hidden = games.length > 0;
-  for (const g of [...games].reverse()) {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.href = `/${g.slug}/`;
-    const e = document.createElement('span'); e.className = 'e'; e.textContent = g.emoji || '';
-    const t = document.createElement('span'); t.className = 't'; t.textContent = g.title;
-    const d = document.createElement('span'); d.className = 'd' + (done[g.n] ? ' ok' : '');
-    d.textContent = done[g.n] ? '✓ ' + fmtDate(g.date) : fmtDate(g.date);
-    a.append(e, t, d); li.append(a); ol.append(li);
+  const ol = document.getElementById('games');
+  ol.replaceChildren();
+  soonLabel = null;
+
+  // The next game stays a mystery until it's out: no title, no art, just when.
+  if (next) {
+    const li = el('li');
+    const { c, frame } = card('div', next.n, { dashed: true });
+    c.classList.add('soon');
+    frame.append(el('span', 'q', '?'));
+    soonLabel = el('span', 't', countdown(next.date));
+    const label = el('div', 'label'); label.append(soonLabel);
+    c.append(label); li.append(c); ol.append(li);
   }
-});
+
+  for (const g of [...games].reverse()) {
+    const li = el('li');
+    const { c: a, frame } = card('a', g.n);
+    a.href = `/${g.slug}/`;
+    const img = el('img');
+    img.src = `/${g.slug}/thumb.jpg`; img.alt = ''; img.loading = 'lazy'; img.width = 600; img.height = 315;
+    frame.querySelector('.bg').after(img);
+    if (done[g.n]) frame.append(goldStar(g.n));
+    else if (g.date === today) frame.append(el('span', 'sticker', 'new!'));
+    const label = el('div', 'label');
+    label.append(el('span', 't', g.title), el('span', 'd', fmtDate(g.date)));
+    a.append(label); li.append(a); ol.append(li);
+  }
+  document.getElementById('empty').hidden = games.length > 0 || !!next;
+}
+
+render();
+setInterval(() => {
+  if (D.localDate() !== shownDay) render();
+  else if (soonLabel && next) soonLabel.textContent = countdown(next.date);
+}, 30000);
 </script>
 </body>
 </html>

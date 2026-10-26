@@ -8,7 +8,8 @@
 // ending), or from a finished save when the game has none there. Game art can be random, so existing cards are
 // left alone unless named. The landing card (public/og.png) is just the site's name and tagline.
 // Each page's og:/twitter: tags are replaced with a fresh set; the image URL carries a content hash
-// so chat apps refetch it when the card changes.
+// so chat apps refetch it when the card changes. Each card also gets a small public/<slug>/thumb.jpg
+// for the landing page grid; missing thumbs are made from existing cards on every run.
 import { chromium } from 'playwright';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -53,6 +54,17 @@ async function renderCard(browser, html, out) {
   await page.evaluate(() => document.fonts.ready);
   await page.screenshot({ path: out });
   await page.close();
+}
+
+// A half-size JPEG of a game's card, for the landing page grid.
+async function thumb(browser, slug) {
+  const card = path.join(PUBLIC, slug, 'og.png');
+  const page = await browser.newPage({ viewport: { width: W / 2, height: H / 2 }, deviceScaleFactor: 1 });
+  await page.setContent(`<body style="margin:0"><img style="display:block;width:${W / 2}px;height:${H / 2}px" src="${dataUrl(fs.readFileSync(card))}"></body>`);
+  const out = path.join(PUBLIC, slug, 'thumb.jpg');
+  await page.screenshot({ path: out, type: 'jpeg', quality: 82 });
+  await page.close();
+  console.log(`  ${path.relative(ROOT, out)}`);
 }
 
 const CARDS = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'cards.json'), 'utf8'));
@@ -102,6 +114,7 @@ async function gameCard(browser, base, game) {
     alt: `${game.title}: ${game.tagline}`,
   });
   console.log(`  ${path.relative(ROOT, out)}`);
+  await thumb(browser, game.slug);
 }
 
 async function siteCard(browser) {
@@ -139,6 +152,10 @@ try {
   console.log('social cards');
   if (!only.length) await siteCard(browser);
   for (const g of targets) await gameCard(browser, base, g);
+  for (const g of games) {
+    const dir = path.join(PUBLIC, g.slug);
+    if (!targets.includes(g) && fs.existsSync(path.join(dir, 'og.png')) && !fs.existsSync(path.join(dir, 'thumb.jpg'))) await thumb(browser, g.slug);
+  }
 } finally {
   await browser.close();
   server.close();
