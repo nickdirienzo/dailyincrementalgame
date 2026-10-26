@@ -4,7 +4,7 @@
 //
 //   npm run credits -- <slug>
 //
-// It reads the game's files for /shared/lib/ imports and Google Fonts, public/<slug>/art/sources.json
+// It reads the game's files for /shared/lib/ imports and /shared/fonts/ families (npm run fonts), public/<slug>/art/sources.json
 // (written by `npm run art`) for art, and the game's games.json entry (or --palette <slug>) for the palette.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -55,10 +55,10 @@ const packs = [...code.matchAll(/packs:\s*\[([^\]]*)\]/g)].flatMap(m => [...m[1]
 if (/soundfonts:\s*true|gm_[a-z]/.test(code)) packs.push('gm');
 if (packs.length) credits.sounds = [...new Set(packs)].filter(p => PACKS[p]).map(p => ({ ...PACKS[p] }));
 
-// Google Fonts: all are under the SIL Open Font License or Apache 2.0.
-const fonts = [...code.matchAll(/fonts\.googleapis\.com\/css2\?([^"']+)/g)]
-  .flatMap(m => [...m[1].matchAll(/family=([^:&]+)/g)].map(f => decodeURIComponent(f[1].replace(/\+/g, ' '))));
-if (fonts.length) credits.fonts = [...new Set(fonts)].map(name => ({ name, home: `https://fonts.google.com/specimen/${name.replace(/ /g, '+')}` }));
+// Fonts: Google Fonts families self-hosted under /shared/fonts/ (npm run fonts), each with its font.json.
+const fonts = [...new Set([...code.matchAll(/\/shared\/fonts\/([a-z0-9-]+)\//g)].map(m => m[1]))];
+if (/fonts\.googleapis\.com/.test(code)) console.log(`still loads fonts from Google: run npm run fonts -- ${slug}`);
+if (fonts.length) credits.fonts = fonts.map(f => JSON.parse(fs.readFileSync(path.join(PUBLIC, 'shared', 'fonts', f, 'font.json'), 'utf8')));
 
 // Palette.
 const games = JSON.parse(fs.readFileSync(path.join(PUBLIC, 'games.json'), 'utf8'));

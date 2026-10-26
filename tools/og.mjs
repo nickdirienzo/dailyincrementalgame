@@ -68,6 +68,12 @@ async function thumb(browser, slug) {
   console.log(`  ${path.relative(ROOT, out)}`);
 }
 
+// The pill's font, inlined from our self-hosted copy (setContent pages can't load files by URL).
+function tagFont() {
+  const dir = path.join(PUBLIC, 'shared', 'fonts', 'bricolage-grotesque');
+  return fs.readFileSync(path.join(dir, 'font.css'), 'utf8').replace(/url\(([^)]+\.woff2)\)/g, (_, f) => `url(data:font/woff2;base64,${fs.readFileSync(path.join(dir, f)).toString('base64')})`);
+}
+
 const CARDS = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'cards.json'), 'utf8'));
 
 async function gameCard(browser, base, game) {
@@ -90,8 +96,8 @@ async function gameCard(browser, base, game) {
 
   const out = path.join(PUBLIC, game.slug, 'og.png');
   await renderCard(browser, `<!doctype html><html><head>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&display=swap">
 <style>
+  ${tagFont()}
   body { margin: 0; width: ${W}px; height: ${H}px; position: relative; overflow: hidden; background: ${bg}; }
   .art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 75%; }
   .fade { position: absolute; inset: 0; background: linear-gradient(${bg} 0%, transparent 42%); }

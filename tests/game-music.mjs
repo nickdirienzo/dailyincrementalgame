@@ -34,11 +34,11 @@ try {
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    page.on('console', m => { if (m.type() === 'error' && !/fonts\.(googleapis|gstatic)\.com/.test(m.location().url || '')) errors.push(m.text()); });
+    page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
     page.on('response', r => { if (r.url().startsWith(origin) && r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
     page.on('request', r => {
       const url = new URL(r.url());
-      if (!['127.0.0.1', 'fonts.googleapis.com', 'fonts.gstatic.com'].includes(url.hostname) && !['data:', 'blob:'].includes(url.protocol)) errors.push('External request: ' + r.url());
+      if (!['127.0.0.1'].includes(url.hostname) && !['data:', 'blob:'].includes(url.protocol)) errors.push('External request: ' + r.url());
     });
     await page.goto(`${origin}/${game.slug}/?debug`);
     await page.waitForFunction(() => window.__game?.song);

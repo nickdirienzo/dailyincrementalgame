@@ -79,14 +79,17 @@
   "fonts": [
     {
       "name": "Limelight",
+      "license": "OFL-1.1",
       "home": "https://fonts.google.com/specimen/Limelight"
     },
     {
       "name": "Special Elite",
+      "license": "Apache-2.0",
       "home": "https://fonts.google.com/specimen/Special+Elite"
     },
     {
       "name": "Courier Prime",
+      "license": "OFL-1.1",
       "home": "https://fonts.google.com/specimen/Courier+Prime"
     }
   ],

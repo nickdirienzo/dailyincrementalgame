@@ -37,7 +37,7 @@ npm run mix -- moonshroom     # music and sound effect levels
 
 `tests/check.mjs` serves `public/`, checks that each game starts with the ending and upgrades
 hidden, plays the opening, loads a finished save to check the ending and share card, checks for
-sideways scroll at 390px, and fails on console errors or requests to any host but Google Fonts.
+sideways scroll at 390px, and fails on console errors or requests to any other site (fonts are self-hosted with `npm run fonts`).
 Screenshots go to `tests/screenshots/`.
 
 ## Social cards
@@ -91,6 +91,12 @@ rolls. Everything fits the free plan; if a daily limit is hit, only the reports 
 
 The database and its binding are in `wrangler.jsonc`. To change the schema, add a numbered file to
 `migrations/` and run `npx wrangler d1 migrations apply dailyincrementalgame-stats --remote`.
+
+## Feedback
+
+Ideas, bugs and questions go in [Discussions](https://github.com/nickdirienzo/dailyincrementalgame/discussions).
+The repo has no issues or pull requests: the games are made by the agent loop, and Discussions are
+where what players say feeds into it.
 
 ## License
 

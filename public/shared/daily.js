@@ -131,9 +131,11 @@
   // takes: a random player id, sittings, seconds active (tab visible, input in the last minute) and
   // seconds visible (idling included), and whether the ending was reached. Kept in di:plays and
   // reported to /api/play (worker/index.js) every five minutes and when the tab hides.
-  // Only on the live site, never in automated browsers, and only after the first tap or key.
+  // Only on the live site, never in automated browsers or with Global Privacy Control or Do Not
+  // Track on, and only after the first tap or key. /privacy/ explains it to players.
   const stats = (() => {
-    const on = DAY != null && location.hostname === SITE && !navigator.webdriver;
+    const optedOut = navigator.globalPrivacyControl === true || navigator.doNotTrack === '1';
+    const on = DAY != null && location.hostname === SITE && !navigator.webdriver && !optedOut;
     const ACTIVE_WINDOW = 60000, REPORT_EVERY = 300;
     let started = false, lastInput = 0, lastTick = 0, sinceReport = 0;
     const plays = () => store.get('plays', {});
@@ -202,6 +204,7 @@
   // Games list what they're built on in credits.json next to the page (npm run credits -- <slug>).
   // The top bar links to a panel with each project's license and where to support it.
   let creditsEl = null;
+  const LICENSES = { 'OFL-1.1': 'Open Font License', 'Apache-2.0': 'Apache License 2.0', 'UFL-1.0': 'Ubuntu Font License' };
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const link = (href, text) => href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text);
   function creditsHtml(c) {
@@ -215,8 +218,8 @@
     }).join('')}</ul>`);
     if (c.sounds && c.sounds.length) parts.push(`<h3>Sounds</h3><ul>${c.sounds.map(x => item(link(x.home, x.name), `by ${esc(x.author)} · ${esc(x.license)}`, '')).join('')}</ul>`);
     if (c.palette) parts.push(`<h3>Palette</h3><ul>${item(link(c.palette.home, c.palette.name), c.palette.author ? `by ${esc(c.palette.author)} · Lospec` : 'Lospec', '')}</ul>`);
-    if (c.fonts && c.fonts.length) parts.push(`<h3>Fonts</h3><ul>${c.fonts.map(f => item(link(f.home, f.name), 'Google Fonts · Open Font License', '')).join('')}</ul>`);
-    parts.push(`<h3>This site</h3><ul>${item(link(SOURCE, 'Daily Incremental source code'), 'AGPL-3.0, like Strudel', '')}</ul>`);
+    if (c.fonts && c.fonts.length) parts.push(`<h3>Fonts</h3><ul>${c.fonts.map(f => item(link(f.home, f.name), `Google Fonts · ${esc(LICENSES[f.license] || f.license || 'Open Font License')}`, '')).join('')}</ul>`);
+    parts.push(`<h3>This site</h3><ul>${item(link(SOURCE, 'Daily Incremental source code'), 'AGPL-3.0, like Strudel', '')}${item(link('/privacy/', 'Privacy'), 'what we count, and what stays in your browser', '')}</ul>`);
     return parts.join('');
   }
   function openCredits(c) {

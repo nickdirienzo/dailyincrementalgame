@@ -28,18 +28,17 @@ function check(name, ok, detail = '') {
   console.log(`${ok ? '  ok  ' : '  FAIL'} ${name}${detail ? ` (${detail})` : ''}`);
 }
 
-// Opens a page that records console errors and uncaught exceptions. Google Fonts failing to load
-// (offline) is ignored; anything else is the game's fault.
+// Opens a page that records console errors, uncaught exceptions and requests to other sites.
 async function open(browser, url, { ctx = { viewport: DESKTOP }, storage = null } = {}) {
   const context = await browser.newContext(ctx);
   if (storage) await context.addInitScript(s => { for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); }, storage);
   const page = await context.newPage();
   const errors = [];
-  page.on('console', m => { if (m.type() === 'error' && !/fonts\.(googleapis|gstatic)\.com/.test(m.text() + (m.location().url || ''))) errors.push(m.text()); });
+  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push(String(e)));
-  // Everything is served from our own site; Google Fonts is the only outside host allowed.
+  // Everything is served from our own site, fonts included (npm run fonts).
   const external = [];
-  page.on('request', r => { const h = new URL(r.url()).hostname; if (!['127.0.0.1', 'localhost', 'fonts.googleapis.com', 'fonts.gstatic.com'].includes(h) && !r.url().startsWith('data:')) external.push(r.url()); });
+  page.on('request', r => { const h = new URL(r.url()).hostname; if (!['127.0.0.1', 'localhost'].includes(h) && !r.url().startsWith('data:')) external.push(r.url()); });
   await page.goto(url, { waitUntil: 'load' });
   await page.waitForTimeout(800);
   return { page, context, errors, external };

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Privacy · Daily Incremental</title>
+<meta name="description" content="What Daily Incremental keeps in your browser and the little it counts.">
+<meta name="theme-color" content="#fbf7ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#23252b" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/shared/fonts/gaegu/font.css">
+<link rel="stylesheet" href="/shared/fonts/patrick-hand/font.css">
+<style>
+[hidden] { display: none !important; }
+/* A page from the same sketchbook as the landing page, written out by hand. */
+:root {
+  --paper: #fbf7ee; --dot: #e6dfcd; --ink: #2b2a33; --mute: #7a7466; --card: #ffffff;
+  --hand: "Gaegu", "Patrick Hand", "Comic Sans MS", cursive;
+  --text: "Patrick Hand", "Comic Sans MS", cursive;
+  --c1: #ff6b6b; --c3: #ffd43b; --c5: #4dabf7;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --paper: #23252b; --dot: #33363e; --ink: #f1ede4; --mute: #a39d8f; --card: #2d3038; --hl: 30%; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html {
+  min-height: 100%; color: var(--ink);
+  background: var(--paper) radial-gradient(var(--dot) 1.4px, transparent 1.6px) 0 0 / 22px 22px;
+}
+body {
+  margin: 0; font-family: var(--text); font-size: 19px; line-height: 1.5;
+  padding: max(36px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px));
+}
+main {
+  max-width: 680px; margin: 0 auto; padding: 28px clamp(18px, 5vw, 44px) 32px;
+  background: var(--card); border: 2px solid var(--ink);
+  border-radius: 255px 12px 225px 12px / 12px 225px 12px 255px;
+  transform: rotate(-.4deg);
+}
+.back { display: inline-block; margin-bottom: 14px; color: var(--mute); }
+h1 { font-family: var(--hand); font-size: clamp(40px, 9vw, 58px); line-height: 1; margin: 0 0 6px; color: var(--c1); }
+h2 { font-family: var(--hand); font-size: 30px; line-height: 1.1; margin: 28px 0 6px; }
+h2 span { background: linear-gradient(transparent 58%, color-mix(in srgb, var(--c3) var(--hl, 70%), transparent) 58%); padding: 0 4px; }
+p, ul { margin: 0 0 10px; }
+ul { padding-left: 22px; }
+li { margin-bottom: 4px; }
+a { color: inherit; text-decoration-color: var(--c5); text-underline-offset: 3px; }
+code { font-size: .9em; }
+.date { color: var(--mute); margin-bottom: 18px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="/">← Daily Incremental</a>
+  <h1>Privacy</h1>
+  <p class="date">Last updated October 26, 2026</p>
+
+  <p>Daily Incremental is a hobby project run by one person,
+  <a href="https://nickdirienzo.com/">Nick DiRienzo</a>, not a company. "We" on this page means me (and Claude).</p>
+
+  <p>The short version: no accounts, no cookies, no ads, and nothing that says who you are. Your
+  progress stays in your browser. We count anonymous plays and finishes to see which games people like
+  so we can build better games.</p>
+
+  <h2><span>In your browser</span></h2>
+  <p>Saves, finished games, streaks, gold stars and sound settings live in your browser's local
+  storage on this site. They never leave your device. Clearing this site's data in your browser
+  wipes them.</p>
+
+  <h2><span>What we count</span></h2>
+  <p>Once you tap or press a key in a game, your browser sends us a small tally for that game every
+  few minutes and when you leave:</p>
+  <ul>
+    <li>a random id your browser makes up the first time, which isn't tied to your name or anything else about you</li>
+    <li>which game it is</li>
+    <li>how many times you've sat down to play it</li>
+    <li>how many seconds the game was on screen, and how many of those you were actively playing</li>
+    <li>whether you reached the ending</li>
+    <li>the country you're in, which Cloudflare works out from the connection</li>
+  </ul>
+  <p>That's all. We don't store your IP address, and we never see your saves or anything you type.
+  We use the totals to learn how long games really take and which kinds people finish, so future
+  games get better.</p>
+
+  <h2><span>Page views</span></h2>
+  <p>The site runs on <a href="https://www.cloudflare.com/">Cloudflare</a>, which also counts page
+  views with its <a href="https://www.cloudflare.com/web-analytics/">Web Analytics</a>: which pages
+  get visited, where visitors came from, and their browser and country. It uses no cookies and
+  doesn't follow you around the web. Like any web host, Cloudflare sees your IP address to send you
+  the pages.</p>
+
+  <h2><span>Keeping it</span></h2>
+  <p>The counts sit in a database on our Cloudflare account, on servers that may be outside your
+  country, and we keep them as long as the site runs. Nothing in them points back to you, so we
+  can't look up or delete yours in particular. Clearing this site's data starts you fresh.</p>
+
+  <h2><span>Opting out</span></h2>
+  <p>If your browser sends Global Privacy Control or Do Not Track, we don't count anything. Clearing
+  this site's data also throws away your random id, and the next one is brand new.</p>
+  <p>We don't ask before counting because the counts are small and only used to make better games
+  (EU and UK law calls this a "legitimate interest"). If you'd rather we didn't count you, opt out as
+  above. And if you're in the EU or UK and think we're mishandling your data, you can report us to
+  your country's privacy regulator.</p>
+
+  <h2><span>Sharing</span></h2>
+  <p>We don't sell or share any of this, and would only hand it over if the law required it. If the
+  site ever changes hands, this policy goes with it.</p>
+
+  <h2><span>Kids</span></h2>
+  <p>The games are for everyone, and we don't knowingly collect anything personal from anyone,
+  kids included.</p>
+
+  <h2><span>Questions</span></h2>
+  <p>The whole site is <a href="https://github.com/nickdirienzo/dailyincrementalgame">open source</a>,
+  so you can read exactly what it does. Questions? Ask in
+  <a href="https://github.com/nickdirienzo/dailyincrementalgame/discussions">the discussions on GitHub</a>, or for
+  anything private, email <a href="mailto:contact@dailyincrementalgame.com">contact@dailyincrementalgame.com</a>.
+  If this page changes, the date at the top will too.</p>
+</main>
+</body>
+</html>

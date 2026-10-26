@@ -106,7 +106,7 @@ doesn't become the only kind of satisfaction.
 
 - A game lives in `public/<slug>/`: `index.html` plus any modules, art and data it needs
   (economy in its own module is a good habit, so the pacing sim can import it). No build step.
-  Everything is served from our own site; the only third-party requests allowed are Google Fonts.
+  Everything is served from our own site, fonts included: no third-party requests at all.
 - Shared code a game may use:
   - `public/shared/kit/`: our own helpers. `audio.mjs` (audio context, sound and music toggles,
     scales, synth voices, a sequencer for music), `sprites.mjs` (recolor and restyle SVG art,
@@ -123,6 +123,10 @@ doesn't become the only kind of satisfaction.
   finished art: recolor them to the palette and restyle them to the rolled look so no game looks
   like the icon set. Main characters are often better hand-made (pixel grids or drawn live).
   Emoji only as small accents. Register every sprite and look at the `?sprites` sheet.
+- Fonts: pick any Google Fonts family, write the usual Google Fonts `<link>` (css2 URL), then run
+  `npm run fonts -- <slug>`. It downloads the families into `public/shared/fonts/` (shared between
+  games, with their licenses) and swaps the link for our own copies. The browser check fails if a
+  page still asks Google.
 - Sounds: `npm run samples -- list` shows every instrument; `npm run samples -- vcsl marimba`,
   `-- piano` or `-- gm gm_acoustic_guitar_nylon` copies it into `public/shared/samples` or
   `public/shared/soundfonts` (recordings transcoded to MP3). Never load sounds from elsewhere at

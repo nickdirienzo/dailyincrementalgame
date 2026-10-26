@@ -91,14 +91,17 @@
   "fonts": [
     {
       "name": "IM Fell English SC",
+      "license": "OFL-1.1",
       "home": "https://fonts.google.com/specimen/IM+Fell+English+SC"
     },
     {
       "name": "IM Fell English",
+      "license": "OFL-1.1",
       "home": "https://fonts.google.com/specimen/IM+Fell+English"
     },
     {
       "name": "Spectral",
+      "license": "OFL-1.1",
       "home": "https://fonts.google.com/specimen/Spectral"
     }
   ],
