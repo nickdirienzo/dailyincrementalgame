@@ -76,7 +76,7 @@ for future agent sessions.
 ## Testing
 
 ```
-npm install && npm run setup   # once per machine: Playwright and its Chromium (Node 24, see mise.toml)
+mise install && mise run setup  # once per checkout: Node 24 + Python 3.12, npm deps, Chromium, music toolchain
 npm run check                  # landing page + every game
 npm run check -- moonshroom    # just one game
 ```

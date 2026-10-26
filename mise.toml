@@ -1,3 +1,18 @@
 [tools]
 node = "24"
 python = "3.12"
+
+[env]
+_.path = ["{{config_root}}/node_modules/.bin"]
+
+[tasks.setup]
+description = "Once per checkout: npm deps, Playwright's Chromium, and the slopwave toolchain"
+run = ["npm ci", "npm run setup", "npm run music:setup"]
+
+[tasks.serve]
+description = "Serve public/ at http://localhost:8080"
+run = "npm run serve"
+
+[tasks.check]
+description = "Browser check (pass a slug to check one game)"
+run = "npm run check --"
