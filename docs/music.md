@@ -14,6 +14,52 @@ backing up the config; retain all sessions and preferences.
 and supplies the configured toolchain and Node to `session render`. This is authoring
 tooling only; the site retains its static, local Strudel runtime.
 
+## Sharing music history between Macs
+
+The private Cloudflare R2 bucket in `music-storage.json` stores complete snapshots
+of `.slopwave/sessions/`, `work/`, and `preferences/`, including audio, exact revision
+artifacts and feedback. The public game repository contains only the tooling and
+bucket/account identifiers. Credentials, `config.json`, the installed toolchain,
+sync state and local backup archives are never included in uploads.
+
+On a second Mac, pull this repository, then run:
+
+```sh
+npm ci
+mise install
+npm run music:setup
+npx wrangler auth create dailyincrementalgame-music
+npx wrangler auth activate dailyincrementalgame-music --cwd .slopwave
+npx wrangler whoami --cwd .slopwave
+npm run music:pull
+```
+
+Authorize the personal Cloudflare account matching `music-storage.json`, not a
+work account. The named profile preserves the default Cloudflare login. If using
+another browser profile, copy the authorization URL printed by Wrangler into it.
+Login is per machine; never copy its token into this repo or a music snapshot.
+
+Before music work or listening feedback, run `npm run music:pull`; afterward run
+`npm run music:push`. `npm run music:status` shows the local and remote snapshot
+IDs and whether local files changed. Git still handles game code separately.
+`npm run music:verify` downloads the latest snapshot and verifies a complete
+restore into a temporary empty workspace, without changing your music files.
+
+Uploads create uniquely named archives and JSON manifests under `slopwave/snapshots/`
+and publish `slopwave/latest.json` only after uploading the archive. Earlier
+snapshots remain in R2. Downloads verify the archive and every file's SHA-256.
+Pull preserves local-only changes and makes a local backup before replacing clean
+files; conflicting edits or changes to immutable revisions/events stop the restore.
+There is no delete propagation or force-overwrite option.
+
+Use one Mac at a time: push before switching, then pull on the other. The CLI checks
+for a changed remote head but does not provide an atomic distributed lock; simultaneous
+uploads can race on `latest.json`, although both named archives remain recoverable.
+Recover an older snapshot by downloading its matching `.zip` and `.json` objects
+from R2 and verifying checksums before a deliberate restore. Local backups live in
+`.slopwave/backups/`. Each push is a full compressed snapshot; retention is manual.
+Run `npm run music:storage-check` for local archive/conflict tests.
+
 ## Brief to revision
 
 Read the skill's composition and session references and the configured toolchain's
@@ -120,5 +166,6 @@ Export preferences only when requested, to a new file under the configured
 `.slopwave/preferences/`. Export includes attributed decisive comparisons under
 the same brief, excludes technical fixes, and infers no transitive preferences.
 Don't train models, upload feedback, or publish artifacts as part of this workflow.
-`.slopwave/` is ignored local project data, not a backup: preserve its sessions and
-artifact files when archiving or moving it; exported indexes refer to those files.
+`.slopwave/` is ignored by Git; only a successful `music:push` backs up its consumer
+data to R2. Preserve sessions and artifacts when moving it; exported indexes refer
+to those files. Toolchains and credentials are configured separately on each Mac.

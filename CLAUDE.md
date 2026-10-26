@@ -13,6 +13,9 @@ feedback quotes and revision references; acceptance is not a preference comparis
 and tests or agent judgments are not human labels. Deliver the selected `song.mjs`
 through our existing music adapter; the game owns playback. Preserve existing games
 and music unless their revision is part of the task.
+Pull private music history with `npm run music:pull` before music work or feedback,
+and save it with `npm run music:push` afterward. Follow the R2 account, conflict,
+and one-Mac-at-a-time rules in `AGENTS.md` and `docs/music.md`.
 
 ## The bar (from the first game, Moonshroom)
 

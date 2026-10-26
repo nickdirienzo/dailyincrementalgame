@@ -16,7 +16,12 @@
     "music": "python3 tools/slopwave.py",
     "music:setup": "python3 .agents/skills/slopwave/scripts/setup.py --project . --install --ref 6253c8a73ca6767d1f1280717f1057c3a534f972",
     "music:check": "node tests/music.mjs",
-    "music:game-check": "node tests/game-music.mjs"
+    "music:game-check": "node tests/game-music.mjs",
+    "music:push": "python3 tools/music_storage.py push",
+    "music:pull": "python3 tools/music_storage.py pull",
+    "music:status": "python3 tools/music_storage.py status",
+    "music:verify": "python3 tools/music_storage.py verify",
+    "music:storage-check": "python3 tests/music_storage.py"
   },
   "devDependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
@@ -30,6 +35,7 @@
     "pixi.js": "^8.22.0",
     "playwright": "^1.64.1",
     "roughjs": "^4.6.6",
+    "wrangler": "4.152.0",
     "zzfx": "^1.4.0"
   }
 }

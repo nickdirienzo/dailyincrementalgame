@@ -65,7 +65,10 @@ Game music uses the repo-local slopwave skill, driven by each game's description
 and music brief. Run `mise install` then `npm run music:setup` once per checkout;
 see [the music workflow](docs/music.md) for composition, rendering and feedback.
 The separate toolchain, experiments, revision snapshots, listening feedback and
-preferences live under ignored `.slopwave/`; back it up with the project when needed.
+preferences live under ignored `.slopwave/`. `npm run music:pull` and
+`npm run music:push` share music history through a private Cloudflare R2 bucket;
+the toolchain and machine-specific configuration remain local. See the music
+workflow for the one-time login on each Mac.
 Only selected composition modules go into game assets, using the existing Strudel
 adapter and game-owned playback. `AGENTS.md` and `CLAUDE.md` enable this workflow
 for future agent sessions.

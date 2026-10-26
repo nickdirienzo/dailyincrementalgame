@@ -16,6 +16,14 @@ heard revision, preserving the quote separately from interpretation. Acceptance
 is not a pairwise preference; only explicit, unambiguous human comparisons create
 musical preference labels. Tests, agent critiques, and silence are not approval.
 
+Music history is shared between Macs through the private R2 bucket configured in
+`music-storage.json`. Before authoring or recording feedback, run `npm run music:pull`;
+after saving work, run `npm run music:push`. See `docs/music.md` for per-Mac login.
+Use only the named music profile and configured account, never the default Cloudflare
+login. Work on one Mac at a time. Stop on conflicts, preserve both versions, and
+resolve them explicitly; never force an overwrite. If sync is unavailable, preserve
+local work and report that the other Mac cannot see it yet.
+
 Use `session render` for listening candidates. Deliver only the selected
 `song.mjs` through the existing `createMusic` / `createAudio` adapters; the game
 owns playback, phase selection, tempo, Sound panel controls, and visibility.
