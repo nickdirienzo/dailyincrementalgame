@@ -12,8 +12,8 @@ export const OFFLINE_RATE = 0.1, OFFLINE_CAP = 8 * 3600;
 // ---------- Things you buy more than one of ----------
 // cellar: how many cellars must be open before it shows up.
 export const HELPERS = [
-  { id: 'beetle', name: 'Night beetle', cost: 100, rate: 0.3, cellar: 2, desc: 'Sorts by sniffing. Slow. Never late.' },
-  { id: 'vole', name: 'Vole cousin', cost: 1100, rate: 2.4, cellar: 2, desc: 'Everyone has a vole cousin. Yours sorts lemons.' },
+  { id: 'beetle', name: 'Night beetle', cost: 25, rate: 0.3, cellar: 1, desc: 'Sorts by sniffing. Slow. Never late.' },
+  { id: 'vole', name: 'Vole cousin', cost: 600, rate: 2.4, cellar: 1, desc: 'Everyone has a vole cousin. Yours sorts lemons.' },
   { id: 'shrew', name: 'Shrew crew', cost: 12000, rate: 18, cellar: 3, desc: 'Three shrews, one apron. They take turns.' },
   { id: 'badger', name: 'Badger foreman', cost: 150000, rate: 100, cellar: 4, desc: 'Doesn’t sort. Makes everyone else sort faster by standing there.' },
   { id: 'starnose', name: 'Star-nosed mole', cost: 2.5e6, rate: 450, cellar: 5, desc: 'Twenty-two fingers on its nose. Reads a lemon like a newspaper.' },
@@ -57,7 +57,7 @@ export const setRateK = k => { RATE_K = k; };
 // `at`: the scrap can't drop until this many lemons have shipped, so the map paces the story.
 export const CELLARS = [
   { name: 'Cellar No. 1', at: 0 },
-  { name: 'Cellar No. 2: the Root Cellar', at: 2500, cost: { lemons: 2500 },
+  { name: 'Cellar No. 2: the Root Cellar', at: 1200, cost: { lemons: 1500 },
     fitch: '“Huh,” says Fitch. “More lemons.”' },
   { name: 'Cellar No. 3: the Cistern', at: 20000, cost: { lemons: 6000 },
     fitch: '“Would you look at that,” says Fitch. “Lemons.”' },
