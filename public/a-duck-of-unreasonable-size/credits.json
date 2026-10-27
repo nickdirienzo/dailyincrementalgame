@@ -1,0 +1,77 @@
+{
+  "libs": [
+    {
+      "name": "@strudel/web",
+      "version": "1.3.0",
+      "license": "AGPL-3.0-or-later",
+      "what": "pattern music: synths, samples, Tidal mini-notation",
+      "home": "https://strudel.cc",
+      "support": "https://opencollective.com/tidalcycles"
+    }
+  ],
+  "art": [
+    {
+      "set": "Huge Icons",
+      "license": "MIT",
+      "home": "https://icon-sets.iconify.design/icon-sets/hugeicons/",
+      "support": "https://icon-sets.iconify.design/icon-sets/hugeicons/",
+      "icons": [
+        {
+          "icon": "hugeicons:rubber-duck",
+          "author": "Hugeicons",
+          "source": "https://icon-sets.iconify.design/hugeicons/rubber-duck/"
+        }
+      ]
+    },
+    {
+      "set": "Phosphor",
+      "license": "MIT",
+      "licenseUrl": "https://github.com/phosphor-icons/core/blob/main/LICENSE",
+      "home": "https://github.com/phosphor-icons/core",
+      "support": "https://github.com/sponsors/phosphor-icons",
+      "icons": [
+        {
+          "icon": "ph:stamp-bold",
+          "author": "Phosphor Icons",
+          "source": "https://icon-sets.iconify.design/ph/stamp-bold/"
+        },
+        {
+          "icon": "ph:envelope-simple-bold",
+          "author": "Phosphor Icons",
+          "source": "https://icon-sets.iconify.design/ph/envelope-simple-bold/"
+        }
+      ]
+    },
+    {
+      "set": "Game Icons",
+      "license": "CC-BY-3.0",
+      "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+      "home": "https://github.com/game-icons/icons",
+      "support": "https://game-icons.net",
+      "icons": [
+        {
+          "icon": "game-icons:fishing-hook",
+          "author": "Lorc",
+          "source": "https://game-icons.net/1x1/lorc/fishing-hook.html"
+        }
+      ]
+    }
+  ],
+  "fonts": [
+    {
+      "name": "Neonderthaw",
+      "license": "OFL-1.1",
+      "home": "https://fonts.google.com/specimen/Neonderthaw"
+    },
+    {
+      "name": "Tilt Neon",
+      "license": "OFL-1.1",
+      "home": "https://fonts.google.com/specimen/Tilt+Neon"
+    }
+  ],
+  "palette": {
+    "name": "INKPINK",
+    "author": "Inkpendude ",
+    "home": "https://lospec.com/palette-list/inkpink"
+  }
+}

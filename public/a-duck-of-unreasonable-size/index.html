@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A Duck of Unreasonable Size · Daily Incremental</title>
+<meta name="description" content="A squid paints rubber ducks bigger and bigger, one stamped form at a time. Daily Incremental.">
+<meta property="og:site_name" content="Daily Incremental">
+<meta property="og:type" content="website">
+<meta property="og:title" content="A Duck of Unreasonable Size">
+<meta property="og:description" content="A squid painter squishes rubber ducks into bigger ducks, one stamped form at a time.">
+<meta property="og:url" content="https://dailyincrementalgame.com/a-duck-of-unreasonable-size/">
+<meta property="og:image" content="https://dailyincrementalgame.com/a-duck-of-unreasonable-size/og.png?v=2df76fd8">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A Duck of Unreasonable Size: A squid painter squishes rubber ducks into bigger ducks, one stamped form at a time.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/shared/fonts/neonderthaw/font.css">
+<link rel="stylesheet" href="/shared/fonts/tilt-neon/font.css">
+<style>
+  /* INKPINK: #ffffff #fe6c90 #d03791 #87286a #452459 #260d34 */
+  :root {
+    --p0: #ffffff; --p1: #fe6c90; --p2: #d03791; --p3: #87286a; --p4: #452459; --p5: #260d34;
+    --bg: var(--p5); --ink: var(--p0); --type: 'Tilt Neon', system-ui, sans-serif; --script: 'Neonderthaw', cursive;
+    color-scheme: dark;
+  }
+  html, body { background: var(--bg); color: var(--ink); }
+  /* Keep this: any display rule (flex, grid) would otherwise override the hidden attribute. */
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; font: 15px/1.45 var(--type);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: max(14px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+    background: radial-gradient(ellipse at 50% -10%, var(--p4), var(--p5) 60%) fixed;
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; }
+  header h1 {
+    font: 400 clamp(34px, 7vw, 58px)/1.05 var(--script); margin: 6px 0 2px; color: var(--p0);
+    text-shadow: 0 0 4px var(--p1), 0 0 12px var(--p1), 0 0 26px var(--p2);
+  }
+  header p { margin: 0 0 12px; color: var(--p1); font-size: 14px; }
+  .game { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .game { grid-template-columns: 1fr; } }
+  .stagebox {
+    max-width: min(100%, calc(76vh * 640 / 600));
+    border: 2px solid var(--p2); border-radius: 14px; overflow: hidden; background: var(--p5);
+    box-shadow: 0 0 0 1px var(--p3), 0 0 18px #d0379166, inset 0 0 22px #d0379144;
+  }
+  canvas#stage { display: block; width: 100%; height: auto; aspect-ratio: 640 / 600; touch-action: none; cursor: grab; }
+  canvas#stage.dragging { cursor: grabbing; }
+  .stats { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 2px 4px; font-size: 15px; }
+  .stats b { color: var(--p1); font-weight: 400; text-shadow: 0 0 8px #fe6c9088; }
+  .meter { margin: 8px 2px 0; }
+  .meter .label { display: flex; justify-content: space-between; font-size: 13px; color: var(--p1); }
+  .bar { position: relative; height: 10px; border-radius: 6px; background: var(--p4); border: 1px solid var(--p3); overflow: hidden; }
+  .bar i { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, var(--p2), var(--p1)); box-shadow: 0 0 10px var(--p1); transition: width .4s; }
+  .bar s { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--p0); opacity: .55; }
+  .log { margin: 10px 2px 0; min-height: 3em; color: var(--p0); font-size: 15px; }
+  .log.fresh { animation: fresh .8s ease-out; }
+  @keyframes fresh { from { color: var(--p1); text-shadow: 0 0 10px var(--p1); } }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  .btn {
+    font: 16px var(--type); color: var(--p0); background: var(--p5); border: 2px solid var(--p1); border-radius: 10px;
+    padding: 8px 14px; cursor: pointer; box-shadow: 0 0 10px #fe6c9066, inset 0 0 8px #fe6c9044; text-shadow: 0 0 6px var(--p1);
+  }
+  .btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
+  .btn.big { font-size: 20px; padding: 10px 20px; border-color: var(--p0); }
+  .btn small { display: block; font-size: 12px; color: var(--p1); text-shadow: none; }
+  aside h2 { font: 400 22px var(--type); margin: 2px 0 10px; color: var(--p0); text-shadow: 0 0 8px var(--p2); }
+  aside h3 { font: 400 17px var(--type); margin: 16px 0 8px; color: var(--p1); }
+  #afford { font: 13px var(--type); color: var(--p1); text-shadow: none; }
+  #shop { display: grid; gap: 8px; }
+  @media (max-width: 760px) and (min-width: 520px) { #shop { grid-template-columns: 1fr 1fr; } }
+  .up {
+    position: relative; text-align: left; font: 14px/1.3 var(--type); color: var(--p0); background: #26113a;
+    border: 1px solid var(--p3); border-radius: 10px; padding: 8px 10px; cursor: pointer;
+  }
+  .up b { display: block; font-weight: 400; font-size: 15px; }
+  .up span { display: block; color: #e9c3d6; font-size: 13px; }
+  .up em { display: block; font-style: normal; color: var(--p1); margin-top: 3px; }
+  .up.can { border-color: var(--p1); box-shadow: 0 0 10px #fe6c9055; }
+  .up:disabled { cursor: default; }
+  .up:disabled:not(.can) { opacity: .62; }
+  .up.odd { border-style: dashed; }
+  .up.ren { background: #2b0f2c; }
+  .up .tag { position: absolute; top: -8px; right: 8px; font-size: 11px; padding: 0 6px; border-radius: 8px; background: var(--p1); color: var(--p5); }
+  .up.new { animation: pulse 1.6s ease-in-out 4; }
+  @keyframes pulse { 50% { box-shadow: 0 0 18px var(--p1); border-color: var(--p0); } }
+  #plea {
+    margin-top: 12px; padding: 14px 16px; border: 2px solid var(--p0); border-radius: 14px; background: #26113aee;
+    box-shadow: 0 0 18px #fe6c9066;
+  }
+  #plea .who { color: var(--p1); font-size: 14px; }
+  #plea p { margin: 4px 0 12px; font-size: 17px; }
+  #ending { margin: 26px auto 10px; max-width: 640px; text-align: center; padding: 18px; border: 2px solid var(--p1); border-radius: 16px; box-shadow: 0 0 22px #fe6c9066; }
+  #ending h2 { font: 400 44px/1.1 var(--script); margin: 0 0 8px; text-shadow: 0 0 6px var(--p1), 0 0 18px var(--p2); }
+  #ending p { margin: 8px 0; }
+  .form-final { display: inline-block; margin: 10px 0; padding: 10px 16px; background: var(--p0); color: var(--p5); border-radius: 4px; transform: rotate(-2deg); text-align: left; font-size: 14px; }
+  .form-final b { color: var(--p2); }
+  @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh { animation: none; } .bar i { transition: none; } }
+</style>
+<!-- Libraries from /shared/lib/libs.json, by version. List only what this game imports: the credits tool reads these.
+     Strudel's soundfonts import @strudel/core and @strudel/webaudio, which are both inside the @strudel/web bundle. -->
+<script type="importmap">
+{ "imports": {
+  "@strudel/web": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/core": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/webaudio": "/shared/lib/@strudel/web@1.3.0/index.mjs"
+} }
+</script>
+<!-- Shared site runtime: top bar, credits, share card, streaks. data-day is this game's "n" from games.json (an internal id, never shown). -->
+<script src="/shared/daily.js" data-day="6" data-credits></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>A Duck of Unreasonable Size</h1>
+    <p>Drag ducklets from the ink pot into the pond. Drag a duck onto its twin to make one bigger duck.</p>
+  </header>
+  <div class="game">
+    <main>
+      <div class="stagebox"><canvas id="stage" width="640" height="600" aria-label="A neon-lit night pier. Sepia the squid paints rubber ducks in a small pond; Clerk Juniper the crab waits with a stamp."></canvas></div>
+      <div class="stats">
+        <span>Coins <b id="coins">0</b></span>
+        <span>Tips <b id="rate">0</b>/s</span>
+        <span>Ink <b id="ink">4/4</b></span>
+        <span id="pcWrap" hidden>Postcards <b id="pc">0</b></span>
+      </div>
+      <div class="meter">
+        <div class="label"><span id="meterLabel">The Legend of Sepia</span><span id="meterVal"></span></div>
+        <div class="bar" id="meterBar"><i id="meterFill"></i></div>
+      </div>
+      <div class="log" id="log" aria-live="polite"></div>
+      <div class="actions">
+        <button class="btn" id="hookBtn" type="button" hidden></button>
+        <button class="btn" id="launchBtn" type="button" hidden></button>
+        <button class="btn big" id="sailBtn" type="button" hidden>⛵ Set sail on the Duck</button>
+      </div>
+      <div id="plea" hidden>
+        <div class="who" id="pleaWho"></div>
+        <p id="pleaText"></p>
+        <div class="actions" style="margin:0">
+          <button class="btn" id="stayBtn" type="button">Stay a little</button>
+          <button class="btn big" id="goBtn" type="button">Sail anyway</button>
+        </div>
+      </div>
+    </main>
+    <aside id="side">
+      <h2>Wares &amp; Wonders <span id="afford"></span></h2>
+      <div id="shop"></div>
+    </aside>
+  </div>
+  <section id="ending" hidden>
+    <h2>Gone sailing.</h2>
+    <div class="form-final">FORM 1 · <b>Application to Be Missed</b><br>Will be missed? <b>☑</b> &nbsp;·&nbsp; <b>APPROVED</b> — J., Clerk of the Harbour</div>
+    <p id="endText">The Duck of Unreasonable Size slips past the harbour light with a squid on top and a tiny sail that finally means something. Somewhere out there, a thousand rubber ducks already carry Sepia's name. Now Sepia gets to go and see them.</p>
+    <p id="endStats"></p>
+    <button class="btn big" id="shareBtn" type="button">Share result</button>
+  </section>
+</div>
+<script type="module">
+import { createAudio, scale } from '/shared/kit/audio.mjs';
+import { createMusic } from '/shared/kit/music.mjs';
+import { createSoundtrack } from './music.mjs';
+import * as Sprites from '/shared/kit/sprites.mjs';
+import * as E from './economy.mjs';
+
+const $ = id => document.getElementById(id);
+const DEBUG = location.search.includes('debug');
+const KEY = window.DailyGame ? DailyGame.storageKey('save') : 'di:6:save';
+let S = E.newState();
+try { const raw = localStorage.getItem(KEY); if (raw) S = E.load(JSON.parse(raw)); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const P = ['#ffffff', '#fe6c90', '#d03791', '#87286a', '#452459', '#260d34'];
+
+// ---------- Sound ----------
+// Everything on A minor pentatonic, the soundtrack's key.
+const A = createAudio({ sfxTrim: 1, musicTrim: 3.2 });
+const N = scale('minor pentatonic', 57);
+const sfx = {
+  pick() { A.tone({ type: 'sine', freq: N(5), dur: 0.05, vol: 0.12, glide: 1.25 }); },
+  plop() { A.tone({ type: 'sine', freq: N(3), dur: 0.09, vol: 0.22, glide: 0.6 }); A.tone({ type: 'pluck', freq: N(7), dur: 0.08, vol: 0.1, at: A.now + 0.04 }); },
+  squeak() { A.tone({ type: 'triangle', freq: N(8 + Math.floor(Math.random() * 3)), dur: 0.09, vol: 0.13, glide: 1.4, cutoff: 3000 }); },
+  squish(t = 2) {
+    A.noiseHit('snare', { vol: 0.05, dur: 0.06 });
+    A.tone({ type: 'sine', freq: N(2), dur: 0.12, vol: 0.2, glide: 1.6 });
+    A.tone({ type: 'keys', freq: N(4 + t), dur: 0.2, vol: 0.16, at: A.now + 0.08 });
+  },
+  stamp() { A.noiseHit('kick', { vol: 0.22 }); A.noiseHit('snare', { vol: 0.07, dur: 0.05 }); },
+  registered() { [5, 7, 9, 10].forEach((d, i) => A.tone({ type: 'bell', freq: N(d), dur: 0.22, vol: 0.12, at: A.now + i * 0.09 })); },
+  coin() { A.tone({ type: 'bell', freq: N(10), dur: 0.08, vol: 0.09 }); A.tone({ type: 'bell', freq: N(12), dur: 0.1, vol: 0.08, at: A.now + 0.06 }); },
+  buy() { [3, 5, 7].forEach((d, i) => A.tone({ type: 'pluck', freq: N(d), dur: 0.14, vol: 0.16, at: A.now + i * 0.07 })); },
+  unlock() { A.tone({ type: 'bell', freq: N(9), dur: 0.3, vol: 0.1 }); A.tone({ type: 'bell', freq: N(11), dur: 0.35, vol: 0.08, at: A.now + 0.12 }); },
+  deny() { A.tone({ type: 'triangle', freq: N(2), dur: 0.09, vol: 0.14 }); A.tone({ type: 'triangle', freq: N(0), dur: 0.14, vol: 0.13, at: A.now + 0.1 }); },
+  form() { A.noiseHit('whoosh', { vol: 0.06, dur: 0.25 }); A.tone({ type: 'keys', freq: N(1), dur: 0.25, vol: 0.14, at: A.now + 0.15 }); },
+  launch() { A.noiseHit('whoosh', { vol: 0.09, dur: 0.8 }); [0, 2, 4, 5, 7, 9].forEach((d, i) => A.tone({ type: 'pluck', freq: N(d + 3), dur: 0.2, vol: 0.13, at: A.now + 0.2 + i * 0.1 })); },
+  postcard() { A.tone({ type: 'bell', freq: N(7), dur: 0.25, vol: 0.1 }); A.tone({ type: 'bell', freq: N(9), dur: 0.3, vol: 0.09, at: A.now + 0.15 }); },
+  hook() { for (let i = 0; i < 4; i++) A.noiseHit('hat', { vol: 0.05, at: A.now + i * 0.06 }); A.tone({ type: 'pluck', freq: N(6), dur: 0.2, vol: 0.15, at: A.now + 0.28 }); },
+  jackpot() { [5, 7, 8, 10, 12].forEach((d, i) => A.tone({ type: 'bell', freq: N(d), dur: 0.25, vol: 0.11, at: A.now + i * 0.08 })); },
+  plea() { A.tone({ type: 'keys', freq: N(2), dur: 0.5, vol: 0.12 }); A.tone({ type: 'keys', freq: N(4), dur: 0.5, vol: 0.09, at: A.now + 0.2 }); },
+  finale() {
+    const seq = [[0, 0], [2, .18], [4, .36], [5, .54], [7, .72], [9, .9], [10, 1.2]];
+    seq.forEach(([d, t]) => { A.tone({ type: 'keys', freq: N(d + 3), dur: 0.5, vol: 0.13, at: A.now + t }); A.tone({ type: 'bell', freq: N(d + 8), dur: 0.4, vol: 0.07, at: A.now + t + 0.04 }); });
+    A.tone({ type: 'pad', freq: N(0), dur: 1.8, vol: 0.08, attack: 0.3, at: A.now + 1.2 });
+    A.tone({ type: 'pad', freq: N(3), dur: 1.8, vol: 0.06, attack: 0.3, at: A.now + 1.2 });
+  },
+};
+// Per-effect levels, measured with npm run mix so every effect peaks near -10 dBFS.
+const LEVEL = { pick: 4, plop: 1.8, squeak: 3.2, squish: 1.1, stamp: 3.5, registered: 2.5, coin: 4.5, buy: 2.2, unlock: 4,
+  deny: 3.2, form: 1.65, launch: 2.6, postcard: 3.6, hook: 3, jackpot: 2.5, plea: 1.4, finale: 0.76 };
+for (const k of Object.keys(sfx)) {
+  const fn = sfx[k];
+  sfx[k] = (...a) => {
+    const tone = A.tone, hit = A.noiseHit, m = LEVEL[k] || 1;
+    A.tone = o => tone({ ...o, vol: (o.vol ?? 0.3) * m });
+    A.noiseHit = (kind, o = {}) => hit(kind, { ...o, vol: (o.vol ?? 0.25) * m });
+    try { fn(...a); } finally { A.tone = tone; A.noiseHit = hit; }
+  };
+}
+if (DEBUG) window.__game = { A, sfx, long: ['finale', 'launch'], S: () => S, E };
+
+// The game owns playback; music.mjs arranges the composed song per phase.
+const PHASE_KEYS = { 1: 'pond', 2: 'flotilla', 3: 'petition', 4: 'jubilee' };
+let music = null, soundtrack = null;
+function song() {
+  soundtrack ||= createSoundtrack(music.strudel);
+  return soundtrack(PHASE_KEYS[E.phase(S)]);
+}
+createMusic(A, { song }).then(m => { music = m; music.update(); if (DEBUG) Object.assign(window.__game, { music: m, song }); });
+
+// ---------- Canvas & layout ----------
+const cv = $('stage'), g = cv.getContext('2d');
+const W = 640, H = 600, CELL = 76, POND_R = 632, POND_B = 500;
+function fit() {
+  const dpr = Math.min(2, devicePixelRatio || 1), r = cv.getBoundingClientRect();
+  const w = Math.round((r.width || W) * dpr), h = Math.round(w * H / W);
+  if (cv.width !== w) { cv.width = w; cv.height = h; }
+}
+addEventListener('resize', fit);
+// A finished world shows a short, full pond so the great duck has sky to sail in.
+const vCols = () => S.ended ? 6 : E.cols(S), vRows = () => S.ended ? 3 : E.rows(S);
+const vActive = i => (i % E.COLS) < vCols() && Math.floor(i / E.COLS) < vRows();
+const pondX0 = () => POND_R - 6 * CELL + (6 - vCols()) * CELL / 2;
+const cellXY = i => { const x = i % E.COLS, y = Math.floor(i / E.COLS); return [pondX0() + x * CELL, POND_B - (y + 1) * CELL]; };
+function cellAt(px, py) {
+  const x = Math.floor((px - pondX0()) / CELL), y = Math.floor((POND_B - py) / CELL);
+  if (x < 0 || y < 0 || x >= E.cols(S) || y >= E.rows(S) || px < pondX0() || py > POND_B) return -1;
+  return y * E.COLS + x;
+}
+const POT = { x: 22, y: 404, w: 118, h: 90 };
+const STAMP = { x: 556, y: 520, w: 64, h: 66 };
+const inRect = (p, r) => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h;
+
+// ---------- Sprites ----------
+// The rubber duck is a line icon; here it becomes a bent neon tube: a blurred glow, the colored
+// tube, and a hot white core. Bigger sizes get brighter tubes and their own trimmings.
+const TUBE = { 1: P[3], 2: P[2], 3: P[2], 4: P[1], 5: P[1], 6: P[1], 7: P[0], 8: P[0] };
+const spr = {};
+async function neonDuck(color, size) {
+  const src = await Sprites.loadSvg('./art/hugeicons--rubber-duck.svg');
+  const tube = await Sprites.svgToCanvas(Sprites.recolor(src.replace('stroke-width="1.5"', 'stroke-width="1.7"'), color), size);
+  const core = await Sprites.svgToCanvas(Sprites.recolor(src.replace('stroke-width="1.5"', 'stroke-width="0.55"'), color === P[0] ? '#fff' : '#ffe3ec'), size);
+  const pad = 14, c = Sprites.canvas(size + pad * 2, size + pad * 2), x = c.getContext('2d');
+  x.filter = 'blur(7px)'; x.globalAlpha = 0.9; x.drawImage(Sprites.silhouette(tube, color), pad, pad);
+  x.filter = 'blur(2px)'; x.drawImage(tube, pad, pad);
+  x.filter = 'none'; x.globalAlpha = 1; x.drawImage(tube, pad, pad); x.drawImage(core, pad, pad);
+  return c;
+}
+async function neonIcon(file, color, size, width) {
+  let src = await Sprites.loadSvg(file);
+  const shape = await Sprites.svgToCanvas(Sprites.recolor(src, color), size);
+  const pad = 10, c = Sprites.canvas(size + pad * 2, size + pad * 2), x = c.getContext('2d');
+  x.filter = 'blur(6px)'; x.drawImage(shape, pad, pad); x.filter = 'none'; x.drawImage(shape, pad, pad);
+  return c;
+}
+// Sepia and Juniper are drawn by hand, as neon tubes, so they can wave and stamp.
+function tubeStroke(x, color, w, fn) {
+  x.save(); x.lineCap = 'round'; x.lineJoin = 'round';
+  x.strokeStyle = color; x.lineWidth = w * 2.8; x.globalAlpha = 0.22; x.beginPath(); fn(); x.stroke();
+  x.globalAlpha = 1; x.lineWidth = w; x.beginPath(); fn(); x.stroke();
+  x.strokeStyle = '#fff'; x.lineWidth = Math.max(1, w * 0.32); x.globalAlpha = 0.85; x.beginPath(); fn(); x.stroke();
+  x.restore();
+}
+function drawSepia(x, cx, cy, t, busy, total) {
+  const bob = reduced ? 0 : Math.sin(t * 1.6) * 3;
+  cy += bob;
+  // Tentacles: the busy ones reach toward the pond with a lit brush.
+  for (let k = 0; k < 8; k++) {
+    const a = -0.9 + k * 0.26, len = 70 + (k % 3) * 10, wave = reduced ? 0 : Math.sin(t * 2.2 + k) * 8;
+    const sx = cx - 26 + k * 7.5, sy = cy + 30;
+    const isBusy = k < busy, isFree = k < total;
+    const ex = isBusy ? sx + 50 + k * 5 : sx + Math.sin(a) * 26 + wave, ey = isBusy ? sy + 30 - k * 4 : sy + len;
+    tubeStroke(x, isFree ? P[1] : P[3], 3, () => { x.moveTo(sx, sy); x.quadraticCurveTo(sx + wave * 0.6, sy + len * 0.55, ex, ey); });
+    if (isBusy) { x.save(); x.shadowColor = P[0]; x.shadowBlur = 10; x.fillStyle = P[0]; x.beginPath(); x.arc(ex, ey, 3.2, 0, 7); x.fill(); x.restore(); }
+  }
+  // Mantle, fins, beret.
+  tubeStroke(x, P[1], 4, () => {
+    x.moveTo(cx - 30, cy + 30); x.bezierCurveTo(cx - 38, cy - 30, cx - 16, cy - 82, cx, cy - 96);
+    x.bezierCurveTo(cx + 16, cy - 82, cx + 38, cy - 30, cx + 30, cy + 30); x.closePath();
+  });
+  tubeStroke(x, P[2], 3, () => { x.moveTo(cx - 14, cy - 70); x.lineTo(cx - 34, cy - 58); x.lineTo(cx - 20, cy - 46); x.moveTo(cx + 14, cy - 70); x.lineTo(cx + 34, cy - 58); x.lineTo(cx + 20, cy - 46); });
+  tubeStroke(x, P[0], 3, () => { x.moveTo(cx - 20, cy - 84); x.quadraticCurveTo(cx - 14, cy - 112, cx + 14, cy - 106); x.quadraticCurveTo(cx + 30, cy - 98, cx + 22, cy - 86); x.quadraticCurveTo(cx, cy - 80, cx - 20, cy - 84); x.moveTo(cx + 2, cy - 108); x.lineTo(cx + 4, cy - 116); });
+  // Eyes, which blink.
+  const blink = !reduced && (t % 5) < 0.12;
+  for (const ex of [cx - 12, cx + 12]) {
+    if (blink) tubeStroke(x, P[0], 2.5, () => { x.moveTo(ex - 6, cy); x.lineTo(ex + 6, cy); });
+    else { tubeStroke(x, P[0], 2.5, () => x.arc(ex, cy, 8, 0, 7)); x.fillStyle = P[0]; x.beginPath(); x.arc(ex + 2, cy + 1, 3, 0, 7); x.fill(); }
+  }
+}
+function drawJuniper(x, cx, cy, t, hat) {
+  const wob = reduced ? 0 : Math.sin(t * 3) * 1.5;
+  tubeStroke(x, P[2], 3.5, () => { x.ellipse(cx, cy, 30, 17, 0, 0, Math.PI * 2); });
+  for (const s of [-1, 1]) {
+    tubeStroke(x, P[2], 2.5, () => { x.moveTo(cx + s * 9, cy - 14); x.lineTo(cx + s * 11, cy - 30 + wob); });
+    tubeStroke(x, P[0], 2.5, () => x.arc(cx + s * 11, cy - 34 + wob, 4.5, 0, 7));
+    for (let k = 0; k < 3; k++) tubeStroke(x, P[2], 2, () => { x.moveTo(cx + s * (16 + k * 6), cy + 10); x.lineTo(cx + s * (24 + k * 7), cy + 24); });
+  }
+  tubeStroke(x, P[1], 3, () => { x.moveTo(cx - 28, cy - 4); x.quadraticCurveTo(cx - 48, cy - 16, cx - 44, cy - 30); x.moveTo(cx - 44, cy - 30); x.lineTo(cx - 52, cy - 40); x.moveTo(cx - 44, cy - 30); x.lineTo(cx - 36, cy - 42); });
+  if (hat) tubeStroke(x, P[0], 2.5, () => { x.moveTo(cx - 14, cy - 42 + wob); x.lineTo(cx + 14, cy - 42 + wob); x.rect(cx - 8, cy - 56 + wob, 16, 14); });
+}
+function drawGull(x, cx, cy, t) {
+  tubeStroke(x, P[0], 2.5, () => { x.ellipse(cx, cy, 13, 8, 0, 0, 7); x.moveTo(cx + 9, cy - 6); x.arc(cx + 13, cy - 9, 5, 0, 7); });
+  tubeStroke(x, P[1], 2, () => { x.moveTo(cx + 18, cy - 9); x.lineTo(cx + 25, cy - 7); x.moveTo(cx - 2, cy + 8); x.lineTo(cx - 2, cy + 16); x.moveTo(cx + 4, cy + 8); x.lineTo(cx + 4, cy + 16); });
+}
+function makeCharacterSprite(fn, w, h) { const c = Sprites.canvas(w, h); fn(c.getContext('2d')); return c; }
+
+async function makeSprites() {
+  for (let t = 1; t <= 8; t++) spr['duck' + t] = Sprites.register(`duck ${t}: ${E.TIERS[t].name}`, await neonDuck(TUBE[t], 96));
+  spr.wet = Sprites.register('wet duck', await neonDuck(P[4], 96));
+  spr.stamp = Sprites.register('stamp', await neonIcon('./art/ph--stamp-bold.svg', P[1], 44));
+  spr.card = Sprites.register('postcard', await neonIcon('./art/ph--envelope-simple-bold.svg', P[0], 30));
+  spr.hookIcon = Sprites.register('hook', await neonIcon('./art/game-icons--fishing-hook.svg', P[1], 30));
+  Sprites.register('Sepia', makeCharacterSprite(x => drawSepia(x, 70, 130, 1, 2, 4), 150, 230));
+  Sprites.register('Clerk Juniper', makeCharacterSprite(x => drawJuniper(x, 70, 70, 1, true), 140, 110));
+  Sprites.register('Barnaby', makeCharacterSprite(x => drawGull(x, 30, 30, 1), 64, 56));
+}
+
+// ---------- Floating bits ----------
+const fx = [];        // { kind, x, y, t, life, text, color }
+const sailing = [];   // ducks heading out to sea
+const pop = (x, y, text, color = P[1]) => fx.push({ kind: 'text', x, y, t: 0, life: 1.4, text, color });
+const burst = (x, y, color = P[1], n = 10) => { if (reduced) return; for (let k = 0; k < n; k++) { const a = Math.random() * 7, v = 40 + Math.random() * 80; fx.push({ kind: 'spark', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30, t: 0, life: 0.7, color }); } };
+const cellCenter = i => { const [x, y] = cellXY(i); return [x + CELL / 2, y + CELL / 2]; };
+
+// ---------- Log ----------
+let logT = 0;
+function say(msg) { const el = $('log'); el.textContent = msg; el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); logT = 0; }
+const COASTS = ['the Isle of Marrow', 'Cape Dismal', 'the Jade Shallows', 'Port Elsewhere', 'the Bay of Quiet Gulls', 'the Salt Kingdoms', 'a lighthouse with one keeper', 'the far side of the fog', 'the Coral Parliament', 'a beach with no name yet'];
+const CARD_LINES = [
+  d => `“Your ${d} washed up here and we made it king. It is a good king. It squeaks at the tide.”`,
+  d => `“A ${d} sailed into our harbour at dawn. The children follow it everywhere. Thank you, we think.”`,
+  d => `“We have built a small temple to your ${d}. It is mostly a shelf.”`,
+  d => `“Your ${d} beat our fastest boat. Our fastest boat has retired.”`,
+  d => `“We found the signature on its bottom. Who is Sepia? Everyone here wants to know.”`,
+];
+const AMBIENT = [
+  'Barnaby the gull tosses a coin into the pond and says nothing, nobly.',
+  'A tourist asks if the ducks are for sale. Sepia gazes out to sea, as legends do.',
+  'Somewhere beyond the harbour light, the tide is thinking about ducks.',
+  'Juniper polishes the stamp. The stamp gleams with the light of a thousand approvals.',
+  'The neon hums in a minor key. Sepia hums along.',
+  'Barnaby reports that the fish are talking about you. The fish are always talking.',
+  'Lo, the ink pot bubbles, and a duck-shaped thought forms within it.',
+  'Every form has a little box: “Will be missed?” Juniper always leaves it blank.',
+];
+
+// ---------- Shop ----------
+const shop = $('shop');
+const fmt = n => n < 1000 ? String(Math.floor(n)) : n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+function shopItems() {
+  const items = [];
+  if (S.ended) return items;
+  for (const u of E.UPGRADES) {
+    const l = E.lvl(S, u.id);
+    if (l >= u.cost.length) continue;
+    if (!(u.show(S) || S.seen.includes(u.id))) continue;
+    items.push({ id: u.id, name: u.name + (u.cost.length > 1 ? ` ${'I II III IV V'.split(' ')[l]}` : ''), desc: u.desc, cost: u.cost[l], cur: 'coins' });
+  }
+  if (!S.booth && (S.earned >= 20 || S.seen.includes('booth'))) items.push({ id: 'booth', name: 'Hook-a-Duck Booth', desc: 'Barnaby opens a booth. Pay, hook a duck, see what is painted underneath.', cost: E.BOOTH_UNLOCK, cur: 'coins' });
+  for (const o of E.ONEOFFS) if (!S.odd[o.id] && (o.show(S) || S.seen.includes(o.id))) items.push({ id: o.id, name: o.name, desc: o.desc, cost: o.cost, cur: 'coins', odd: true });
+  items.sort((a, b) => a.cost - b.cost);
+  if (S.flotillas > 0) for (const r of E.RENOWN) {
+    const l = E.rlvl(S, r.id); if (l >= r.cost.length) continue;
+    items.push({ id: r.id, name: r.name + (r.cost.length > 1 ? ` ${'I II III IV V'.split(' ')[l]}` : ''), desc: r.desc, cost: r.cost[l], cur: 'postcards', ren: true });
+  }
+  return items;
+}
+const newUntil = {};
+let shopSig = '';
+function renderShop() {
+  const items = shopItems();
+  for (const it of items) if (!S.seen.includes(it.id)) { S.seen.push(it.id); newUntil[it.id] = performance.now() + 9000; if (S.time > 2) sfx.unlock(); }
+  const sig = items.map(i => i.id + i.cost).join('|');
+  if (sig !== shopSig) {
+    shopSig = sig;
+    shop.innerHTML = '';
+    let renHead = false;
+    for (const it of items) {
+      if (it.ren && !renHead) { renHead = true; const h = document.createElement('h3'); h.textContent = '✉ Bought with postcards (kept forever)'; shop.append(h); }
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'up' + (it.odd ? ' odd' : '') + (it.ren ? ' ren' : '');
+      b.dataset.id = it.id; b.dataset.cost = it.cost; b.dataset.cur = it.cur;
+      b.innerHTML = `<b></b><span></span><em></em>`;
+      b.querySelector('b').textContent = it.name;
+      b.querySelector('span').textContent = it.desc;
+      b.querySelector('em').textContent = it.cur === 'coins' ? `${fmt(it.cost)} coins` : `${it.cost} postcards`;
+      b.addEventListener('click', () => doBuy(it.id));
+      shop.append(b);
+    }
+  }
+  let n = 0;
+  const now = performance.now();
+  for (const b of shop.querySelectorAll('button.up')) {
+    const have = b.dataset.cur === 'coins' ? S.coins : S.postcards;
+    const can = have >= Number(b.dataset.cost) && !S.ended;
+    b.disabled = !can; b.classList.toggle('can', can); if (can) n++;
+    const isNew = (newUntil[b.dataset.id] || 0) > now;
+    b.classList.toggle('new', isNew);
+    let tag = b.querySelector('.tag');
+    if (isNew && !tag) { tag = document.createElement('i'); tag.className = 'tag'; tag.textContent = 'new'; b.append(tag); }
+    if (!isNew && tag) tag.remove();
+  }
+  $('afford').textContent = n ? `· ${n} affordable` : '';
+}
+function doBuy(id) {
+  const out = [];
+  if (!E.buy(S, id, out)) return;
+  delete newUntil[id];
+  handle(out); save(); renderShop();
+}
+
+// ---------- Events from the rules ----------
+let lastLegendPhase = E.phase(S);
+const wetCell = new Set();
+function handle(out) {
+  for (const ev of out) {
+    switch (ev.type) {
+      case 'spawn': {
+        const [x, y] = cellCenter(ev.i); burst(x, y, P[3], 5);
+        if (!ev.crab) sfx.plop(); else if (Math.random() < 0.5) sfx.squeak();
+        if (!S.everMerged && !ev.crab && E.ducks(S).length === 2) say('Two ducklets. Drag one onto the other. Lo, what happens next is in the old songs.');
+        break;
+      }
+      case 'golden': say('Golden ink! This ducklet comes out bigger than a ducklet has any right to.'); break;
+      case 'merge': {
+        const [x, y] = cellCenter(ev.i); burst(x, y, TUBE[ev.t], 14); sfx.squish(ev.t);
+        if (S.everMerged === 1) say('Two ducks become one. Twice the rubber, twice the duck. Sepia takes up a brush, for wet paint must dry.');
+        else if (Math.random() < 0.18) say(['The duck swelleth.', 'Behold: more duck.', 'And the rubber was gathered unto itself, and it was larger.', 'Sepia paints with four arms and steadies the duck with the rest.'][Math.floor(Math.random() * 4)]);
+        break;
+      }
+      case 'best': if (ev.t >= 3) say(`A ${E.TIERS[ev.t].name}! ${['', '', '', 'Bigger than any bath.', 'It has a wake.', 'Juniper is going to want to see this.', 'It casts a shadow on the neighbours.', 'The pier tilts slightly toward it.', 'It is unreasonable.'][ev.t]}`); break;
+      case 'loot': {
+        const [x, y] = cellCenter(ev.i);
+        if (ev.kind === 'coins') { pop(x, y - 24, `+${ev.n} coins`); sfx.coin(); say(`A prize was painted under that duck: ${ev.n} coins. Barnaby says that's how it works.`); }
+        if (ev.kind === 'ink') { pop(x, y - 24, '+3 ink', P[0]); sfx.coin(); say('Under the duck: a spare pot of ink, still warm.'); }
+        if (ev.kind === 'duck') { pop(x, y - 24, 'free duck!', P[0]); sfx.jackpot(); say(`Under the duck: a whole ${E.TIERS[ev.t].name}, folded up very small.`); }
+        if (ev.kind === 'golden') { pop(x, y - 24, 'golden ink', P[0]); sfx.jackpot(); say('Under the duck: golden ink. The next ducklet from the pot will be special.'); }
+        break;
+      }
+      case 'form': {
+        const [x, y] = cellCenter(ev.i); sfx.form(); burst(x, y, P[0], 6);
+        if (ev.silly) say(`Under the duck: Form ${ev.code}, “${ev.title}.” Juniper insists it be filed. Stamp it.`);
+        else if (ev.census) say('The quarterly Duck Census has arrived, early, as it does every two minutes.');
+        else say(`Clerk Juniper scuttles forth with Form ${ev.code}: “${ev.title}.” No ${E.TIERS[ev.tier].name} may float without it. Drag the stamp onto it.`);
+        break;
+      }
+      case 'noRoom': if (Math.random() < 0.02) say(`Juniper waits, form in claw, for an empty spot in the pond.`); break;
+      case 'stamp': { const [x, y] = cellCenter(ev.i); sfx.stamp(); pop(x, y - 20, ev.left > 0 ? `${ev.left} to go` : 'filed!', P[0]); shake = 3; break; }
+      case 'registered': { sfx.registered(); say(`Form ${ev.code} is stamped. The ${E.TIERS[ev.t].name} is now a lawful vessel. (The “Will be missed?” box: blank.)`); break; }
+      case 'filed': { const [x, y] = cellCenter(ev.i); pop(x, y - 34, `+${ev.n} coins`); sfx.coin(); say(`Form ${ev.code} filed. Juniper pays a small bounty for tidy paperwork: ${ev.n} coins.`); break; }
+      case 'deny': {
+        sfx.deny();
+        if (ev.reason === 'wet') say('The paint is still wet. Even legends wait for paint.');
+        if (ev.reason === 'form') say(`Juniper raises one claw. “A ${E.TIERS[ev.t].name}? Not without Form ${E.TIERS[ev.t].form.code}.”`);
+        if (ev.reason === 'legend') say(`Juniper raises one claw. “Form ${E.TIERS[ev.t].form.code} is for applicants of Legend ${E.TIERS[ev.t].form.legend}. Launch a Flotilla and come back famous.”`);
+        if (ev.reason === 'top') say('There is no form for anything bigger. Juniper checked twice.');
+        if (ev.reason === 'full') say('The pond is full. Barnaby cannot hook a duck into nowhere.');
+        break;
+      }
+      case 'buy': {
+        sfx.buy();
+        const lines = {
+          sign: 'A neon sign: DUCKS. The pier glows pink and the coins come faster.',
+          arms: 'Sepia unties another tentacle from the railing. More paint, more hands.',
+          sac: 'A deeper ink sac. The pot holds more.', gym: 'Squid calisthenics. Very undignified. Very effective.',
+          crab: 'An Apprentice Crab joins, and drops ducklets into the pond whenever it likes.',
+          dredge: 'The pond is dredged. More room, and one very surprised eel.',
+          notary: 'A Night-Shift Notary crab arrives. It stamps whatever Juniper gives it.',
+          lights: 'Pier lights! The front row now dazzles the tourists.',
+          rich: 'Richer ink: some ducklets come out as whole ducks.',
+          tidy: 'The Tidy Tentacle squishes matching ducks while you are not looking.',
+          sign2: '“OPEN LATE.” It was always open late. Now everyone knows.',
+          booth: 'Barnaby opens the Hook-a-Duck Booth. “The bottoms are a mystery even to me.”',
+          sail: 'Sepia paints a tiny sail on one duck. It points out to sea. Sepia looks at it for a long time.',
+          jeff: 'One duck is now named Jeff. Jeff is not a size. Jeff is a feeling.',
+          frame: 'Form 7-B is framed and hung in the shed. The “Will be missed?” box is still blank.',
+          postcard: 'A postcard of somewhere else. Sepia keeps it in the beret, for later.',
+          hat: 'Juniper wears the hat to work. Juniper does not mention the hat. Juniper wears it every day.',
+          shanty: 'Barnaby learns the shanty. It is about leaving. Barnaby sings it wrong on purpose.',
+          pilgrims: 'Pilgrims arrive, clutching postcards, to see the pond where the ducks are born.',
+          pond: 'The Harbour leases you another row of water. Juniper made you fill in a form, of course.',
+          brushes: 'Ancestral brushes, mailed back from far coasts. Two more tentacles, every run.',
+          seal: 'The Seal of Good Standing. Juniper now accepts fewer stamps from you, grudgingly.',
+          apprentices: 'The Apprentice and the Notary will be waiting every time you start again.',
+          marks: 'Lucky marks: twice as many prizes painted under ducks.',
+          ink: 'Ink of the Deep. The pot refills faster, forever.',
+        };
+        say(lines[ev.id] || `Bought: ${ev.name}.`);
+        if (ev.id === 'booth') showActions();
+        break;
+      }
+      case 'hook': {
+        sfx.hook();
+        if (ev.kind === 'duck') { const [x, y] = cellCenter(ev.i); burst(x, y, P[0], 10); if (ev.jackpot) { sfx.jackpot(); say('JACKPOT. Barnaby hooks a Galleon Duck and has to sit down.'); } else say(`Barnaby hooks a ${E.TIERS[ev.t].name}. “Lucky,” says Barnaby, to everyone.`); }
+        else say('Barnaby hooks… a form. “Some days the pond gives paperwork,” he says, gravely.');
+        break;
+      }
+      case 'dry': { const [x, y] = cellCenter(ev.i); if (ev.t >= 3) burst(x, y, TUBE[ev.t], 6); break; }
+      case 'flotillaOpen': sfx.unlock(); say('A Galleon Duck! Harbour code is clear: vessels belong at sea. You may now launch a Flotilla.'); showActions(); break;
+      case 'jubilee': {
+        sfx.finale(); shake = 6;
+        say('THE JUBILEE! The judges measure the duck and run out of measuring. Sepia wins. And because it is a registered vessel… it can sail.');
+        const [x, y] = cellCenter(ev.i); burst(x, y, P[0], 40);
+        showActions(); if (music) music.update();
+        break;
+      }
+      case 'launch': {
+        sfx.launch();
+        for (const [k, t] of ev.sent.entries()) sailing.push({ t, x: 250 + (k % 6) * 60, y: 430 - Math.floor(k / 6) * 50, d: k * 0.08 });
+        say(`The Flotilla sails at midnight, ${ev.sent.length} ducks strong. Juniper files the departure in triplicate. Postcards will come.`);
+        pendingCards = Math.min(3, Math.max(1, ev.sent.filter(t => t >= 4).length));
+        cardBig = E.TIERS[Math.max(...ev.sent)].name; cardT = 0;
+        break;
+      }
+      case 'end': break;
+    }
+  }
+  const ph = E.phase(S);
+  if (ph !== lastLegendPhase) {
+    if (ph === 3 && lastLegendPhase < 3) say('Your Legend is enough. Juniper produces Form Ω: “Petition for a Duck of Unreasonable Size.” Two Colossal Ducks, one squish.');
+    lastLegendPhase = ph; if (music) music.update();
+  }
+}
+let pendingCards = 0, cardBig = '', cardT = 0;
+
+// ---------- Actions bar ----------
+function showActions() {
+  const hb = $('hookBtn'), lb = $('launchBtn');
+  hb.hidden = !S.booth || S.ended;
+  lb.hidden = !S.flotillaOpen || S.ended || S.jubilee;
+  $('sailBtn').hidden = !S.jubilee || S.ended;
+  if (!hb.hidden) { hb.innerHTML = `🎣 Hook a duck <small>${E.boothCost(S)} coins</small>`; hb.disabled = S.coins < E.boothCost(S); }
+  if (!lb.hidden) {
+    const v = E.flotillaValue(S), top = E.legalTop(S), gate = top < E.TOP ? E.TIERS[top + 1].form.legend : 0;
+    const note = gate && S.legend < gate ? ` · ${Math.max(0, gate - S.legend - v)} more for Form ${E.TIERS[top + 1].form.code}` : '';
+    lb.innerHTML = `⛵ Launch a Flotilla <small>+${v} postcards · coins &amp; wares reset${note}</small>`;
+    lb.disabled = v < 1;
+  }
+}
+$('hookBtn').addEventListener('click', () => { const out = []; E.hook(S, out); handle(out); save(); showActions(); });
+$('launchBtn').addEventListener('click', () => {
+  const out = []; if (!E.launch(S, out)) return;
+  handle(out); save(); shopSig = ''; renderShop(); showActions(); if (music) music.update();
+});
+const PLEAS = [
+  null,
+  ['Barnaby the gull', 'You can’t go. Who will I toss my coin to? I have been tossing the same coin since spring. It is my only coin.', 'Sail anyway'],
+  ['The Pier Committee (three herrings in a coat)', 'We have voted to rename the pier “Sepia Pier.” We made a plaque. The plaque is a duck. Surely you will stay for the plaque.', 'Sail anyway'],
+  ['Clerk Juniper', 'Leaving by duck requires Form 1: Application to Be Missed. Nobody has ever filed one. I keep it in the bottom drawer. The box has always been blank.', 'Hand Juniper the form'],
+];
+function showPlea() {
+  const p = PLEAS[S.plea]; if (!p) return;
+  $('plea').hidden = false; $('pleaWho').textContent = p[0]; $('pleaText').textContent = p[1]; $('goBtn').textContent = p[2];
+  sfx.plea();
+}
+$('sailBtn').addEventListener('click', () => {
+  if (S.plea === 0) { const out = []; E.sail(S, out); save(); }
+  showPlea(); $('sailBtn').hidden = true;
+});
+$('stayBtn').addEventListener('click', () => {
+  $('plea').hidden = true; $('sailBtn').hidden = false;
+  say(['Sepia stays a little. The great duck bobs at the pier, patient. It is a registered vessel; it can wait.', 'Sepia stays a little longer. Barnaby pretends not to be relieved.', 'Sepia stays. Juniper does not look up, but the stamp hovers.'][S.plea - 1] || 'Sepia stays a little.');
+});
+$('goBtn').addEventListener('click', () => {
+  const out = []; E.sail(S, out); save();
+  if (S.ended) { $('plea').hidden = true; end(false); } else showPlea();
+});
+
+// ---------- Drag and drop ----------
+let drag = null, pointer = { x: -99, y: -99 }, shake = 0;
+const local = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; };
+cv.addEventListener('pointerdown', e => {
+  if (S.ended) return;
+  const p = local(e); pointer = p;
+  let kind = null, from = -1;
+  if (inRect(p, POT)) kind = 'ink';
+  else if (inRect(p, STAMP)) kind = 'stamp';
+  else {
+    const i = cellAt(p.x, p.y);
+    if (i >= 0 && S.grid[i]) { kind = S.grid[i].k === 'form' ? 'form' : 'duck'; from = i; }
+  }
+  if (!kind) return;
+  cv.setPointerCapture(e.pointerId);
+  drag = { kind, from, x: p.x, y: p.y, x0: p.x, y0: p.y, moved: false };
+  cv.classList.add('dragging');
+  if (kind !== 'form') sfx.pick();
+});
+cv.addEventListener('pointermove', e => {
+  const p = local(e); pointer = p;
+  if (drag) { drag.x = p.x; drag.y = p.y; if (Math.hypot(p.x - drag.x0, p.y - drag.y0) > 8) drag.moved = true; }
+});
+function drop(e) {
+  if (!drag) return;
+  const d = drag; drag = null; cv.classList.remove('dragging');
+  const out = [];
+  const to = cellAt(d.x, d.y);
+  if (!d.moved) {
+    // Taps: the pot drops a ducklet in the back, a form takes a thump, a duck squeaks.
+    if (d.kind === 'ink') {
+      const e2 = E.empties(S).sort((a, b) => Math.floor(b / E.COLS) - Math.floor(a / E.COLS));
+      if (S.ink < 1) { sfx.deny(); say('The ink pot is empty. Ink refills on its own, like tides and grudges.'); }
+      else if (!e2.length) { sfx.deny(); say('The pond is full. Squish something, or launch it to sea.'); }
+      else E.spawn(S, e2[0], out);
+    } else if (d.kind === 'form') E.stamp(S, d.from, out);
+    else if (d.kind === 'duck') { sfx.squeak(); const [x, y] = cellCenter(d.from); pop(x, y - 30, 'squeak', P[0]); }
+    else if (d.kind === 'stamp') say('Drag the stamp onto a form. Or tap the form. Juniper accepts both, sternly.');
+  } else if (d.kind === 'ink') {
+    if (to < 0) {}
+    else if (S.ink < 1) { sfx.deny(); say('The ink pot is empty. Ink refills on its own, like tides and grudges.'); }
+    else if (S.grid[to]) { sfx.deny(); }
+    else E.spawn(S, to, out);
+  } else if (d.kind === 'stamp') {
+    if (to >= 0 && S.grid[to] && S.grid[to].k === 'form') E.stamp(S, to, out);
+  } else if (d.kind === 'duck') {
+    if (to >= 0 && to !== d.from) {
+      const b = S.grid[to];
+      if (b && b.k === 'form') { sfx.deny(); say('That spot holds a form. Juniper would never allow a duck on a form.'); }
+      else if (!E.move(S, d.from, to, out) && !out.length) sfx.deny();
+      else if (!out.some(ev => ev.type === 'merge' || ev.type === 'deny')) sfx.plop();
+    }
+  }
+  handle(out); save(); renderShop(); showActions();
+}
+cv.addEventListener('pointerup', drop);
+cv.addEventListener('pointercancel', () => { drag = null; cv.classList.remove('dragging'); });
+
+// ---------- Drawing ----------
+const stars = Array.from({ length: 60 }, (_, k) => [(k * 97) % W, (k * 53) % 300, (k % 3) + 1]);
+// Glowing text is drawn once into a cache and stamped each frame (shadows are slow per frame).
+const textCache = new Map();
+function neonText(x, text, px, py, size, color, font = 'Tilt Neon', flicker = 1) {
+  const key = `${text}|${size}|${color}|${font}`;
+  let c = textCache.get(key);
+  if (!c) {
+    const K = 2, m = Sprites.canvas(1, 1).getContext('2d'); m.font = `${size}px '${font}'`;
+    const w = Math.ceil(m.measureText(text).width + size * 2), h = Math.ceil(size * 2.6);
+    c = Sprites.canvas(w * K, h * K); const t = c.getContext('2d'); t.scale(K, K);
+    t.font = `${size}px '${font}'`; t.textAlign = 'center'; t.textBaseline = 'middle';
+    t.shadowColor = color; t.shadowBlur = 18; t.fillStyle = color; t.fillText(text, w / 2, h / 2);
+    t.shadowBlur = 6; t.fillStyle = '#fff'; t.globalAlpha = 0.85; t.fillText(text, w / 2, h / 2);
+    c.w = w; c.h = h;
+    if (document.fonts.check(`${size}px '${font}'`)) textCache.set(key, c);
+  }
+  x.save(); x.globalAlpha *= flicker; x.drawImage(c, px - c.w / 2, py - c.h / 2, c.w, c.h); x.restore();
+}
+function drawDuck(x, t, cx, cy, scale = 1, alpha = 1, wet = false) {
+  const s = spr[wet ? 'wet' : 'duck' + t]; if (!s) return;
+  const size = (0.42 + 0.075 * t) * CELL * 1.25 * scale;
+  x.save(); x.globalAlpha = alpha;
+  x.drawImage(s, cx - size / 2, cy - size / 2 - 2, size, size);
+  // Trimmings by size: a mast for vessels, a crown for leviathans, a halo for colossi.
+  if (!wet && t >= 5) tubeStroke(x, P[0], 1.6, () => { x.moveTo(cx + size * 0.05, cy - size * 0.12); x.lineTo(cx + size * 0.05, cy - size * 0.45); x.lineTo(cx + size * 0.25, cy - size * 0.2); x.lineTo(cx + size * 0.05, cy - size * 0.2); });
+  if (!wet && t >= 6) tubeStroke(x, P[1], 1.8, () => { const bx = cx - size * 0.22, by = cy - size * 0.36; x.moveTo(bx - 8, by); x.lineTo(bx - 8, by - 9); x.lineTo(bx - 3, by - 4); x.lineTo(bx, by - 11); x.lineTo(bx + 3, by - 4); x.lineTo(bx + 8, by - 9); x.lineTo(bx + 8, by); x.closePath(); });
+  if (!wet && t >= 7) { x.globalAlpha = alpha * (0.4 + 0.2 * Math.sin(T * 2)); tubeStroke(x, P[0], 1.2, () => { x.moveTo(cx - size * 0.38, cy + size * 0.36); x.lineTo(cx + size * 0.38, cy + size * 0.36); }); }
+  x.restore();
+}
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+function drawForm(x, c, cx, cy, i) {
+  const w = CELL - 16, h = CELL - 12, tilt = ((i * 37) % 7 - 3) * 0.02;
+  x.save(); x.translate(cx, cy); x.rotate(tilt);
+  x.shadowColor = c.tier ? P[1] : P[0]; x.shadowBlur = 12;
+  x.fillStyle = '#f7e6ee'; x.fillRect(-w / 2, -h / 2, w, h); x.shadowBlur = 0;
+  x.strokeStyle = c.tier ? P[2] : P[3]; x.lineWidth = 2; x.strokeRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 6);
+  x.fillStyle = P[5]; x.textAlign = 'center'; x.font = "12px 'Tilt Neon'";
+  x.fillText(`FORM ${c.code}`, 0, -h / 2 + 15);
+  x.fillStyle = P[4]; x.font = "8px 'Tilt Neon'";
+  const words = c.title.split(' '); let line = '', ly = -h / 2 + 27;
+  for (const wd of words) { if ((line + ' ' + wd).length > 15 && line) { x.fillText(line, 0, ly); ly += 9; line = wd; } else line = line ? line + ' ' + wd : wd; }
+  if (ly < h / 2 - 16) x.fillText(line, 0, ly);
+  x.fillStyle = P[3]; x.textAlign = 'left'; x.fillText('Missed? ☐', -w / 2 + 6, h / 2 - 7);
+  // Stamps still needed, as little pips.
+  const n = Math.min(c.left, 12);
+  for (let k = 0; k < n; k++) { x.fillStyle = P[2]; x.beginPath(); x.arc(w / 2 - 7 - (k % 6) * 6, h / 2 - 14 + Math.floor(k / 6) * 6 - 2, 2.2, 0, 7); x.fill(); }
+  if (c.left > 12) { x.fillStyle = P[2]; x.textAlign = 'right'; x.fillText(`+${c.left - 12}`, w / 2 - 4, h / 2 - 22); }
+  x.restore();
+}
+let T = 0;
+function draw() {
+  const k = cv.width / W;
+  g.setTransform(k, 0, 0, k, 0, 0);
+  const sx = shake && !reduced ? (Math.random() - 0.5) * shake : 0, sy = shake && !reduced ? (Math.random() - 0.5) * shake : 0;
+  g.translate(sx, sy);
+  // Sky and sea.
+  const sky = g.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, P[5]); sky.addColorStop(0.55, P[4]); sky.addColorStop(1, P[5]);
+  g.fillStyle = sky; g.fillRect(-10, -10, W + 20, H + 20);
+  for (const [x, y, r] of stars) { g.globalAlpha = 0.35 + 0.3 * Math.sin(T + x); g.fillStyle = P[0]; g.fillRect(x, y, r * 0.7, r * 0.7); }
+  g.globalAlpha = 1;
+  // Moon.
+  g.save(); g.shadowColor = P[1]; g.shadowBlur = 30; g.fillStyle = '#ffe3ec'; g.beginPath(); g.arc(560, 52, 18, 0, 7); g.fill(); g.restore();
+  // The far harbour light.
+  const beam = 0.5 + 0.5 * Math.sin(T * 0.9);
+  g.save(); g.globalAlpha = 0.25 * beam; g.fillStyle = P[1]; g.beginPath(); g.moveTo(24, 100); g.lineTo(-10, 80 + beam * 30); g.lineTo(-10, 120 + beam * 30); g.fill(); g.restore();
+  tubeStroke(g, P[2], 2, () => { g.moveTo(20, 120); g.lineTo(24, 96); g.lineTo(28, 120); });
+
+  // Sign.
+  const flick = reduced ? 1 : (Math.random() < 0.015 ? 0.4 : 1);
+  if (S.ended) neonText(g, 'Gone Sailing', 330, 46, 52, P[1], 'Neonderthaw', flick);
+  else {
+    neonText(g, "Sepia's Ducks", 330, 42, 52, P[1], 'Neonderthaw', flick);
+    if (E.lvl(S, 'sign') || S.jubilee) neonText(g, 'DUCKS', 470, 84, 16, P[0]);
+    if (E.lvl(S, 'sign2')) neonText(g, 'OPEN LATE', 190, 84, 16, P[2], 'Tilt Neon', reduced ? 1 : (Math.sin(T * 7) > 0.97 ? 0.3 : 1));
+  }
+  // Barnaby and the booth.
+  if (S.booth || S.ended) {
+    tubeStroke(g, P[2], 2, () => { g.rect(64, 88, 56, 30); g.moveTo(64, 88); g.lineTo(92, 74); g.lineTo(120, 88); });
+    neonText(g, 'HOOK', 92, 103, 11, P[0]);
+    drawGull(g, 136, 104 + (reduced ? 0 : Math.sin(T * 2) * 1.5), T);
+  } else drawGull(g, 120, 104, T);
+
+  // Pond.
+  const cols = vCols(), rows = vRows(), px = pondX0(), top = POND_B - rows * CELL;
+  g.save();
+  g.fillStyle = '#1d0a2a'; g.fillRect(px - 6, top - 6, cols * CELL + 12, rows * CELL + 12);
+  g.globalAlpha = 0.5;
+  for (let r = 0; r < rows * 3; r++) { const yy = top + 10 + r * CELL / 3; g.strokeStyle = P[4]; g.lineWidth = 1; g.beginPath(); for (let xx = px; xx < px + cols * CELL; xx += 8) g.lineTo(xx, yy + Math.sin(xx * 0.08 + T * 1.5 + r) * 2); g.stroke(); }
+  g.restore();
+  tubeStroke(g, P[2], 2.5, () => g.roundRect(px - 6, top - 6, cols * CELL + 12, rows * CELL + 12, 10));
+  // Front row glow.
+  g.save(); g.globalAlpha = 0.18; g.fillStyle = P[1]; g.fillRect(px, POND_B - CELL, cols * CELL, CELL); g.restore();
+  g.save(); g.fillStyle = P[1]; g.font = "11px 'Tilt Neon'"; g.textAlign = 'left'; g.fillText(`front row ×${E.frontMult(S)}`, px + 4, POND_B - 5); g.restore();
+  // Cell outlines.
+  g.strokeStyle = '#87286a55'; g.lineWidth = 1;
+  for (let i = 0; i < E.COLS * E.ROWS; i++) { if (!vActive(i)) continue; const [x, y] = cellXY(i); g.strokeRect(x + 3, y + 3, CELL - 6, CELL - 6); }
+
+  // Contents. In a finished save the pond is drawn full of the ducks left behind.
+  const showGrid = S.ended && E.ducks(S).filter(c => c.t < E.TOP).length < 6 ? decoGrid() : S.grid;
+  const hoverTo = drag && drag.moved ? cellAt(drag.x, drag.y) : -1;
+  for (let i = 0; i < showGrid.length; i++) {
+    const c = showGrid[i]; if (!c || !vActive(i) || (S.ended && c.t === E.TOP)) continue;
+    if (drag && drag.from === i && drag.moved) continue;
+    const [x, y] = cellCenter(i);
+    const bob = reduced ? 0 : Math.sin(T * 2 + i) * 1.5;
+    if (c.k === 'form') { drawForm(g, c, x, y, i); continue; }
+    const wet = c.wet > 0;
+    drawDuck(g, c.t, x, y + bob, 1, wet ? 0.85 : 1, wet);
+    if (wet) {
+      const frac = 1 - c.wet / E.TIERS[c.t].paint;
+      g.save(); g.lineWidth = 3; g.strokeStyle = P[0]; g.shadowColor = P[1]; g.shadowBlur = 8;
+      g.beginPath(); g.arc(x, y, CELL * 0.4, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2); g.stroke(); g.restore();
+    }
+    g.save(); g.font = "11px 'Tilt Neon'"; g.textAlign = 'right'; g.fillStyle = wet ? P[3] : P[1];
+    g.fillText(ROMAN[c.t], x + CELL / 2 - 6, y + CELL / 2 - 6); g.restore();
+    // Matching pairs glow faintly while a duck is dragged.
+    if (drag && drag.kind === 'duck' && drag.moved && S.grid[drag.from] && E.canMerge(S, S.grid[drag.from], c)) {
+      g.save(); g.globalAlpha = 0.5 + 0.3 * Math.sin(T * 8); tubeStroke(g, P[0], 1.5, () => g.roundRect(x - CELL / 2 + 4, y - CELL / 2 + 4, CELL - 8, CELL - 8, 8)); g.restore();
+    }
+  }
+  if (hoverTo >= 0) { const [x, y] = cellXY(hoverTo); g.save(); g.globalAlpha = 0.7; tubeStroke(g, P[1], 1.5, () => g.roundRect(x + 2, y + 2, CELL - 4, CELL - 4, 8)); g.restore(); }
+
+  // Pier and characters.
+  g.fillStyle = '#1a0826'; g.fillRect(0, 512, W, H - 512);
+  tubeStroke(g, P[3], 2, () => { g.moveTo(0, 512); g.lineTo(W, 512); });
+  g.strokeStyle = '#45245988'; g.lineWidth = 1;
+  for (let x = 0; x < W; x += 34) { g.beginPath(); g.moveTo(x, 514); g.lineTo(x + 14, H); g.stroke(); }
+  // Tourists, more of them as tips grow.
+  const crowd = S.ended ? 9 : Math.min(9, Math.floor(Math.sqrt(E.tipRate(S)) * 2.2));
+  for (let k = 0; k < crowd; k++) {
+    const x = 175 + k * 34, y = 552 + (k % 2) * 6, b = reduced ? 0 : Math.sin(T * 3 + k) * 1.5;
+    tubeStroke(g, k % 3 ? P[3] : P[2], 2, () => { g.arc(x, y - 12 + b, 6, 0, 7); g.moveTo(x - 9, y + 16); g.quadraticCurveTo(x, y - 6 + b, x + 9, y + 16); });
+  }
+  const busy = Math.min(E.arms(S), S.grid.filter(c => c && c.k === 'duck' && c.wet > 0).length);
+  if (!S.ended) drawSepia(g, 80, 250, T, busy, E.arms(S));
+  // Ink pot.
+  if (!S.ended) {
+    const full = S.ink / E.inkCap(S);
+    g.save(); g.fillStyle = P[4]; g.beginPath(); g.roundRect(POT.x + 14, POT.y + 30 + (1 - full) * 44, POT.w - 28, 54 - (1 - full) * 44 - 10, 8); g.fill(); g.restore();
+    tubeStroke(g, P[1], 3, () => { g.moveTo(POT.x + 20, POT.y + 22); g.lineTo(POT.x + 12, POT.y + 82); g.quadraticCurveTo(POT.x + POT.w / 2, POT.y + 94, POT.x + POT.w - 12, POT.y + 82); g.lineTo(POT.x + POT.w - 20, POT.y + 22); g.moveTo(POT.x + 14, POT.y + 22); g.lineTo(POT.x + POT.w - 14, POT.y + 22); });
+    neonText(g, `ink ${Math.floor(S.ink)}/${E.inkCap(S)}`, POT.x + POT.w / 2, POT.y + 60, 15, S.ink >= 1 ? P[0] : P[3]);
+    if (S.ink >= 1 && !(drag && drag.kind === 'ink')) drawDuck(g, S.golden ? 3 : 1, POT.x + POT.w / 2, POT.y + 6 + (reduced ? 0 : Math.sin(T * 3) * 2), 0.8);
+    if (S.time < 25 && !S.everMerged && !drag) { g.save(); g.globalAlpha = 0.6 + 0.4 * Math.sin(T * 4); neonText(g, 'drag me →', POT.x + POT.w / 2, POT.y - 26, 14, P[0]); g.restore(); }
+  }
+  // Juniper and the stamp.
+  drawJuniper(g, 505, 556, T, S.odd.hat);
+  if (!(drag && drag.kind === 'stamp')) g.drawImage(spr.stamp || Sprites.canvas(1, 1), STAMP.x, STAMP.y, STAMP.w, STAMP.h);
+  g.save(); g.font = "10px 'Tilt Neon'"; g.fillStyle = P[1]; g.textAlign = 'center'; g.fillText('HARBOUR OFFICE', 530, 594); g.restore();
+
+  // The finished world: the Duck of Unreasonable Size on the horizon, Sepia aboard, tiny sail up.
+  if (S.ended) {
+    const bx = 400 + (reduced ? 0 : Math.sin(T * 0.3) * 12), by = 185;
+    drawDuck(g, 8, bx, by, 1.5);
+    g.save(); g.translate(bx - 30, by - 70); g.scale(0.32, 0.32); drawSepia(g, 0, 0, T, 0, 8); g.restore();
+  }
+
+  // Sailing flotillas.
+  for (const s of sailing) {
+    const tt = Math.max(0, s.age - s.d);
+    const x = s.x + tt * 40, y = s.y - tt * 90, sc = Math.max(0.15, 1 - tt * 0.18);
+    drawDuck(g, s.t, x, y, sc, Math.max(0, 1 - tt * 0.2));
+  }
+  // Dragged thing on top.
+  if (drag && drag.moved) {
+    if (drag.kind === 'ink') drawDuck(g, S.golden ? 3 : 1, drag.x, drag.y, 1.1);
+    else if (drag.kind === 'duck' && S.grid[drag.from]) drawDuck(g, S.grid[drag.from].t, drag.x, drag.y, 1.1, 0.95, S.grid[drag.from].wet > 0);
+    else if (drag.kind === 'stamp') g.drawImage(spr.stamp, drag.x - 30, drag.y - 40, 60, 62);
+  }
+  // Sparks and floating words.
+  for (const f of fx) {
+    const a = 1 - f.t / f.life;
+    if (f.kind === 'spark') { g.globalAlpha = a; g.fillStyle = f.color; g.fillRect(f.x, f.y, 3, 3); }
+    else { g.save(); g.globalAlpha = a; neonText(g, f.text, f.x, f.y - f.t * 26, 15, f.color); g.restore(); }
+  }
+  g.globalAlpha = 1;
+}
+let deco = null;
+function decoGrid() {
+  if (deco) return deco;
+  deco = Array(E.COLS * E.ROWS).fill(null);
+  const ts = [7, 6, 6, 5, 7, 5, 4, 6, 5, 3, 4, 5, 6, 4, 3, 5, 6, 7, 4, 3, 5, 4, 6, 5, 3, 4, 5, 6, 3, 4];
+  for (let i = 0; i < deco.length; i++) deco[i] = { k: 'duck', t: ts[i], wet: 0 };
+  return deco;
+}
+
+// ---------- HUD ----------
+function hud() {
+  $('coins').textContent = fmt(S.coins);
+  $('rate').textContent = E.tipRate(S).toFixed(1);
+  $('ink').textContent = `${Math.floor(S.ink)}/${E.inkCap(S)}`;
+  $('pcWrap').hidden = S.flotillas < 1;
+  $('pc').textContent = S.postcards;
+  // The drive: Legend toward Form Ω, then the duck itself.
+  const goal = E.TIERS[E.TOP].form.legend;
+  let label, val, frac;
+  if (S.ended) { label = 'The Legend of Sepia'; val = 'complete'; frac = 1; }
+  else if (S.legend < goal) {
+    const top = E.legalTop(S);
+    label = 'The Legend of Sepia'; val = `Legend ${S.legend} / ${goal}` + (top < E.TOP ? ` · next permit at ${E.TIERS[top + 1].form.legend}` : '');
+    frac = S.legend / goal * 0.8;
+  } else {
+    const best = Math.max(0, ...E.ducks(S).map(c => c.t));
+    label = 'The Duck of Unreasonable Size'; val = S.jubilee ? 'built. It won.' : `biggest now: ${E.TIERS[best]?.name || 'none'}`;
+    frac = 0.8 + 0.2 * (S.jubilee ? 1 : Math.min(1, E.ducks(S).reduce((a, c) => a + Math.pow(2, c.t - 1), 0) / 128));
+  }
+  $('meterLabel').textContent = label; $('meterVal').textContent = val;
+  $('meterFill').style.width = `${(frac * 100).toFixed(1)}%`;
+  showActions();
+}
+// Milestone ticks on the meter.
+for (const t of [6, 7]) { const s = document.createElement('s'); s.style.left = `${E.TIERS[t].form.legend / E.TIERS[E.TOP].form.legend * 80}%`; $('meterBar').append(s); }
+{ const s = document.createElement('s'); s.style.left = '80%'; $('meterBar').append(s); }
+
+// ---------- Loop ----------
+let last = performance.now(), saveT = 0, ambT = 0, hudT = 0;
+function frame(now) {
+  const dt = Math.min(0.25, (now - last) / 1000); last = now; T += dt;
+  if (!S.ended) {
+    const out = []; E.tick(S, dt, out); if (out.length) handle(out);
+  }
+  for (const f of fx) { f.t += dt; if (f.kind === 'spark') { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 120 * dt; } }
+  for (let k = fx.length - 1; k >= 0; k--) if (fx[k].t > fx[k].life) fx.splice(k, 1);
+  for (const s of sailing) s.age = (s.age || 0) + dt;
+  for (let k = sailing.length - 1; k >= 0; k--) if (sailing[k].age > 6) sailing.splice(k, 1);
+  if (shake) shake = Math.max(0, shake - dt * 20);
+  // Postcards trickle in after a Flotilla.
+  if (pendingCards > 0) {
+    cardT += dt;
+    if (cardT > 6) {
+      cardT = 0; pendingCards--;
+      const coast = COASTS[Math.floor(Math.random() * COASTS.length)];
+      say(`A postcard from ${coast}: ${CARD_LINES[Math.floor(Math.random() * CARD_LINES.length)](cardBig)}`);
+      sfx.postcard();
+    }
+  }
+  logT += dt; ambT += dt;
+  if (logT > 26 && ambT > 26 && !S.ended && !pendingCards) { ambT = 0; say(AMBIENT[Math.floor(Math.random() * AMBIENT.length)]); }
+  hudT += dt; if (hudT > 0.2) { hudT = 0; hud(); renderShop(); }
+  saveT += dt; if (saveT > 4) { saveT = 0; save(); }
+  fit(); draw();
+  requestAnimationFrame(frame);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+addEventListener('pagehide', save);
+
+function end(resumed) {
+  S.ended = true; save();
+  $('ending').hidden = false;
+  $('plea').hidden = true; showActions();
+  const mins = Math.floor(S.time / 60), secs = String(Math.floor(S.time % 60)).padStart(2, '0');
+  $('endStats').textContent = S.flotillas ? `${mins}m${secs}s · ${S.flotillas} flotillas · ${S.legend} postcards from far coasts · ${S.formsStamped} forms stamped` : '';
+  if (music) music.update();
+  if (!resumed) {
+    sfx.finale();
+    say('Sepia sails. Behind, a pier of neon and a crab who will never admit to anything. Ahead, every coast with a duck on it.');
+    if (window.DailyGame) DailyGame.finish({ lines: [`🦆 Built a Duck of Unreasonable Size`, `⏱ ${mins}m${secs}s`, `⛵ ${S.flotillas} flotillas · ✉ ${S.legend} postcards`, `☑ Will be missed`] });
+  }
+  setTimeout(() => $('ending').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' }), resumed ? 0 : 1200);
+}
+$('shareBtn').addEventListener('click', () => window.DailyGame && DailyGame.share());
+
+// ---------- Start ----------
+if (DEBUG) Object.assign(window.__game, { at: i => cellCenter(i), POT, STAMP, W, H });
+await makeSprites();
+if (Sprites.sheetRequested()) Sprites.showSheet();
+fit();
+if (S.ended) { end(true); say('Gone sailing. The pond is still full of ducks, and the tourists still come.'); }
+else {
+  if (S.jubilee && S.plea > 0) $('sailBtn').hidden = false;
+  say(S.time > 1 ? 'The pier lights hum back on. Sepia picks up the brush where it was left.' : 'Lo! Upon the neon pier, Sepia the squid takes up the brush. Drag a ducklet from the ink pot into the pond.');
+}
+hud(); renderShop(); showActions();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

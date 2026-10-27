@@ -104,5 +104,38 @@
       "topic": "late-October first frost and morning fog"
     },
     "palette": "cryptic-ocean"
+  },
+  {
+    "n": 6,
+    "slug": "a-duck-of-unreasonable-size",
+    "date": "2026-10-28",
+    "title": "A Duck of Unreasonable Size",
+    "tagline": "A squid painter squishes rubber ducks into bigger ducks, one stamped form at a time.",
+    "emoji": "🦑🦆",
+    "scale": "hundreds",
+    "minutes": "25–35",
+    "seed": 487038373,
+    "interaction": "drag-and-drop",
+    "arc": {
+      "drive": "legacy",
+      "obstacle": "paperwork",
+      "turn": "they win and leave town",
+      "initial": "J"
+    },
+    "length": "mini (10–60 min)",
+    "structure": [
+      "limited space to arrange (a grid, shelf or map)",
+      "reset loop (prestige for a permanent bonus)"
+    ],
+    "twist": "gambling or loot drops",
+    "ending": "an ending you have to be talked out of",
+    "look": "neon signs",
+    "music": {
+      "style": "lo-fi hip hop",
+      "scale": "minor pentatonic"
+    },
+    "tone": "epic fantasy",
+    "context": "none",
+    "palette": "inkpink"
   }
 ]

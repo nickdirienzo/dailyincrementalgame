@@ -111,5 +111,156 @@
   ],
   "rubs": 7727,
   "time": 10246
+ },
+ "a-duck-of-unreasonable-size": {
+  "coins": 184,
+  "earned": 2600,
+  "ink": 5,
+  "time": 900,
+  "flotillas": 2,
+  "legend": 31,
+  "postcards": 3,
+  "flotillaOpen": true,
+  "booth": true,
+  "reg": {
+   "1": true,
+   "2": true,
+   "3": true,
+   "4": true,
+   "5": true,
+   "6": true
+  },
+  "filed": {
+   "3": true,
+   "4": true,
+   "5": true,
+   "6": true
+  },
+  "best": 6,
+  "everMerged": 200,
+  "formsStamped": 14,
+  "up": {
+   "sign": 1,
+   "arms": 2,
+   "crab": 1,
+   "dredge": 2,
+   "sac": 1
+  },
+  "ren": {
+   "pilgrims": 2,
+   "pond": 1
+  },
+  "odd": {
+   "sail": true,
+   "jeff": true
+  },
+  "grid": [
+   {
+    "k": "duck",
+    "t": 6,
+    "wet": 0,
+    "seq": 6
+   },
+   {
+    "k": "duck",
+    "t": 5,
+    "wet": 0,
+    "seq": 5
+   },
+   {
+    "k": "duck",
+    "t": 5,
+    "wet": 0,
+    "seq": 5
+   },
+   {
+    "k": "duck",
+    "t": 4,
+    "wet": 0,
+    "seq": 4
+   },
+   {
+    "k": "duck",
+    "t": 3,
+    "wet": 0,
+    "seq": 3
+   },
+   null,
+   {
+    "k": "duck",
+    "t": 4,
+    "wet": 0,
+    "seq": 4
+   },
+   {
+    "k": "duck",
+    "t": 3,
+    "wet": 0,
+    "seq": 3
+   },
+   {
+    "k": "duck",
+    "t": 2,
+    "wet": 0,
+    "seq": 2
+   },
+   {
+    "k": "duck",
+    "t": 2,
+    "wet": 0,
+    "seq": 2
+   },
+   {
+    "k": "form",
+    "code": "12-Q",
+    "title": "Duck Is Technically a Lighthouse",
+    "left": 2,
+    "total": 2
+   },
+   null,
+   {
+    "k": "duck",
+    "t": 1,
+    "wet": 0,
+    "seq": 1
+   },
+   {
+    "k": "duck",
+    "t": 2,
+    "wet": 0,
+    "seq": 2
+   },
+   {
+    "k": "duck",
+    "t": 3,
+    "wet": 0,
+    "seq": 3
+   },
+   {
+    "k": "duck",
+    "t": 5,
+    "wet": 5,
+    "seq": 99
+   },
+   null,
+   null,
+   {
+    "k": "duck",
+    "t": 1,
+    "wet": 0,
+    "seq": 1
+   },
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ]
  }
 }

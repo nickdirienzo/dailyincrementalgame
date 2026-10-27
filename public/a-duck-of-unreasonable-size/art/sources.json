@@ -1,0 +1,37 @@
+{
+  "hugeicons--rubber-duck.svg": {
+    "icon": "hugeicons:rubber-duck",
+    "set": "Huge Icons",
+    "setUrl": "https://icon-sets.iconify.design/icon-sets/hugeicons/",
+    "author": "Hugeicons",
+    "license": "MIT",
+    "source": "https://icon-sets.iconify.design/hugeicons/rubber-duck/"
+  },
+  "ph--stamp-bold.svg": {
+    "icon": "ph:stamp-bold",
+    "set": "Phosphor",
+    "setUrl": "https://github.com/phosphor-icons/core",
+    "author": "Phosphor Icons",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/phosphor-icons/core/blob/main/LICENSE",
+    "source": "https://icon-sets.iconify.design/ph/stamp-bold/"
+  },
+  "ph--envelope-simple-bold.svg": {
+    "icon": "ph:envelope-simple-bold",
+    "set": "Phosphor",
+    "setUrl": "https://github.com/phosphor-icons/core",
+    "author": "Phosphor Icons",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/phosphor-icons/core/blob/main/LICENSE",
+    "source": "https://icon-sets.iconify.design/ph/envelope-simple-bold/"
+  },
+  "game-icons--fishing-hook.svg": {
+    "icon": "game-icons:fishing-hook",
+    "set": "Game Icons",
+    "setUrl": "https://github.com/game-icons/icons",
+    "author": "Lorc",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+    "source": "https://game-icons.net/1x1/lorc/fishing-hook.html"
+  }
+}
