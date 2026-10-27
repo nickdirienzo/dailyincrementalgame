@@ -51,12 +51,20 @@ Every game should have these bones:
   with a few silly one-offs that do little but add story.
   On desktop the column never runs below the fold: make it sticky, no taller than the window, with
   its own scroll (`npm run check` measures it with the game's busy save from `tools/cards.json`).
-  Keep it short so there's little to scroll, by shape rather than smaller text: goals pinned on
-  top; every other upgrade a two-line row (name and count, then price and effect) with its joke
-  shown only while new or on hover; bought one-offs gone; and once there's more than one currency
-  to spend, one tab per currency. A tab shows how many of its upgrades are affordable and a dot when
-  something new turned up behind it, and the heading still counts everything. Switching tabs isn't
-  hiding: every revealed upgrade is one tap away, and the open tab is saved.
+  Keep it short the way real incrementals do, by showing only what you decide with and putting
+  the words one hover away:
+  - Goals (the next tunnel, the next rank, the prestige) aren't shop items. Put them on their
+    meter or in the play area, as the thing you're working toward.
+  - One-time upgrades are small tiles: a sprite from the game's own art and a short price, five
+    or so to a row. A details box under the tiles shows whatever you point at (name, full price,
+    effect, joke), and the newest or cheapest tile when you point at nothing. On touch, the first
+    tap shows the details and the second buys. The joke also lands in the log when you buy it.
+  - Things you buy many of are one-line rows (name and count, short price, rate) and show in the
+    details box too.
+  - Once there's more than one currency to spend, one tab per currency. A tab shows how many of
+    its upgrades are affordable and a dot when something new turned up behind it, and the heading
+    still counts everything. Switching tabs isn't hiding: every revealed upgrade is one tap away,
+    and the open tab is saved.
 - **Straightforward.** One core action you get within five seconds. No tutorial walls.
 - **Fairly cute.** A small premise with a character or two and a joke or two. Flavor text in a
   log line under the play area.

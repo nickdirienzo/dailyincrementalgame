@@ -125,14 +125,40 @@
   .up .tag { position: absolute; top: -9px; right: 10px; padding: 1px 8px; font: 12px/1.4 var(--type); background: var(--p5); color: var(--p0);
              border-radius: 7px 4px 6px 3px; }
   .up.new { animation: pulse 1.6s ease-in-out 4; }
-  /* Things you buy many of: two short lines. The joke shows while new, and on hover or focus. */
-  .up.compact { padding: 6px 11px; gap: 0 10px; }
-  .up.compact .name { grid-column: 1 / -1; }
-  .up.compact .cost { grid-column: 1; grid-row: 2; }
-  .up.compact .fx { grid-column: 2; grid-row: 2; text-align: right; align-self: baseline; }
-  .up.compact .desc { grid-row: 3; }
-  .up.compact .desc { display: none; }
-  .up.compact.new .desc, .up.compact:hover .desc, .up.compact:focus-visible .desc { display: block; }
+  /* One-offs: a tile each, sprite and price. The details show in the peek box. */
+  #tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; }
+  #tiles:empty { display: none; }
+  .up.tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 5px 2px 4px; min-height: 56px; }
+  .up.tile img, .up.tile .glyph { width: 34px; height: 30px; object-fit: contain; }
+  .up.tile .glyph { font: 24px/30px var(--display); text-align: center; color: var(--p4); }
+  .up.tile small { font: 11px/1.1 var(--type); color: var(--p3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .up.tile:not(.can) img, .up.tile:not(.can) .glyph { opacity: .45; }
+  .up.tile.can small { color: var(--p5); }
+  .up.tile.silly::after { content: "✶"; position: absolute; top: 2px; left: 5px; font-size: 11px; color: var(--p4); }
+  .up.tile.new::before { content: ""; position: absolute; top: 4px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--p5); }
+  .up.tile.peeked { box-shadow: inset 0 0 0 1px var(--p5); }
+  /* Whatever you're pointing at, in full. */
+  #peek { padding: 8px 11px; min-height: 76px; display: flex; flex-direction: column; gap: 2px; }
+  #peek b { font: 400 15px/1.25 var(--type); color: var(--p5); }
+  #peek .cost, #peek .fx { font: 12.5px/1.3 var(--type); color: var(--p4); }
+  #peek .desc { font: 13px/1.35 var(--body); color: var(--p4); }
+  #peek .hint { font: italic 12.5px/1.3 var(--body); color: var(--p3); }
+  /* Things you buy many of: one line each. */
+  .up.row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 0 10px; padding: 6px 10px; align-items: baseline; }
+  .up.row .name { font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .up.row .cost, .up.row .fx { grid-column: auto; font-size: 12.5px; white-space: nowrap; }
+  .up.row .fx { min-width: 5.5em; text-align: right; }
+  .up.row .desc { display: none; }
+  .up.row.new .tag { top: -7px; }
+  /* Eyes and the next tunnel are goals, so they sit on their meters. */
+  .goalbtn { all: unset; box-sizing: border-box; cursor: default; display: flex; justify-content: space-between; gap: 10px; width: 100%; margin-top: 6px;
+             padding: 6px 10px; font: 13px/1.3 var(--type); color: var(--p4); background: var(--p0); position: relative;
+             border-radius: 9px 5px 8px 4px / 5px 8px 4px 9px; box-shadow: inset 0 0 0 1px rgba(149,197,172,.3); }
+  .goalbtn span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .goalbtn.can { cursor: pointer; background: var(--p2); color: var(--p5); }
+  .goalbtn.can:hover { background: var(--p3); }
+  .goalbtn:focus-visible { outline: 2px solid var(--p5); outline-offset: 2px; }
+  .goalbtn.new { animation: pulse 1.6s ease-in-out 4; }
   /* One tab per currency for the things you buy many of. */
   .tabs { display: flex; gap: 6px; margin-top: 4px; }
   .tabs button { all: unset; box-sizing: border-box; cursor: pointer; flex: 1 1 auto; position: relative; text-align: center; padding: 7px 4px;
@@ -153,7 +179,7 @@
               border-radius: 12px 7px 11px 6px / 7px 11px 6px 12px; }
   #shareBtn:focus-visible { outline: 2px solid var(--p5); outline-offset: 3px; }
 
-  @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh { animation: none; } .bar i { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .up.new, .goalbtn.new, .log.fresh { animation: none; } .bar i { transition: none; } }
 </style>
 <script type="importmap">
 { "imports": {
@@ -192,9 +218,11 @@
           <div id="eyesMeter" hidden>
             <div class="meter-head"><span>Your eyes · the sun is 100,000 lux</span><span id="mEyes">0 lux</span></div>
             <div class="bar eyes"><i id="bEyes" style="width:0%"></i></div>
+            <button type="button" class="goalbtn" id="goalEyes" data-id="eyes" hidden></button>
           </div>
           <div>
             <div class="meter-head"><span>Fitch’s map · tunnels marked UP</span><span id="mMap">1 of 7 cellars</span></div>
+            <button type="button" class="goalbtn" id="goalDig" data-id="dig" hidden></button>
           </div>
         </div>
         <div class="machine wash">
@@ -205,9 +233,10 @@
     </main>
     <aside id="side">
       <h2>Fitch’s Board <span id="afford"></span></h2>
-      <p class="shopnote" id="shopnote">Chalked on a crate lid. Fitch takes lemons. Later he takes other things.</p>
+      <p class="shopnote" id="shopnote" hidden></p>
       <div id="shop">
-        <div id="ones"></div>
+        <div id="tiles"></div>
+        <div id="peek" class="wash" hidden></div>
         <div class="tabs" id="tabs" role="tablist" hidden></div>
         <div id="many" role="tabpanel"></div>
       </div>
@@ -1102,49 +1131,134 @@ function itemInfo(id) {
   return { name: u.name, desc: u.desc, fx: effectText(u), silly: u.silly };
 }
 
-const shop = $('shop'), ones = $('ones'), many = $('many'), tabs = $('tabs');
-// Goals and one-offs stay on top; the things you buy many of sit under one tab per currency.
+const shop = $('shop'), tiles = $('tiles'), peek = $('peek'), many = $('many'), tabs = $('tabs');
+// Goals sit on their meters; one-offs are tiles with a peek box; the things you buy many of are
+// one-line rows under one tab per currency.
 const TABS = [{ kind: 'helper', name: 'Crew' }, { kind: 'battery', name: 'Batteries' }, { kind: 'bulb', name: 'Bulbs' }];
+const GOALS = { dig: $('goalDig'), eyes: $('goalEyes') };
 const isMany = id => TABS.some(t => t.kind === E.BY_ID[id].kind);
-let shopKey = '', tab;
-const unseen = new Set(); // shown up while its tab wasn't open: the tab gets a dot, the row pulses when you open it
-function upButton(id, isNew) {
-  const info = itemInfo(id), u = E.BY_ID[id];
-  const b = document.createElement('button');
-  b.type = 'button'; b.className = 'up' + (info.silly ? ' silly' : '') + (info.goal ? ' goal' : '') + (info.goal ? '' : ' compact'); b.dataset.id = id;
-  const lvl = isMany(id) ? `<span class="lvl">${S.owned[id] || 0}</span>` : '';
-  b.innerHTML = `<span class="name">${info.name}${lvl}</span><span class="cost">${E.fmtCost(E.costOf(S, id))}</span><span class="desc">${info.desc}</span>${info.fx ? `<span class="fx">${info.fx}</span>` : ''}`;
-  if (isNew) {
-    b.classList.add('new');
-    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = 'new'; b.append(tag);
-    setTimeout(() => { tag.remove(); b.classList.remove('new'); }, 7000);
+const seenKey = id => id === 'dig' ? `dig${S.cellars}` : id === 'eyes' ? `eyes${S.eyes}` : id;
+let shopKey = '', tab, peekId = null, picked = null, lastPointer = 'mouse';
+const unseen = new Set(); // showed up while its tab wasn't open: the tab gets a dot, the row pulses when you open it
+const fresh = new Map();  // id -> when its "new" pulse ends
+
+// A tile's picture: the sprite of whatever the upgrade is about.
+const ICON = { helper: u => u.helper, rub: () => 'lemon', bat: () => 'lemon cell', bulb: () => 'bulb', machine: () => 'fruit machine' };
+function iconOf(u) {
+  if (u.id === 'clock') return 'alarm clock';
+  if (u.id === 'dumbwaiter') return 'crate';
+  if (u.id === 'calendar' || u.id === 'scarf') return 'map scrap';
+  if (u.silly && !u.rub && u.id !== 'sunglasses' && u.id !== 'radio') return null;
+  if (u.helper) return ICON.helper(u);
+  if (u.rub || u.pct) return ICON.rub();
+  if (u.bat || u.unlock === 'volts' || u.id === 'radio') return ICON.bat();
+  if (u.bulb || u.unlock === 'light' || u.id === 'sunglasses') return ICON.bulb();
+  if (u.auto || u.luck) return ICON.machine();
+  return null;
+}
+const iconUrl = {};
+function iconSrc(name) {
+  const key = { 'lemon cell': 'cell', 'lemon': 'lemon' }[name] || name;
+  if (!ART[key]) return null;
+  return iconUrl[key] || (iconUrl[key] = trimmed(ART[key]).toDataURL());
+}
+// Sprites sit small in their canvases; crop to what's drawn so a 30px tile shows the whole critter.
+function trimmed(c) {
+  const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+  let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 24) {
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
   }
+  if (x1 < 0) return c;
+  const out = Sp.canvas(x1 - x0 + 3, y1 - y0 + 3);
+  out.getContext('2d').drawImage(c, x0 - 1, y0 - 1, out.width, out.height, 0, 0, out.width, out.height);
+  return out;
+}
+const shortCost = (c, unit) => Object.entries(c).map(([r, v]) => r === unit ? short(v) : `${short(v)} ${{ volts: 'V', duds: 'duds', light: 'light', lemons: 'lemons' }[r]}`).join(' + ');
+const short = n => n < 1e4 ? E.fmt(n) : E.fmt(n).replace(' million', 'M').replace(' billion', 'B').replace(' trillion', 'T');
+const isNew = id => (fresh.get(id) || 0) > performance.now();
+function notice(id) {
+  const k = seenKey(id);
+  if (S.seen[k]) return false;
+  S.seen[k] = 1; if (id !== 'dig' && id !== 'eyes') S.seen[id] = 1;
+  if (isMany(id) && E.BY_ID[id].kind !== tab) unseen.add(id);
+  else fresh.set(id, performance.now() + 7000);
+  return true;
+}
+
+function tile(id) {
+  const u = E.BY_ID[id], info = itemInfo(id), icon = iconOf(u), src = icon && iconSrc(icon);
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'up tile' + (u.silly ? ' silly' : ''); b.dataset.id = id;
+  b.setAttribute('aria-label', `${info.name}, ${E.fmtCost(E.costOf(S, id))}. ${info.fx || ''} ${info.desc}`);
+  b.innerHTML = (src ? `<img alt="" src="${src}">` : `<span class="glyph" aria-hidden="true">${u.silly ? '✶' : '◆'}</span>`) +
+    `<small>${short(Object.values(E.costOf(S, id))[0])}</small>`;
   return b;
 }
+function row(id) {
+  const u = E.BY_ID[id], cost = E.costOf(S, id), unit = { helper: 'lemons', battery: 'duds', bulb: 'volts' }[u.kind];
+  const costText = shortCost(cost, unit);
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'up row'; b.dataset.id = id;
+  b.innerHTML = `<span class="name">${u.name} <span class="lvl">${S.owned[id] || 0}</span></span><span class="cost">${costText}</span><span class="fx">${effectText(u).replace(/ (lemons|volts|light)\/s each/, '/s')}</span>`;
+  b.setAttribute('aria-label', `${u.name}, have ${S.owned[id] || 0}. ${E.fmtCost(cost)}. ${effectText(u)}. ${u.desc}`);
+  if (unseen.delete(id)) fresh.set(id, performance.now() + 7000);
+  return b;
+}
+// The peek box: the tile or row you're pointing at, else the newest or cheapest tile.
+function peekKey(vis) {
+  const ones = vis.filter(id => !isMany(id));
+  if (peekId && vis.includes(peekId)) return peekId;
+  return ones.find(isNew) || ones.find(id => E.canBuy(S, id)) || ones[0] || null;
+}
+let peekShown = '';
+function renderPeek(vis) {
+  const id = peekKey(vis);
+  peek.hidden = !vis.length;
+  const k = id ? `${id}|${E.fmtCost(E.costOf(S, id))}|${effectText(E.BY_ID[id])}|${picked}` : 'none';
+  if (k === peekShown) return;
+  peekShown = k;
+  for (const t of shop.querySelectorAll('.peeked')) t.classList.remove('peeked');
+  if (!id) { peek.innerHTML = '<span class="hint">Point at anything on the board for the details.</span>'; return; }
+  shop.querySelector(`.up[data-id="${id}"]`)?.classList.add('peeked');
+  const u = E.BY_ID[id], info = itemInfo(id);
+  const fx = isMany(id) ? `${effectText(u)} · have ${S.owned[id] || 0}` : info.fx;
+  peek.innerHTML = `<b>${info.name}${u.silly ? ' ✶' : ''}</b><span class="cost">${E.fmtCost(E.costOf(S, id))}${fx ? ' · ' + fx : ''}</span><span class="desc">${info.desc}</span>` +
+    (picked === id ? '<span class="hint">Tap it again to buy.</span>' : '');
+}
+
+function refreshGoals() {
+  for (const [id, b] of Object.entries(GOALS)) {
+    const show = !S.ended && E.visible(S, id);
+    b.hidden = !show;
+    if (!show) continue;
+    if (notice(id) && started) sfx.unlock();
+    const info = itemInfo(id), can = E.canBuy(S, id);
+    const label = `${info.name}|${E.fmtCost(E.costOf(S, id))}`;
+    if (b.dataset.label !== label) {
+      b.dataset.label = label;
+      b.innerHTML = `<span>${info.name}</span><span>${shortCost(E.costOf(S, id))}</span>`;
+      b.setAttribute('aria-label', `${info.name}, ${E.fmtCost(E.costOf(S, id))}. ${info.fx}`);
+      b.title = `${info.desc} ${info.fx}`;
+    }
+    b.classList.toggle('can', can); b.setAttribute('aria-disabled', String(!can));
+    b.classList.toggle('new', isNew(id));
+  }
+}
 function refreshShop() {
-  const vis = S.ended ? [] : E.SHOP_ORDER.filter(id => E.visible(S, id));
+  refreshGoals();
+  const vis = S.ended ? [] : E.SHOP_ORDER.filter(id => id !== 'dig' && id !== 'eyes' && E.visible(S, id));
   const groups = TABS.filter(t => vis.some(id => E.BY_ID[id].kind === t.kind));
   tab = S.tab || 'helper';
   if (groups.length && !groups.some(t => t.kind === tab)) tab = groups[0].kind;
-  const k = tab + '|' + vis.join(',') + '|' + vis.map(id => id === 'dig' ? S.cellars : id === 'eyes' ? S.eyes : (S.owned[id] || 0)).join(',');
+  let noticed = 0;
+  for (const id of vis) noticed += notice(id);
+  if (noticed && started) sfx.unlock();
+  const k = tab + '|' + vis.join(',') + '|' + vis.map(id => S.owned[id] || 0).join(',') + '|' + !!ART.cell;
   if (k !== shopKey) {
     shopKey = k;
-    let fresh = 0;
-    const isNew = id => {
-      const seenKey = id === 'dig' ? `dig${S.cellars}` : id === 'eyes' ? `eyes${S.eyes}` : id;
-      if (S.seen[seenKey]) return false;
-      S.seen[seenKey] = 1; if (id !== 'dig' && id !== 'eyes') S.seen[id] = 1;
-      fresh++;
-      if (isMany(id) && E.BY_ID[id].kind !== tab) { unseen.add(id); return false; }
-      return true;
-    };
-    ones.replaceChildren(...vis.filter(id => !isMany(id)).map(id => upButton(id, isNew(id))));
-    const rows = vis.filter(id => isMany(id));
-    rows.forEach(id => { if (E.BY_ID[id].kind !== tab) isNew(id); });
-    many.replaceChildren(...rows.filter(id => E.BY_ID[id].kind === tab).map(id => {
-      const pulse = isNew(id) || unseen.has(id); unseen.delete(id);
-      return upButton(id, pulse);
-    }));
+    tiles.replaceChildren(...vis.filter(id => !isMany(id)).map(tile));
+    many.replaceChildren(...vis.filter(id => isMany(id) && E.BY_ID[id].kind === tab).map(row));
     tabs.hidden = groups.length < 2;
     tabs.replaceChildren(...groups.map(t => {
       const b = document.createElement('button');
@@ -1153,10 +1267,20 @@ function refreshShop() {
       b.innerHTML = `${t.name} <b></b>`;
       return b;
     }));
-    if (fresh && started) sfx.unlock();
+    peekShown = '';
   }
   let n = 0;
-  for (const b of shop.querySelectorAll('.up')) { const can = E.canBuy(S, b.dataset.id); b.classList.toggle('can', can); b.setAttribute('aria-disabled', String(!can)); n += can; }
+  for (const b of shop.querySelectorAll('.up')) {
+    const can = E.canBuy(S, b.dataset.id);
+    b.classList.toggle('can', can); b.setAttribute('aria-disabled', String(!can)); n += can;
+    const nu = isNew(b.dataset.id);
+    b.classList.toggle('new', nu);
+    if (b.classList.contains('row')) {
+      let t = b.querySelector('.tag');
+      if (nu && !t) { t = document.createElement('span'); t.className = 'tag'; t.textContent = 'new'; b.append(t); }
+      if (!nu && t) t.remove();
+    }
+  }
   // Count every affordable thing, open tab or not, and say which tabs have some.
   for (const b of tabs.children) {
     const ids = vis.filter(id => E.BY_ID[id].kind === b.dataset.tab), c = ids.filter(id => E.canBuy(S, id)).length;
@@ -1165,13 +1289,24 @@ function refreshShop() {
     b.classList.toggle('fresh', ids.some(id => unseen.has(id)));
   }
   $('afford').textContent = n ? `${n} affordable` : '';
+  if (!S.ended) { $('shopnote').hidden = vis.length > 0; $('shopnote').textContent = 'Chalked on a crate lid. Fitch takes lemons. Later he takes other things.'; }
+  renderPeek(vis);
 }
+shop.addEventListener('pointerdown', e => { lastPointer = e.pointerType; }, true);
+shop.addEventListener('pointerover', e => { const b = e.target.closest('.up'); if (b && e.pointerType === 'mouse') { peekId = b.dataset.id; refreshShop(); } });
+shop.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !picked) { peekId = null; refreshShop(); } });
+shop.addEventListener('focusin', e => { const b = e.target.closest('.up'); if (b) { peekId = b.dataset.id; refreshShop(); } });
 shop.addEventListener('click', e => {
   const t = e.target.closest('[data-tab]');
   if (t) { if (t.dataset.tab !== tab) { S.tab = t.dataset.tab; refreshShop(); } return; }
   const b = e.target.closest('.up'); if (!b) return;
-  buy(b.dataset.id);
+  const id = b.dataset.id;
+  // On a touchscreen there's no hover: the first tap shows a tile's details, the second buys it.
+  if (lastPointer === 'touch' && b.classList.contains('tile') && picked !== id) { picked = peekId = id; refreshShop(); return; }
+  picked = null;
+  buy(id);
 });
+for (const b of Object.values(GOALS)) b.addEventListener('click', () => buy(b.dataset.id));
 function buy(id) {
   const u = E.BY_ID[id];
   const before = E.phase(S);
@@ -1332,9 +1467,8 @@ function phaseChanged() {
   N = scale('major pentatonic', KEYS[E.phase(S)]);
   if (music) music.update();
   const ph = E.phase(S);
-  if (ph === 2) $('shopnote').textContent = 'Fitch takes duds now, too. “Batteries,” he says, like it’s a dirty word.';
-  if (ph === 3) $('shopnote').textContent = 'Fitch takes volts. He has bulbs. He has always had bulbs.';
-  if (ph === 4) $('shopnote').textContent = 'Fitch takes everything now. He looks tired. It’s a big order.';
+  if (ph === 2) say('“I take duds now, too. For batteries.” He says it like a dirty word.', 7000);
+  if (ph === 3) say('“I take volts. I have bulbs. I have always had bulbs.”', 7000);
 }
 let endT = -1;
 function triggerEnd() {
@@ -1359,7 +1493,7 @@ const END_SECS = reduced ? 10 : 34;
 function showEnding(resumed) {
   $('ending').hidden = false;
   document.querySelector('.machine').hidden = true;
-  $('shopnote').textContent = 'The board’s wiped clean. Fitch is upstairs, watching the sun come up.';
+  $('shopnote').textContent = 'The board’s wiped clean. Fitch is upstairs, watching the sun come up.'; $('shopnote').hidden = false;
   if (resumed) log('It looks like a lemon, you think. A big one. Nobody’s sorted it.');
   $('sub').textContent = 'Topside. The grove, at 6:47 a.m.';
   if (!resumed) $('ending').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
