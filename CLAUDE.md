@@ -42,8 +42,8 @@ Every game should have these bones:
   strings, brass and winds; 128 recorded VCSL instruments; a grand piano; synths) and a pattern
   language built for variation. Fetch the instruments a game uses with `npm run samples`; they're
   served from our site. `public/shared/kit/audio.mjs` owns the mix (it follows the Sound panel)
-  and quick synth sound effects. Music starts with the first gesture and pauses while the tab is
-  hidden.
+  and quick synth sound effects. Music starts with the first gesture and keeps playing in a
+  background tab (people leave it on while they work).
 - **A clear upgrade path.** Upgrades sit in a column beside the play area (stacking below it on
   phones) so players notice unlocks. New unlocks pulse and get a "new" tag. Once an upgrade has
   shown up it stays until bought: never hide one again because the player spent resources, or
