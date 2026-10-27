@@ -60,13 +60,14 @@ export function createAudio({ sfxTrim = 1, musicTrim = 1 } = {}) {
   function unlock() {
     if (!ensure()) return;
     unlocked = true;
-    if (ctx.state === 'suspended' && !document.hidden) ctx.resume().then(emit, () => {});
+    if (ctx.state === 'suspended') ctx.resume().then(emit, () => {});
     emit();
   }
   ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, true));
+  // Keep playing in a background tab: people leave the music on while they work. (Browsers
+  // don't throttle audible tabs, so the music keeps time.) Wake the context if the OS paused it.
   document.addEventListener('visibilitychange', () => {
-    if (!ctx || !unlocked) return;
-    if (document.hidden) ctx.suspend().then(emit, () => {}); else ctx.resume().then(emit, () => {});
+    if (ctx && unlocked && !document.hidden && ctx.state === 'suspended') ctx.resume().then(emit, () => {});
   });
   // The Sound panel (this tab) and other tabs.
   const reload = () => { cfg = settings(); apply(); emit(); };

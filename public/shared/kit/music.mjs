@@ -48,7 +48,7 @@ export async function createMusic(A, { packs = [], soundfonts = false, song }) {
   }
 
   let key = null, playing = false;
-  const wanted = () => A.unlocked && A.musicOn && !document.hidden;
+  const wanted = () => A.unlocked && A.musicOn;
 
   function update(force = false) {
     if (!wanted()) { if (playing) { hush(); playing = false; } return; }
@@ -60,7 +60,6 @@ export async function createMusic(A, { packs = [], soundfonts = false, song }) {
     pattern.play();
     playing = true;
   }
-  document.addEventListener('visibilitychange', () => update());
   A.onChange(() => update());
 
   // One-shot through Strudel's engine on the effects bus: sound effects in the music's instruments.

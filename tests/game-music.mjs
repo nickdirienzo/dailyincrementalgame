@@ -85,13 +85,14 @@ try {
       if (String(key).startsWith('up')) assert(!result.sounds.includes('white'), 'Sunrise must drop the drums');
       console.log(`${game.slug}: ${key}, ${bpm} BPM, audible, in scale, cached`);
     }
-    // Sound panel mute/resume and tab visibility must continue to control the new music.
+    // Sound panel mute/resume controls the music; a background tab keeps it playing.
     await page.evaluate(() => { localStorage.setItem('di:sound-muted', '1'); dispatchEvent(new Event('di:audio')); });
     assert.equal(await page.evaluate(() => __game.music.playing), false);
     await page.evaluate(() => { localStorage.setItem('di:sound-muted', '0'); dispatchEvent(new Event('di:audio')); });
     await page.waitForFunction(() => __game.music.playing);
     await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
-    await page.waitForFunction(() => !__game.music.playing && __game.A.ctx.state === 'suspended');
+    await page.waitForTimeout(200);
+    assert(await page.evaluate(() => __game.music.playing && __game.A.ctx.state === 'running'), 'Music must keep playing in a background tab');
     await page.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event('visibilitychange')); });
     await page.waitForFunction(() => __game.music.playing && __game.A.ready);
     // A reload must select the saved phase/radio/ending, not reset to the opening track.

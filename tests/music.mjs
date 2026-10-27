@@ -85,12 +85,12 @@ try {
   await page.waitForFunction(() => !fixture.music.playing);
   await page.evaluate(() => { localStorage.setItem('di:volume-music', '0.6'); window.dispatchEvent(new Event('di:audio')); });
   await page.waitForFunction(() => fixture.music.playing);
-  // Simulate the visibility signal to exercise the adapter's pause/resume handler.
+  // A background tab must keep the music playing.
   await page.evaluate(() => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: true });
     document.dispatchEvent(new Event('visibilitychange'));
   });
-  assert.equal(await page.evaluate(() => fixture.music.playing), false);
+  assert.equal(await page.evaluate(() => fixture.music.playing), true);
   await page.evaluate(() => {
     delete document.hidden;
     document.dispatchEvent(new Event('visibilitychange'));

@@ -138,7 +138,7 @@ Run `npm run music:check -- <path-to-revision/song.mjs>` to exercise the exporte
 module through the site's vendored Strudel and real adapters without editing a game.
 Then run the normal `npm run check -- <slug>` and `npm run mix -- <slug>` for each
 game phase, balancing music near -24 dBFS RMS and effects near -10 dBFS peak.
-Check gesture start, mute/volume, hidden-tab pause, transitions and release tails.
+Check gesture start, mute/volume, background-tab playback, transitions and release tails.
 `npm run music:game-check` exercises the phase arrangements and playback controls
 in The Longest Noon and Three Lemons. `npm run mix -- <slug> --music-only <save>...`
 measures phase music without replaying effects during each measurement.
