@@ -611,9 +611,14 @@ function drawCritter(c, kind, x, y, k, direct = false) {
     c.strokeStyle = rgba(P[4], 0.7); c.beginPath(); c.moveTo(-18, -10); c.quadraticCurveTo(-30, -6, -32, -16); c.stroke();
     // The vole cousin came with an apron.
     if (kind === 'vole') {
-      g(cc => { cc.beginPath(); cc.moveTo(2, -24); cc.lineTo(14, -24); cc.lineTo(17, -3); cc.quadraticCurveTo(7, 1, -1, -3); cc.closePath(); }, P[5], { alpha: 0.8 });
-      c.strokeStyle = rgba(P[5], 0.8); c.lineWidth = 1.2; c.beginPath(); c.moveTo(2, -23); c.quadraticCurveTo(-6, -20, -10, -14); c.stroke();
-      c.fillStyle = rgba(P[3], 0.6); c.fillRect(5, -14, 7, 4);
+      // A bib under the chin and down the belly, tied at the waist, not a sandwich board.
+      c.save(); c.beginPath(); c.ellipse(0, -14, 20, 13, 0, 0, 7); c.clip();
+      g(cc => { cc.beginPath(); cc.moveTo(3, -13); cc.quadraticCurveTo(10, -15, 16, -11); cc.lineTo(16, 2); cc.lineTo(1, 2); cc.closePath(); }, P[5], { alpha: 0.8 });
+      c.restore();
+      c.strokeStyle = rgba(P[5], 0.8); c.lineWidth = 1.2; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(3, -12); c.lineTo(-8, -10); c.stroke();
+      c.beginPath(); c.ellipse(-10, -12, 2.5, 1.5, -0.6, 0, 7); c.ellipse(-10, -8, 2.5, 1.5, 0.6, 0, 7); c.stroke();
+      c.fillStyle = rgba(P[3], 0.6); c.fillRect(7, -6, 5, 3);
     }
   } else if (kind === 'badger') {
     g(cc => { cc.beginPath(); cc.ellipse(-2, -16, 24, 16, 0, 0, 7); }, P[1]);
