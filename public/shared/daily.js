@@ -11,7 +11,8 @@
 //       updates the streak, and opens the share card.
 //   DailyGame.share()      Reopen the share card (e.g. from a "Share" button).
 //   DailyGame.day          This page's game number, or null.
-//   DailyGame.storageKey(name)  -> 'di:<day>:<name>', for the game's own saves.
+//   DailyGame.storageKey(name)  -> 'di:<day>:<name>', for the game's own saves. Keep every save under
+//       this prefix: the top bar's Save panel moves all of di:<day>:* to another device.
 (() => {
   const script = document.currentScript;
   const DAY = script && script.dataset.day ? Number(script.dataset.day) : null;
@@ -302,6 +303,90 @@
   }
   addEventListener('storage', e => { if (e.key && e.key.startsWith('di:')) syncSound(); });
 
+  // ---------- Moving a save ----------
+  // Saves live in this browser only. The Save panel turns this game's save (every di:<n>:* key, plus
+  // its completion) into a code to paste on another device, and loads one back in.
+  const savePrefix = () => `di:${DAY}:`;
+  const b64 = str => { const b = new TextEncoder().encode(str); let s = ''; for (const x of b) s += String.fromCharCode(x); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+  const unb64 = str => new TextDecoder().decode(Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)));
+  function saveCode() {
+    const keys = {};
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith(savePrefix())) keys[k.slice(savePrefix().length)] = localStorage.getItem(k); } } catch (e) {}
+    if (!Object.keys(keys).length) return '';
+    return `DI${DAY}-` + b64(JSON.stringify({ v: 1, n: DAY, keys, done: completions()[DAY] || null }));
+  }
+  // Accepts our codes, and a bare save copied out of the console ({"…"}) for this game.
+  function readCode(text) {
+    text = text.trim();
+    if (text.startsWith('{')) { JSON.parse(text); return { n: DAY, keys: { save: text }, done: null }; }
+    const m = text.replace(/\s+/g, '').match(/^DI(\d+)-([\w-]+)$/);
+    if (!m) throw new Error('That doesn’t look like a save code.');
+    const data = JSON.parse(unb64(m[2]));
+    if (data.n !== DAY) throw new Error('That code is for a different day’s game.');
+    return data;
+  }
+  function loadCode(data) {
+    const prefix = savePrefix();
+    const old = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith(prefix)) old.push(k); }
+    old.forEach(k => localStorage.removeItem(k));
+    for (const [k, v] of Object.entries(data.keys || {})) localStorage.setItem(prefix + k, v);
+    if (data.done) { const done = completions(); if (!done[DAY]) { done[DAY] = data.done; store.set('done', done); } }
+    // The running game would save over the new save on its way out. Ignore its writes until the reload.
+    const set = Storage.prototype.setItem, remove = Storage.prototype.removeItem;
+    Storage.prototype.setItem = function (k, v) { if (String(k).startsWith(prefix)) return; return set.call(this, k, v); };
+    Storage.prototype.removeItem = function (k) { if (String(k).startsWith(prefix)) return; return remove.call(this, k); };
+    location.reload();
+  }
+  let saveEl = null;
+  function openSave() {
+    if (!saveEl) {
+      saveEl = document.createElement('div');
+      saveEl.className = 'di-overlay';
+      saveEl.innerHTML = `
+        <div class="di-card" role="dialog" aria-modal="true" aria-labelledby="di-save-title">
+          <p class="di-eyebrow">Play on another device</p>
+          <h2 id="di-save-title" class="di-title">Your save</h2>
+          <p class="di-streak">Your save lives in this browser. Copy the code, then paste it on the other device under Save.</p>
+          <textarea class="di-code" id="di-code-out" readonly rows="3" aria-label="Save code for this game"></textarea>
+          <div class="di-row"><button type="button" class="di-btn di-save-copy">Copy save code</button></div>
+          <label class="di-streak" for="di-code-in">Got a code from another device?</label>
+          <textarea class="di-code" id="di-code-in" rows="3" placeholder="Paste a save code"></textarea>
+          <div class="di-row"><button type="button" class="di-btn di-ghost di-save-load">Load save</button></div>
+          <p class="di-streak di-save-msg" aria-live="polite"></p>
+          <button type="button" class="di-close" aria-label="Close">×</button>
+        </div>`;
+      document.body.appendChild(saveEl);
+      const close = () => { saveEl.hidden = true; };
+      const msg = t => { saveEl.querySelector('.di-save-msg').textContent = t; };
+      saveEl.addEventListener('click', e => { if (e.target === saveEl) close(); });
+      saveEl.querySelector('.di-close').addEventListener('click', close);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+      saveEl.querySelector('.di-save-copy').addEventListener('click', async e => {
+        const btn = e.currentTarget, out = saveEl.querySelector('#di-code-out');
+        out.value = saveCode();
+        if (!out.value) { msg('Nothing saved yet. Play a little first.'); return; }
+        try { await navigator.clipboard.writeText(out.value); btn.textContent = 'Copied'; }
+        catch (err) { out.select(); btn.textContent = 'Selected, press copy'; }
+        setTimeout(() => { btn.textContent = 'Copy save code'; }, 1800);
+      });
+      let armed = false;
+      const load = saveEl.querySelector('.di-save-load');
+      saveEl.querySelector('#di-code-in').addEventListener('input', () => { armed = false; load.textContent = 'Load save'; msg(''); });
+      load.addEventListener('click', () => {
+        let data;
+        try { data = readCode(saveEl.querySelector('#di-code-in').value); } catch (err) { msg(err instanceof SyntaxError ? 'That code is cut off or mistyped.' : err.message); return; }
+        const here = saveCode() !== '';
+        if (here && !armed) { armed = true; load.textContent = 'Replace the save here'; msg('This replaces the game on this device. Tap again to load.'); return; }
+        try { loadCode(data); } catch (err) { msg('Couldn’t load it here. Is storage turned off?'); }
+      });
+    }
+    saveEl.querySelector('#di-code-out').value = saveCode();
+    saveEl.querySelector('.di-save-msg').textContent = '';
+    saveEl.hidden = false;
+    saveEl.querySelector('.di-save-copy').focus();
+  }
+
   // ---------- Top bar on game pages ----------
   function addBar() {
     if (DAY == null) return;
@@ -309,6 +394,10 @@
     bar.className = 'di-bar';
     bar.innerHTML = `<a href="/">← Daily Incremental</a><span class="di-right"><span class="di-sound-wrap"><button type="button" class="di-sound-btn" aria-expanded="false"></button></span></span>`;
     document.body.prepend(bar);
+    const saveLink = document.createElement('a');
+    saveLink.href = '#save'; saveLink.className = 'di-save-link'; saveLink.textContent = 'Save';
+    saveLink.addEventListener('click', e => { e.preventDefault(); openSave(); });
+    bar.querySelector('.di-right').prepend(saveLink);
     soundBtn = bar.querySelector('.di-sound-btn');
     soundBtn.addEventListener('click', toggleSound);
     syncSound();

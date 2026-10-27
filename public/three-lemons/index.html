@@ -93,8 +93,11 @@
   #pullBtn[aria-disabled="true"] { opacity: .5; cursor: default; }
   #pullBtn:focus-visible { outline: 2px solid var(--p5); outline-offset: 2px; }
 
-  aside { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 8px; }
-  @media (max-width: 760px) { aside { position: static; } }
+  /* The board stays in view and scrolls on its own, so nothing on it is ever below the fold. */
+  aside { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 8px;
+          max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain; padding: 10px 4px 4px; margin-top: -10px;
+          scrollbar-width: thin; scrollbar-color: var(--p3) transparent; }
+  @media (max-width: 760px) { aside { position: static; max-height: none; overflow: visible; } }
   aside h2 { margin: 0; font: 400 26px/1.1 var(--display); color: var(--p5); display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
   #afford { font: 13px var(--type); color: var(--p4); }
   .shopnote { margin: 0; font: italic 14px/1.4 var(--body); color: var(--p4); }
@@ -123,17 +126,17 @@
              border-radius: 7px 4px 6px 3px; }
   .up.new { animation: pulse 1.6s ease-in-out 4; }
   /* Things you buy many of: two short lines. The joke shows while new, and on hover or focus. */
-  .up.many { padding: 6px 11px; gap: 0 10px; }
-  .up.many .name { grid-column: 1 / -1; }
-  .up.many .cost { grid-column: 1; grid-row: 2; }
-  .up.many .fx { grid-column: 2; grid-row: 2; text-align: right; align-self: baseline; }
-  .up.many .desc { grid-row: 3; }
-  .up.many .desc { display: none; }
-  .up.many.new .desc, .up.many:hover .desc, .up.many:focus-visible .desc { display: block; }
+  .up.compact { padding: 6px 11px; gap: 0 10px; }
+  .up.compact .name { grid-column: 1 / -1; }
+  .up.compact .cost { grid-column: 1; grid-row: 2; }
+  .up.compact .fx { grid-column: 2; grid-row: 2; text-align: right; align-self: baseline; }
+  .up.compact .desc { grid-row: 3; }
+  .up.compact .desc { display: none; }
+  .up.compact.new .desc, .up.compact:hover .desc, .up.compact:focus-visible .desc { display: block; }
   /* One tab per currency for the things you buy many of. */
   .tabs { display: flex; gap: 6px; margin-top: 4px; }
-  .tabs button { all: unset; box-sizing: border-box; cursor: pointer; flex: 1; position: relative; text-align: center; padding: 7px 6px;
-                 font: 14px/1.2 var(--type); color: var(--p4); background: var(--p0);
+  .tabs button { all: unset; box-sizing: border-box; cursor: pointer; flex: 1 1 auto; position: relative; text-align: center; padding: 7px 4px;
+                 font: 13px/1.2 var(--type); white-space: nowrap; color: var(--p4); background: var(--p0);
                  border-radius: 10px 6px 9px 5px / 6px 9px 5px 10px; box-shadow: inset 0 0 0 1px rgba(105,128,158,.22); }
   .tabs button[aria-selected="true"] { background: var(--p2); color: var(--p5); }
   .tabs button:focus-visible { outline: 2px solid var(--p5); outline-offset: 2px; }
@@ -1108,7 +1111,7 @@ const unseen = new Set(); // shown up while its tab wasn't open: the tab gets a 
 function upButton(id, isNew) {
   const info = itemInfo(id), u = E.BY_ID[id];
   const b = document.createElement('button');
-  b.type = 'button'; b.className = 'up' + (info.silly ? ' silly' : '') + (info.goal ? ' goal' : '') + (isMany(id) ? ' many' : ''); b.dataset.id = id;
+  b.type = 'button'; b.className = 'up' + (info.silly ? ' silly' : '') + (info.goal ? ' goal' : '') + (info.goal ? '' : ' compact'); b.dataset.id = id;
   const lvl = isMany(id) ? `<span class="lvl">${S.owned[id] || 0}</span>` : '';
   b.innerHTML = `<span class="name">${info.name}${lvl}</span><span class="cost">${E.fmtCost(E.costOf(S, id))}</span><span class="desc">${info.desc}</span>${info.fx ? `<span class="fx">${info.fx}</span>` : ''}`;
   if (isNew) {

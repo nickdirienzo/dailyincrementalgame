@@ -8,7 +8,8 @@
 // (di:<n>:save = { ended: true }) and checks the ending shows and Share opens the share card.
 // Every page is also loaded at 390px wide to check nothing scrolls sideways, and any console
 // error or uncaught exception fails the run. The game's busy mid-game save (tools/cards.json) checks the
-// upgrade column fits beside the play area. Games that use the shared kit also get their credits,
+// upgrade column fits in the window, and a save code from the Save panel loads in a fresh browser.
+// Games that use the shared kit also get their credits,
 // sprite sheet (?sprites) checked, and every game's Sound panel. Look at the screenshots too; this can't
 // judge looks.
 import { chromium } from 'playwright';
@@ -156,9 +157,9 @@ async function checkGame(browser, base, game) {
     await context.close();
   }
 
-  // A busy mid-game save (the social card's, from tools/cards.json): the upgrade column has to fit
-  // beside the play area, not run on for screens below it. Group by currency into tabs, keep rows for
-  // things you buy many of to two lines, and let bought one-offs go (see CLAUDE.md).
+  // A busy mid-game save (the social card's, from tools/cards.json): on desktop the upgrade column has
+  // to fit in the window, never below the fold. Make it sticky with its own scroll, and keep it short
+  // so there's little to scroll: compact rows, one tab per currency (see CLAUDE.md).
   if (CARDS[slug]) {
     const storage = { [`di:${n}:save`]: JSON.stringify(CARDS[slug]) };
     const { page, context, errors } = await open(browser, url, { storage });
@@ -168,12 +169,37 @@ async function checkGame(browser, base, game) {
       const main = document.querySelector('main');
       return { side: side ? Math.round(side.getBoundingClientRect().height) : 0, main: main ? Math.round(main.getBoundingClientRect().height) : 0 };
     });
-    const budget = Math.round(Math.max(m.main, DESKTOP.height) * 1.1);
-    check('upgrade column fits beside the play area (mid-game save)', m.side <= budget, `${m.side}px tall, budget ${budget}px`);
+    const budget = DESKTOP.height;
+    check('upgrade column fits in the window (mid-game save)', m.side <= budget, `${m.side}px tall, window ${budget}px`);
     await shot(page, `${slug}-midgame.png`, true);
     check('no console errors (mid-game save)', errors.length === 0, errors.join(' | '));
     await context.close();
   } else console.log('  --   no mid-game save in tools/cards.json, skipped the upgrade column check');
+
+  // The Save panel: copy a finished save's code out of one browser, load it into a fresh one, and
+  // the ending shows there.
+  {
+    const from = await open(browser, url, { storage: { [`di:${n}:save`]: JSON.stringify({ ended: true }) } });
+    let code = '';
+    if (await from.page.locator('.di-save-link').isVisible()) {
+      await from.page.locator('.di-save-link').click();
+      code = await from.page.locator('#di-code-out').inputValue();
+      await shot(from.page, `${slug}-save.png`);
+    }
+    check('Save panel gives a save code', /^DI\d+-/.test(code));
+    await from.context.close();
+    const to = await open(browser, url);
+    await to.page.waitForTimeout(400);
+    await to.page.locator('.di-save-link').click();
+    await to.page.locator('#di-code-in').fill(code);
+    for (let i = 0; i < 2 && await to.page.locator('.di-save-load').isVisible(); i++) {
+      await Promise.all([to.page.waitForEvent('load', { timeout: 3000 }).catch(() => {}), to.page.locator('.di-save-load').click()]);
+    }
+    await to.page.waitForTimeout(1500);
+    check('a save code loads on another browser', await to.page.locator('#ending').isVisible());
+    check('no console errors (save panel)', to.errors.length === 0, to.errors.join(' | '));
+    await to.context.close();
+  }
 
   // Phone width, fresh start.
   {

@@ -49,12 +49,12 @@ Every game should have these bones:
   shown up it stays until bought: never hide one again because the player spent resources, or
   they lose the goal they were saving for. Mix real upgrades
   with a few silly one-offs that do little but add story.
-  The column has to fit beside the play area all game long, not run on for screens below it
-  (`npm run check` measures it with the game's busy save from `tools/cards.json`). Big games get
-  there by shape, not by smaller text: goals pinned on top; things you buy many of (helpers,
-  batteries, buildings) as two-line rows of name and count, price and rate, with their joke shown
-  only while new or on hover; bought one-offs gone; and once there's more than one currency to
-  spend, one tab per currency. A tab shows how many of its upgrades are affordable and a dot when
+  On desktop the column never runs below the fold: make it sticky, no taller than the window, with
+  its own scroll (`npm run check` measures it with the game's busy save from `tools/cards.json`).
+  Keep it short so there's little to scroll, by shape rather than smaller text: goals pinned on
+  top; every other upgrade a two-line row (name and count, then price and effect) with its joke
+  shown only while new or on hover; bought one-offs gone; and once there's more than one currency
+  to spend, one tab per currency. A tab shows how many of its upgrades are affordable and a dot when
   something new turned up behind it, and the heading still counts everything. Switching tabs isn't
   hiding: every revealed upgrade is one tap away, and the open tab is saved.
 - **Straightforward.** One core action you get within five seconds. No tutorial walls.
@@ -143,6 +143,8 @@ doesn't become the only kind of satisfaction.
 - Credits: run `npm run credits -- <slug>` whenever the game's libraries, art, fonts or palette
   change, and keep `data-credits` on the `daily.js` tag. The site shows a Credits panel with
   licenses and links to support each project.
+- Keep every save under `DailyGame.storageKey(...)` (`di:<n>:*`): the top bar's Save panel copies
+  all of it as a code players paste on another device.
 - Input: mouse and touch both work. Use pointer events; `touch-action: none` on the play canvas.
 - Audio starts only after the first user gesture (pointerdown or keydown unlocks the AudioContext).
 - Respect `prefers-reduced-motion`.
