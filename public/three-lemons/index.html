@@ -609,6 +609,12 @@ function drawCritter(c, kind, x, y, k, direct = false) {
     g(cc => { cc.beginPath(); cc.arc(10, -26, 5, 0, 7); }, col);
     c.fillStyle = P[0]; c.beginPath(); c.arc(20, -20, 1.8, 0, 7); c.fill();
     c.strokeStyle = rgba(P[4], 0.7); c.beginPath(); c.moveTo(-18, -10); c.quadraticCurveTo(-30, -6, -32, -16); c.stroke();
+    // The vole cousin came with an apron.
+    if (kind === 'vole') {
+      g(cc => { cc.beginPath(); cc.moveTo(2, -24); cc.lineTo(14, -24); cc.lineTo(17, -3); cc.quadraticCurveTo(7, 1, -1, -3); cc.closePath(); }, P[5], { alpha: 0.8 });
+      c.strokeStyle = rgba(P[5], 0.8); c.lineWidth = 1.2; c.beginPath(); c.moveTo(2, -23); c.quadraticCurveTo(-6, -20, -10, -14); c.stroke();
+      c.fillStyle = rgba(P[3], 0.6); c.fillRect(5, -14, 7, 4);
+    }
   } else if (kind === 'badger') {
     g(cc => { cc.beginPath(); cc.ellipse(-2, -16, 24, 16, 0, 0, 7); }, P[1]);
     g(cc => { cc.beginPath(); cc.ellipse(20, -20, 12, 10, 0, 0, 7); }, P[5]);
@@ -914,10 +920,12 @@ function drawCritters() {
   for (const h of E.HELPERS) { const n = S.owned[h.id] || 0; for (let j = 0; j < Math.min(n, 4); j++) list.push(h.id); }
   const n = Math.min(list.length, L.narrow ? 12 : 18);
   const x0 = L.critters.x0 + W * 0.12, w = (L.narrow ? W * 0.6 : W * 0.62);
+  // A small crew stands big enough to make out; a full night shift squeezes up.
+  const k = L.m / 700 * Math.max(1.05, Math.min(1.6, 1.75 - n * 0.05));
   for (let i = 0; i < n; i++) {
     const x = x0 + w * (i + 0.5) / n, y = L.critters.y + ((i * 7) % 3) * 4;
     const hop = reduced ? 0 : Math.max(0, Math.sin(T * 3 + i * 1.3)) * 3;
-    drawCritter(ctx, list[i], x, y - hop, L.m / 700);
+    drawCritter(ctx, list[i], x, y - hop, k);
   }
 }
 
@@ -933,6 +941,11 @@ function drawDark(st) {
   hole(L.lemon.x, L.lemon.y, L.m * (0.3 + rubProgress * 0.1), 0.85);
   hole(L.machine.x, L.machine.y + L.machine.h * 0.4, L.m * 0.2, 0.6);
   hole(L.shaft.x + L.shaft.w / 2, H * 0.3, L.m * 0.2, 0.4);
+  // A work lamp on the floor so you can see who's on the night shift.
+  if (E.HELPERS.some(h => S.owned[h.id])) {
+    dkx.save(); dkx.translate(W * (L.narrow ? 0.46 : 0.47), L.critters.y - L.m * 0.03); dkx.scale(W * 0.36 / (L.m * 0.12), 1);
+    hole(0, 0, L.m * 0.12, 0.7); dkx.restore();
+  }
   if (S.unlocked.light) hole(W / 2, H * 0.15, L.m * (0.3 + Math.min(0.6, Math.log10(st.lightRate + 1) * 0.1)), 0.7);
   dkx.globalCompositeOperation = 'source-over';
   ctx.drawImage(dark, 0, 0, W, H);
