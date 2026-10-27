@@ -7,7 +7,8 @@
 // the opening by dragging and tapping on the canvas. It reloads with a finished save
 // (di:<n>:save = { ended: true }) and checks the ending shows and Share opens the share card.
 // Every page is also loaded at 390px wide to check nothing scrolls sideways, and any console
-// error or uncaught exception fails the run. Games that use the shared kit also get their credits,
+// error or uncaught exception fails the run. The game's busy mid-game save (tools/cards.json) checks the
+// upgrade column fits beside the play area. Games that use the shared kit also get their credits,
 // sprite sheet (?sprites) checked, and every game's Sound panel. Look at the screenshots too; this can't
 // judge looks.
 import { chromium } from 'playwright';
@@ -20,6 +21,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = path.join(ROOT, 'public');
 const SHOTS = path.join(ROOT, 'tests', 'screenshots');
 const DESKTOP = { width: 1280, height: 900 };
+const CARDS = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'cards.json'), 'utf8'));
 const PHONE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 };
 
 const results = [];
@@ -153,6 +155,25 @@ async function checkGame(browser, base, game) {
     check('no console errors (sound panel)', errors.length === 0, errors.join(' | '));
     await context.close();
   }
+
+  // A busy mid-game save (the social card's, from tools/cards.json): the upgrade column has to fit
+  // beside the play area, not run on for screens below it. Group by currency into tabs, keep rows for
+  // things you buy many of to two lines, and let bought one-offs go (see CLAUDE.md).
+  if (CARDS[slug]) {
+    const storage = { [`di:${n}:save`]: JSON.stringify(CARDS[slug]) };
+    const { page, context, errors } = await open(browser, url, { storage });
+    await page.waitForTimeout(1200);
+    const m = await page.evaluate(() => {
+      const side = document.querySelector('#side') || document.querySelector('#shop')?.parentElement;
+      const main = document.querySelector('main');
+      return { side: side ? Math.round(side.getBoundingClientRect().height) : 0, main: main ? Math.round(main.getBoundingClientRect().height) : 0 };
+    });
+    const budget = Math.round(Math.max(m.main, DESKTOP.height) * 1.1);
+    check('upgrade column fits beside the play area (mid-game save)', m.side <= budget, `${m.side}px tall, budget ${budget}px`);
+    await shot(page, `${slug}-midgame.png`, true);
+    check('no console errors (mid-game save)', errors.length === 0, errors.join(' | '));
+    await context.close();
+  } else console.log('  --   no mid-game save in tools/cards.json, skipped the upgrade column check');
 
   // Phone width, fresh start.
   {

@@ -77,9 +77,19 @@
     position: relative; text-align: left; font: 14px/1.3 var(--type); color: var(--p0); background: #26113a;
     border: 1px solid var(--p3); border-radius: 10px; padding: 8px 10px; cursor: pointer;
   }
-  .up b { display: block; font-weight: 400; font-size: 15px; }
-  .up span { display: block; color: #e9c3d6; font-size: 13px; }
-  .up em { display: block; font-style: normal; color: var(--p1); margin-top: 3px; }
+  /* Two lines: name and price, then what it does. */
+  .up { display: grid; grid-template-columns: 1fr auto; gap: 1px 10px; padding: 6px 10px; }
+  .up b { font-weight: 400; font-size: 15px; }
+  .up em { font-style: normal; color: var(--p1); white-space: nowrap; align-self: baseline; }
+  .up span { grid-column: 1 / -1; color: #e9c3d6; font-size: 13px; }
+  /* One tab per currency once postcards arrive. */
+  .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tabs button { flex: 1; position: relative; font: 15px var(--type); color: var(--p1); background: #26113a; border: 1px solid var(--p3);
+                 border-radius: 10px; padding: 6px 8px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { color: var(--p0); border-color: var(--p1); box-shadow: 0 0 10px #fe6c9055; }
+  .tabs button:focus-visible { outline: 2px solid var(--p0); outline-offset: 2px; }
+  .tabs button.fresh::after { content: ""; position: absolute; top: 4px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--p1); }
+  .tabnote { margin: -2px 0 8px; font-size: 13px; color: var(--p1); }
   .up.can { border-color: var(--p1); box-shadow: 0 0 10px #fe6c9055; }
   .up:disabled { cursor: default; }
   .up:disabled:not(.can) { opacity: .62; }
@@ -149,7 +159,8 @@
     </main>
     <aside id="side">
       <h2>Wares &amp; Wonders <span id="afford"></span></h2>
-      <div id="shop"></div>
+      <div class="tabs" id="tabs" role="tablist" hidden></div>
+      <div id="shop" role="tabpanel"></div>
     </aside>
   </div>
   <section id="ending" hidden>
@@ -389,40 +400,63 @@ function shopItems() {
   return items;
 }
 const newUntil = {};
+const unseen = new Set(); // showed up while the other tab was open: that tab gets a dot until you look
+const TABS = [{ cur: 'coins', name: 'Coins' }, { cur: 'postcards', name: '✉ Postcards' }];
 let shopSig = '';
 function renderShop() {
-  const items = shopItems();
-  for (const it of items) if (!S.seen.includes(it.id)) { S.seen.push(it.id); newUntil[it.id] = performance.now() + 9000; if (S.time > 2) sfx.unlock(); }
-  const sig = items.map(i => i.id + i.cost).join('|');
+  const all = shopItems();
+  const tabs = TABS.filter(t => all.some(i => i.cur === t.cur));
+  const tab = tabs.some(t => t.cur === S.shopTab) ? S.shopTab : 'coins';
+  for (const it of all) if (!S.seen.includes(it.id)) {
+    S.seen.push(it.id); if (S.time > 2) sfx.unlock();
+    if (it.cur === tab) newUntil[it.id] = performance.now() + 9000; else unseen.add(it.id);
+  }
+  const items = all.filter(i => i.cur === tab);
+  const sig = tab + '#' + all.map(i => i.id + i.cost).join('|');
   if (sig !== shopSig) {
     shopSig = sig;
+    for (const it of items) if (unseen.delete(it.id)) newUntil[it.id] = performance.now() + 9000;
+    $('tabs').hidden = tabs.length < 2;
+    $('tabs').replaceChildren(...tabs.map(t => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.role = 'tab'; b.dataset.cur = t.cur; b.setAttribute('aria-selected', String(t.cur === tab));
+      b.innerHTML = `${t.name} <small></small>`;
+      b.addEventListener('click', () => { S.shopTab = t.cur; renderShop(); });
+      return b;
+    }));
     shop.innerHTML = '';
-    let renHead = false;
+    if (tab === 'postcards') { const p = document.createElement('p'); p.className = 'tabnote'; p.textContent = 'Kept forever, every flotilla.'; shop.append(p); }
     for (const it of items) {
-      if (it.ren && !renHead) { renHead = true; const h = document.createElement('h3'); h.textContent = '✉ Bought with postcards (kept forever)'; shop.append(h); }
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'up' + (it.odd ? ' odd' : '') + (it.ren ? ' ren' : '');
       b.dataset.id = it.id; b.dataset.cost = it.cost; b.dataset.cur = it.cur;
-      b.innerHTML = `<b></b><span></span><em></em>`;
+      b.innerHTML = `<b></b><em></em><span></span>`;
       b.querySelector('b').textContent = it.name;
       b.querySelector('span').textContent = it.desc;
-      b.querySelector('em').textContent = it.cur === 'coins' ? `${fmt(it.cost)} coins` : `${it.cost} postcards`;
+      b.querySelector('em').textContent = it.cur === 'coins' ? `${fmt(it.cost)} coins` : `${it.cost} ✉`;
       b.addEventListener('click', () => doBuy(it.id));
       shop.append(b);
     }
   }
+  const have = cur => cur === 'coins' ? S.coins : S.postcards;
   let n = 0;
   const now = performance.now();
   for (const b of shop.querySelectorAll('button.up')) {
-    const have = b.dataset.cur === 'coins' ? S.coins : S.postcards;
-    const can = have >= Number(b.dataset.cost) && !S.ended;
-    b.disabled = !can; b.classList.toggle('can', can); if (can) n++;
+    const can = have(b.dataset.cur) >= Number(b.dataset.cost) && !S.ended;
+    b.disabled = !can; b.classList.toggle('can', can);
     const isNew = (newUntil[b.dataset.id] || 0) > now;
     b.classList.toggle('new', isNew);
     let tag = b.querySelector('.tag');
     if (isNew && !tag) { tag = document.createElement('i'); tag.className = 'tag'; tag.textContent = 'new'; b.append(tag); }
     if (!isNew && tag) tag.remove();
   }
+  // The heading counts everything affordable; each tab says how much of it is behind that tab.
+  for (const b of $('tabs').children) {
+    const c = all.filter(i => i.cur === b.dataset.cur && have(i.cur) >= i.cost && !S.ended).length;
+    n += c; b.querySelector('small').textContent = c ? `· ${c}` : '';
+    b.classList.toggle('fresh', all.some(i => i.cur === b.dataset.cur && unseen.has(i.id)));
+  }
+  if (tabs.length < 2) n = shop.querySelectorAll('button.up.can').length;
   $('afford').textContent = n ? `· ${n} affordable` : '';
 }
 function doBuy(id) {

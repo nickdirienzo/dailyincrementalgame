@@ -49,6 +49,14 @@ Every game should have these bones:
   shown up it stays until bought: never hide one again because the player spent resources, or
   they lose the goal they were saving for. Mix real upgrades
   with a few silly one-offs that do little but add story.
+  The column has to fit beside the play area all game long, not run on for screens below it
+  (`npm run check` measures it with the game's busy save from `tools/cards.json`). Big games get
+  there by shape, not by smaller text: goals pinned on top; things you buy many of (helpers,
+  batteries, buildings) as two-line rows of name and count, price and rate, with their joke shown
+  only while new or on hover; bought one-offs gone; and once there's more than one currency to
+  spend, one tab per currency. A tab shows how many of its upgrades are affordable and a dot when
+  something new turned up behind it, and the heading still counts everything. Switching tabs isn't
+  hiding: every revealed upgrade is one tap away, and the open tab is saved.
 - **Straightforward.** One core action you get within five seconds. No tutorial walls.
 - **Fairly cute.** A small premise with a character or two and a joke or two. Flavor text in a
   log line under the play area.
