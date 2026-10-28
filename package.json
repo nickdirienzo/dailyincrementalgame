@@ -8,7 +8,6 @@
     "check": "node tests/check.mjs",
     "og": "node tools/og.mjs",
     "fonts": "node tools/fonts.mjs",
-    "stats": "node tools/stats.mjs",
     "setup": "playwright install chromium",
     "vendor": "node tools/vendor.mjs",
     "art": "node tools/art.mjs",

@@ -123,83 +123,11 @@
       done[DAY] = { at: localDate(), lines };
       store.set('done', done);
     }
-    try { stats.finish(); } catch (e) {} // stats must never get in the way of an ending
     openCard();
   }
 
-  // ---------- Play stats ----------
-  // Anonymous totals per game, so we can see what gets played, what gets finished and how long it
-  // takes: a random player id, sittings, seconds active (tab visible, input in the last minute) and
-  // seconds visible (idling included), and whether the ending was reached. Kept in di:plays and
-  // reported to /api/play (worker/index.js) every five minutes and when the tab hides.
-  // Only on the live site, never in automated browsers or with Global Privacy Control or Do Not
-  // Track on, and only after the first tap or key. /privacy/ explains it to players.
-  const stats = (() => {
-    const optedOut = navigator.globalPrivacyControl === true || navigator.doNotTrack === '1';
-    const on = DAY != null && location.hostname === SITE && !navigator.webdriver && !optedOut;
-    const ACTIVE_WINDOW = 60000, REPORT_EVERY = 300;
-    let started = false, lastInput = 0, lastTick = 0, sinceReport = 0;
-    const plays = () => store.get('plays', {});
-    const mine = () => plays()[DAY];
-    // Read and write fresh each time so two tabs of the same game add up instead of overwriting.
-    const update = fn => { const all = plays(); const r = all[DAY]; if (!r) return; fn(r); store.set('plays', all); };
-    function pid() {
-      let id = store.get('pid', null);
-      if (!id) {
-        const h = [...crypto.getRandomValues(new Uint8Array(16))].map(x => x.toString(16).padStart(2, '0')).join('');
-        id = `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
-        store.set('pid', id);
-      }
-      return id;
-    }
-    function report() {
-      const r = mine();
-      if (!r) return;
-      const body = JSON.stringify({ pid: pid(), n: DAY, sessions: r.sessions, active: Math.round(r.active), visible: Math.round(r.visible), finished: !!r.finished });
-      try { navigator.sendBeacon('/api/play', new Blob([body], { type: 'application/json' })); } catch (e) {}
-      sinceReport = 0;
-    }
-    function tick() {
-      const now = performance.now();
-      const dt = Math.min(10, (now - lastTick) / 1000); // a sleeping laptop isn't play time
-      lastTick = now;
-      if (document.visibilityState !== 'visible' || (mine() || {}).finished) return;
-      const active = Date.now() - lastInput < ACTIVE_WINDOW;
-      update(r => { r.visible += dt; if (active) r.active += dt; });
-      if ((sinceReport += dt) >= REPORT_EVERY) report();
-    }
-    function start() {
-      if (started) return;
-      started = true;
-      const all = plays();
-      if (!all[DAY]) all[DAY] = { sessions: 0, active: 0, visible: 0 };
-      all[DAY].sessions++;
-      store.set('plays', all);
-      lastTick = performance.now();
-      setInterval(tick, 5000);
-      addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { tick(); report(); } });
-      addEventListener('pagehide', () => { tick(); report(); });
-      report();
-    }
-    if (on) {
-      const r = mine();
-      // Finished before stats existed (or already reported the ending): nothing honest to add.
-      const skip = (r && r.finished) || (!r && completions()[DAY]);
-      if (!skip) {
-        const input = () => { lastInput = Date.now(); try { start(); } catch (e) {} };
-        for (const t of ['pointerdown', 'keydown', 'wheel']) addEventListener(t, input, { capture: true, passive: true });
-        addEventListener('pointermove', () => { if (started) lastInput = Date.now(); }, { capture: true, passive: true });
-      }
-    }
-    return {
-      finish() {
-        if (!started) return;
-        tick();
-        update(r => { r.finished = true; });
-        report();
-      },
-    };
-  })();
+  // The site used to count anonymous plays. Clear what that left behind.
+  try { localStorage.removeItem('di:plays'); localStorage.removeItem('di:pid'); } catch (e) {}
 
   // ---------- Credits ----------
   // Games list what they're built on in credits.json next to the page (npm run credits -- <slug>).
@@ -220,7 +148,7 @@
     if (c.sounds && c.sounds.length) parts.push(`<h3><span>Sounds</span></h3><ul>${c.sounds.map(x => item(link(x.home, x.name), `by ${esc(x.author)} · ${esc(x.license)}`, '')).join('')}</ul>`);
     if (c.palette) parts.push(`<h3><span>Palette</span></h3><ul>${item(link(c.palette.home, c.palette.name), c.palette.author ? `by ${esc(c.palette.author)} · Lospec` : 'Lospec', 'https://lospec.com/supporters')}</ul>`);
     if (c.fonts && c.fonts.length) parts.push(`<h3><span>Fonts</span></h3><ul>${c.fonts.map(f => item(link(f.home, f.name), `Google Fonts · ${esc(LICENSES[f.license] || f.license || 'Open Font License')}`, '')).join('')}</ul>`);
-    parts.push(`<h3><span>This site</span></h3><ul>${item(link(SOURCE, 'Incremendle source code'), 'AGPL-3.0, like Strudel', '')}${item(link('/privacy/', 'Privacy'), 'what we count, and what stays in your browser', '')}</ul>`);
+    parts.push(`<h3><span>This site</span></h3><ul>${item(link(SOURCE, 'Incremendle source code'), 'AGPL-3.0, like Strudel', '')}${item(link('/privacy/', 'Privacy'), 'what stays in your browser', '')}</ul>`);
     return parts.join('');
   }
   function openCredits(c) {
