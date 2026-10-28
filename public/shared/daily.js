@@ -3,6 +3,8 @@
 // N is the game's "n" in games.json: an internal id for saves and streaks, never shown to players.
 // Add data-credits when the game has a credits.json next to it (npm run credits -- <slug>): the top
 // bar then links to a Credits panel with licenses and support links.
+// Add data-why when the game has a why.json next to it: the top bar then links to a "What??" panel
+// with the theme the dice rolled and what the game made of each roll (ending spoilers behind a warning).
 // (omit data-day on non-game pages like the landing page).
 //
 // Game API:
@@ -174,6 +176,49 @@
     creditsEl.querySelector('.di-close').focus();
   }
 
+  // ---------- What is even happening ----------
+  // why.json: { intro, rolls: [{ roll, value, became, spoiler? }], outro? }. Rows marked spoiler stay
+  // hidden behind a warning until the player asks for them.
+  let whyEl = null;
+  function whyHtml(w, open) {
+    const row = r => `<li><span class="di-credit-name">${esc(r.roll)}: ${esc(r.value)}</span><span class="di-why-became">${esc(r.became)}</span></li>`;
+    const plain = (w.rolls || []).filter(r => !r.spoiler), spoilers = (w.rolls || []).filter(r => r.spoiler);
+    const parts = [];
+    if (w.intro) parts.push(`<p class="di-why-intro">${esc(w.intro)}</p>`);
+    parts.push(`<h3><span>The dice said</span></h3><ul>${plain.map(row).join('')}</ul>`);
+    if (spoilers.length) {
+      parts.push(`<h3><span>How it ends</span></h3>`);
+      parts.push(open
+        ? `<ul>${spoilers.map(row).join('')}</ul>${w.outro ? `<p class="di-why-intro">${esc(w.outro)}</p>` : ''}`
+        : `<p class="di-why-intro">⚠ Spoilers: ${spoilers.length} more roll${spoilers.length > 1 ? 's' : ''} explain how the game ends. <button type="button" class="di-why-reveal">Show them</button></p>`);
+    } else if (w.outro) parts.push(`<p class="di-why-intro">${esc(w.outro)}</p>`);
+    return parts.join('');
+  }
+  function openWhy(w) {
+    if (!whyEl) {
+      whyEl = document.createElement('div');
+      whyEl.className = 'di-overlay';
+      whyEl.innerHTML = `
+        <div class="di-card di-credits di-why" role="dialog" aria-modal="true" aria-labelledby="di-why-title">
+          <p class="di-eyebrow">Rolled by dice, explained by the maker</p>
+          <h2 id="di-why-title" class="di-title">What is even happening</h2>
+          <div class="di-credits-body"></div>
+          <button type="button" class="di-close" aria-label="Close">×</button>
+        </div>`;
+      document.body.appendChild(whyEl);
+      const close = () => { whyEl.hidden = true; };
+      whyEl.addEventListener('click', e => {
+        if (e.target === whyEl) close();
+        if (e.target.closest('.di-why-reveal')) whyEl.querySelector('.di-credits-body').innerHTML = whyHtml(w, true);
+      });
+      whyEl.querySelector('.di-close').addEventListener('click', close);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+    whyEl.querySelector('.di-credits-body').innerHTML = whyHtml(w, false);
+    whyEl.hidden = false;
+    whyEl.querySelector('.di-close').focus();
+  }
+
   // ---------- Sound settings ----------
   // One panel for every game: effects and music volume plus mute, saved in localStorage and shared
   // across games. Games on the audio kit (shared/kit/audio.mjs) listen for the di:audio event.
@@ -272,7 +317,7 @@
       saveEl = document.createElement('div');
       saveEl.className = 'di-overlay';
       saveEl.innerHTML = `
-        <div class="di-card" role="dialog" aria-modal="true" aria-labelledby="di-save-title">
+        <div class="di-card di-credits di-save" role="dialog" aria-modal="true" aria-labelledby="di-save-title">
           <p class="di-eyebrow">Play on another device</p>
           <h2 id="di-save-title" class="di-title">Your save</h2>
           <p class="di-streak">Your save lives in this browser. Copy the code, then paste it on the other device under Save.</p>
@@ -329,18 +374,25 @@
     soundBtn = bar.querySelector('.di-sound-btn');
     soundBtn.addEventListener('click', toggleSound);
     syncSound();
-    if (!script || !script.hasAttribute('data-credits')) return;
-    fetch('credits.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(c => {
-      if (!c || !((c.libs || []).length || (c.art || []).length || c.palette || (c.fonts || []).length)) return;
+    // Panels that need a file are fetched; their links keep this order (What??, Credits) whichever loads first.
+    const right = bar.querySelector('.di-right');
+    const panelLink = (attr, file, ok, cls, text, open) => {
+      if (!script || !script.hasAttribute(attr)) return;
       const a = document.createElement('a');
-      a.href = '#credits'; a.className = 'di-credits-link'; a.textContent = 'Credits';
-      a.addEventListener('click', e => { e.preventDefault(); openCredits(c); });
-      bar.querySelector('.di-right').prepend(a);
-    }).catch(() => {});
+      a.href = '#' + file.split('.')[0]; a.className = cls; a.textContent = text; a.hidden = true;
+      right.insertBefore(a, saveLink);
+      fetch(file, { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(data => {
+        if (!data || !ok(data)) return;
+        a.addEventListener('click', e => { e.preventDefault(); open(data); });
+        a.hidden = false;
+      }).catch(() => {});
+    };
+    panelLink('data-why', 'why.json', w => (w.rolls || []).length, 'di-why-link', 'What??', openWhy);
+    panelLink('data-credits', 'credits.json', c => (c.libs || []).length || (c.art || []).length || c.palette || (c.fonts || []).length, 'di-credits-link', 'Credits', openCredits);
   }
 
-  // Stylesheet lives next to this script, plus the site's handwriting fonts for the Credits panel
-  // (declared only; the browser fetches them when the panel first shows).
+  // Stylesheet lives next to this script, plus the site's handwriting fonts for the Credits, What?? and
+  // Save panels (declared only; the browser fetches them when the panel first shows).
   for (const href of ['/shared/daily.css', '/shared/fonts/gaegu/font.css', '/shared/fonts/patrick-hand/font.css']) {
     const css = document.createElement('link');
     css.rel = 'stylesheet';

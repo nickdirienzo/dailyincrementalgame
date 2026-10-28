@@ -8,7 +8,7 @@
 // (di:<n>:save = { ended: true }) and checks the ending shows and Share opens the share card.
 // Every page is also loaded at 390px wide to check nothing scrolls sideways, and any console
 // error or uncaught exception fails the run. The game's busy mid-game save (tools/cards.json) checks the
-// upgrade column fits in the window, and a save code from the Save panel loads in a fresh browser.
+// upgrade column and the play area's buttons fit in the window, and a save code from the Save panel loads in a fresh browser.
 // Games that use the shared kit also get their credits,
 // sprite sheet (?sprites) checked, and every game's Sound panel. Look at the screenshots too; this can't
 // judge looks.
@@ -127,6 +127,26 @@ async function checkGame(browser, base, game) {
     }
   }
 
+  // What?? panel: a why.json explains the rolls, with ending rows behind a spoiler warning.
+  if (html.includes('data-why')) {
+    const file = path.join(PUBLIC, slug, 'why.json');
+    const why = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+    check('has why.json (daily.js tag has data-why)', !!why && (why.rolls || []).length > 0);
+    if (why) {
+      const { page, context, errors } = await open(browser, url);
+      const link = page.locator('.di-why-link');
+      if (await link.isVisible()) {
+        await link.click(); await page.waitForTimeout(300);
+        check('What?? panel opens', await page.locator('.di-why').isVisible());
+        const spoilers = why.rolls.filter(r => r.spoiler);
+        if (spoilers.length) check('What?? hides ending spoilers until asked', !(await page.locator('.di-why').innerText()).includes(spoilers[0].became.slice(0, 40)));
+        await shot(page, `${slug}-why.png`);
+      } else check('What?? link in the top bar', false);
+      check('no console errors (what?!)', errors.length === 0, errors.join(' | '));
+      await context.close();
+    }
+  }
+
   // Sprite sheet: games using the sprite kit show every sprite at ?sprites.
   if (html.includes('/shared/kit/sprites.mjs')) {
     const { page, context, errors } = await open(browser, url + '?sprites');
@@ -171,6 +191,12 @@ async function checkGame(browser, base, game) {
     });
     const budget = DESKTOP.height;
     check('upgrade column fits in the window (mid-game save)', m.side <= budget, `${m.side}px tall, window ${budget}px`);
+    // Buttons in the play area (a prestige, a booth, a sail) count too: none may start below the fold.
+    const low = await page.evaluate(() => [...document.querySelectorAll('button')]
+      .filter(b => b.offsetParent && !b.closest('#side, #shop, aside, #ending, [class^="di-"], [class*=" di-"]'))
+      .filter(b => b.getBoundingClientRect().bottom > innerHeight)
+      .map(b => (b.id || b.textContent.trim()).slice(0, 30)));
+    check('play-area buttons are above the fold (mid-game save)', low.length === 0, low.join(', '));
     await shot(page, `${slug}-midgame.png`, true);
     check('no console errors (mid-game save)', errors.length === 0, errors.join(' | '));
     await context.close();

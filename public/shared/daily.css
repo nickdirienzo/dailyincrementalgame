@@ -69,14 +69,14 @@
   all: unset; cursor: pointer; position: absolute; top: 10px; right: 14px;
   font-size: 22px; line-height: 1; color: #62668a;
 }
-/* Credits wear the site's own sketchbook look (landing and privacy pages): dotted paper, a wobbly
+/* Credits, What?? and Save wear the site's own sketchbook look (landing and privacy pages): dotted paper, a wobbly
    inked frame and handwriting, light or dark with the system. */
 .di-credits {
   --paper: #fbf7ee; --dot: #e6dfcd; --ink: #2b2a33; --mute: #7a7466;
   --hand: "Gaegu", "Patrick Hand", "Comic Sans MS", cursive;
   --text: "Patrick Hand", "Comic Sans MS", cursive;
   --c1: #ff6b6b; --c3: #ffd43b; --c5: #4dabf7; --hl: 70%;
-  width: min(520px, 100%); max-height: calc(100vh - 32px); overflow: auto;
+  box-sizing: border-box; width: min(520px, 100%); max-height: calc(100vh - 32px); overflow: auto;
   padding: 26px clamp(18px, 5vw, 32px) 22px;
   color: var(--ink); color-scheme: light;
   background: var(--paper) radial-gradient(var(--dot) 1.4px, transparent 1.6px) 0 0 / 22px 22px;
@@ -104,4 +104,28 @@
 .di-credits .di-close { font-family: var(--hand); font-size: 30px; top: 12px; right: 20px; color: var(--mute); }
 .di-credits .di-close:focus-visible { outline-color: var(--ink); }
 @keyframes di-fade { from { opacity: 0; } }
+/* What?? panel: the Credits sketchbook, with each roll's explanation under it. */
+.di-why li { flex-direction: column; gap: 2px; }
+.di-why-became { color: var(--ink); font-size: 17px; }
+.di-why .di-credit-name { color: var(--mute); font-size: 16px; }
+.di-why-intro { margin: 0; font-size: 18px; }
+.di-why ul + .di-why-intro { margin-top: 12px; }
+.di-why-reveal { all: unset; cursor: pointer; color: var(--c1); text-decoration: underline; text-underline-offset: 3px; }
+.di-why-reveal:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* Save panel: the sketchbook too, with wobbly inked boxes like the landing page's tallies. */
+.di-save { width: min(460px, 100%); gap: 10px; }
+.di-save .di-code {
+  background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
+  border-radius: 255px 10px 225px 10px / 10px 225px 10px 255px; padding: 10px 14px;
+}
+.di-save .di-code::placeholder { color: var(--mute); }
+.di-save .di-code:focus-visible { outline: 2px dashed var(--c5); outline-offset: 2px; }
+.di-save .di-btn {
+  padding: 4px 16px; font: 700 22px/1.2 var(--hand); color: #2b2a33; background: var(--c3);
+  border: 2px solid var(--ink); border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; transform: rotate(-1.5deg);
+}
+.di-save .di-btn.di-ghost { background: var(--paper); color: var(--ink); box-shadow: none; transform: rotate(1deg); }
+.di-save .di-btn:hover { filter: brightness(1.05); }
+.di-save .di-btn:focus-visible { outline: 2px dashed var(--ink); outline-offset: 3px; }
+.di-save .di-save-msg { color: var(--c1); }
 @media (prefers-reduced-motion: reduce) { .di-overlay { animation: none; } }

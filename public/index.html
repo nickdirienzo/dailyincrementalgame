@@ -297,7 +297,10 @@ function render() {
   shownDay = today;
   const games = D.released(list, today);
   const done = D.completions();
-  next = list.filter(g => g.date > today).sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+  // When tomorrow's game isn't queued yet, still promise one at the next midnight.
+  const tomorrow = parse(today); tomorrow.setDate(tomorrow.getDate() + 1);
+  next = list.filter(g => g.date > today).sort((a, b) => a.date.localeCompare(b.date))[0]
+    || { date: D.localDate(tomorrow), n: Math.max(0, ...list.map(g => g.n)) + 1 };
 
   document.getElementById('streak').textContent = D.streak(list, today);
   document.getElementById('finished').textContent = games.filter(g => done[g.n]).length;

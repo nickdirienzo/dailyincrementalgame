@@ -1,0 +1,19 @@
+{
+  "intro": "Every day the dice roll a premise and a dozen constraints, and the game has to honor all of them. Today's roll was seed 487038373. Here is each roll and what came of it.",
+  "rolls": [
+    { "roll": "Premise", "value": "a squid painter · growing · rubber ducks", "became": "A squid paints ducks, sure, but how do you grow a rubber duck? You squish two of them together. Sepia gets eight arms' worth of brushes, and the ducks go from Ducklet to Galleon to Leviathan and keep going." },
+    { "roll": "Interaction", "value": "drag-and-drop", "became": "You drag duck onto matching duck to merge them, and drag the stamp onto the forms." },
+    { "roll": "Structure", "value": "a limited grid · a reset loop", "became": "The pond is the grid, and it's always too small. The reset is a Flotilla: send your whole fleet out to sea, come back famous, start over with better brushes." },
+    { "roll": "Obstacle", "value": "paperwork", "became": "So a bigger duck has to be legal first. Clerk Juniper, a crab, won't let a new size float until you stamp the right form. Form 7-B is the Application to Exceed Bath Size." },
+    { "roll": "Name initial", "value": "J", "became": "Juniper." },
+    { "roll": "Twist", "value": "gambling or loot drops", "became": "A pier needs a carnival game, so Barnaby the gull runs a hook-a-duck booth. Sometimes the prize under the duck is coins. Sometimes it's more paperwork." },
+    { "roll": "Look", "value": "neon signs", "became": "A night pier, with Sepia and Juniper drawn as glowing neon tubes. Two of the upgrades are signs: “DUCKS” and “OPEN LATE.”" },
+    { "roll": "Tone", "value": "epic fantasy", "became": "A chronicle of mighty deeds, applied to bath toys. “Lo, the pier is lit.” The stamp gleams with the light of a thousand approvals." },
+    { "roll": "Scale", "value": "hundreds", "became": "Coins stay in the hundreds. The number that runs away is the size of the duck." },
+    { "roll": "Music", "value": "lo-fi hip hop, minor pentatonic", "became": "Late-night pier beats for a squid working the night shift." },
+    { "roll": "Drive", "value": "legacy", "became": "Sepia wants their ducks out in the world, carrying their name. Every Flotilla sends some away, and postcards come back.", "spoiler": true },
+    { "roll": "Turn", "value": "they win and leave town", "became": "So the last duck has to be big enough to ride. The Duck of Unreasonable Size is a registered vessel, and Sepia means to sail off on it.", "spoiler": true },
+    { "roll": "Ending", "value": "one you have to be talked out of", "became": "The pier begs Sepia to stay. Barnaby the gull has nobody else to toss their one coin to. The Pier Committee (three herrings in a coat) made a plaque, and the plaque is a duck. Then Juniper brings out Form 1, the Application to Be Missed, and the “Will be missed?” box left blank on every form all game finally gets filled in.", "spoiler": true }
+  ],
+  "outro": "None of this was planned as one idea. It's twelve dice and a lot of saying yes."
+}

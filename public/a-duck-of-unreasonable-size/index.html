@@ -43,13 +43,20 @@
   header p { margin: 0 0 12px; color: var(--p1); font-size: 14px; }
   .game { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 20px; align-items: start; }
   @media (max-width: 760px) { .game { grid-template-columns: 1fr; } }
+  /* fit() sizes the stage so the stats, meter and log under it stay in the window. */
   .stagebox {
-    max-width: min(100%, calc(76vh * 640 / 600));
+    max-width: 100%;
     border: 2px solid var(--p2); border-radius: 14px; overflow: hidden; background: var(--p5);
     box-shadow: 0 0 0 1px var(--p3), 0 0 18px #d0379166, inset 0 0 22px #d0379144;
   }
   canvas#stage { display: block; width: 100%; height: auto; aspect-ratio: 640 / 600; touch-action: none; cursor: grab; }
   canvas#stage.dragging { cursor: grabbing; }
+  /* Short, wide windows: stats, meter and log sit beside the stage so it can use the full height. */
+  main.side { display: flex; gap: 20px; align-items: flex-start; }
+  main.side .info { flex: 1; min-width: 0; }
+  main.side .stats { margin-top: 0; }
+  main.side .meter .label { flex-direction: column; }
+  @media (max-height: 760px) and (min-width: 761px) { header h1 { font-size: 40px; } header p { margin-bottom: 8px; } }
   .stats { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 2px 4px; font-size: 15px; }
   .stats b { color: var(--p1); font-weight: 400; text-shadow: 0 0 8px #fe6c9088; }
   .meter { margin: 8px 2px 0; }
@@ -61,6 +68,11 @@
   .log.fresh { animation: fresh .8s ease-out; }
   @keyframes fresh { from { color: var(--p1); text-shadow: 0 0 10px var(--p1); } }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  /* The booth, the Flotilla and the sail sit atop the sticky column, so they're always in view. */
+  aside .actions { flex-direction: column; margin: 0 0 14px; }
+  aside .actions:not(:has(.btn:not([hidden]))) { display: none; }
+  aside .actions .btn { width: 100%; text-align: left; }
+  @media (max-width: 760px) { aside .actions { flex-direction: row; } aside .actions .btn { width: auto; flex: 1 1 200px; } }
   .btn {
     font: 16px var(--type); color: var(--p0); background: var(--p5); border: 2px solid var(--p1); border-radius: 10px;
     padding: 8px 14px; cursor: pointer; box-shadow: 0 0 10px #fe6c9066, inset 0 0 8px #fe6c9044; text-shadow: 0 0 6px var(--p1);
@@ -103,7 +115,7 @@
   .up.new { animation: pulse 1.6s ease-in-out 4; }
   @keyframes pulse { 50% { box-shadow: 0 0 18px var(--p1); border-color: var(--p0); } }
   #plea {
-    margin-top: 12px; padding: 14px 16px; border: 2px solid var(--p0); border-radius: 14px; background: #26113aee;
+    margin: 0 0 14px; padding: 14px 16px; border: 2px solid var(--p0); border-radius: 14px; background: #26113aee;
     box-shadow: 0 0 18px #fe6c9066;
   }
   #plea .who { color: var(--p1); font-size: 14px; }
@@ -125,7 +137,7 @@
 } }
 </script>
 <!-- Shared site runtime: top bar, credits, share card, streaks. data-day is this game's "n" from games.json (an internal id, never shown). -->
-<script src="/shared/daily.js" data-day="6" data-credits></script>
+<script src="/shared/daily.js" data-day="6" data-credits data-why></script>
 </head>
 <body>
 <div class="wrap">
@@ -136,17 +148,21 @@
   <div class="game">
     <main>
       <div class="stagebox"><canvas id="stage" width="640" height="600" aria-label="A neon-lit night pier. Sepia the squid paints rubber ducks in a small pond; Clerk Juniper the crab waits with a stamp."></canvas></div>
-      <div class="stats">
-        <span>Coins <b id="coins">0</b></span>
-        <span>Tips <b id="rate">0</b>/s</span>
-        <span>Ink <b id="ink">4/4</b></span>
-        <span id="pcWrap" hidden>Postcards <b id="pc">0</b></span>
+      <div class="info">
+        <div class="stats">
+          <span>Coins <b id="coins">0</b></span>
+          <span>Tips <b id="rate">0</b>/s</span>
+          <span>Ink <b id="ink">4/4</b></span>
+          <span id="pcWrap" hidden>Postcards <b id="pc">0</b></span>
+        </div>
+        <div class="meter">
+          <div class="label"><span id="meterLabel">The Legend of Sepia</span><span id="meterVal"></span></div>
+          <div class="bar" id="meterBar"><i id="meterFill"></i></div>
+        </div>
+        <div class="log" id="log" aria-live="polite"></div>
       </div>
-      <div class="meter">
-        <div class="label"><span id="meterLabel">The Legend of Sepia</span><span id="meterVal"></span></div>
-        <div class="bar" id="meterBar"><i id="meterFill"></i></div>
-      </div>
-      <div class="log" id="log" aria-live="polite"></div>
+    </main>
+    <aside id="side">
       <div class="actions">
         <button class="btn" id="hookBtn" type="button" hidden></button>
         <button class="btn" id="launchBtn" type="button" hidden></button>
@@ -160,8 +176,6 @@
           <button class="btn big" id="goBtn" type="button">Sail anyway</button>
         </div>
       </div>
-    </main>
-    <aside id="side">
       <h2>Wares &amp; Wonders <span id="afford"></span></h2>
       <div class="tabs" id="tabs" role="tablist" hidden></div>
       <div id="shop" role="tabpanel"></div>
@@ -250,6 +264,17 @@ createMusic(A, { song }).then(m => { music = m; music.update(); if (DEBUG) Objec
 const cv = $('stage'), g = cv.getContext('2d');
 const W = 640, H = 600, CELL = 76, POND_R = 632, POND_B = 500;
 function fit() {
+  // Wide screens: the stage gets as big as the window allows with the stats, meter and log still in
+  // view, either under it or, when that leaves it small, beside it.
+  const box = cv.parentElement, main = box.parentElement, info = main.querySelector('.info');
+  if (innerWidth > 760) {
+    main.classList.remove('side');
+    const room = innerHeight - (box.getBoundingClientRect().top + scrollY) - 16, mainW = main.clientWidth;
+    const under = Math.min(mainW, (room - info.offsetHeight - 10) * W / H);
+    const beside = Math.min(mainW - 260, room * W / H);
+    main.classList.toggle('side', beside > under);
+    box.style.maxWidth = Math.max(320, Math.max(under, beside)) + 'px';
+  } else { main.classList.remove('side'); box.style.maxWidth = ''; }
   const dpr = Math.min(2, devicePixelRatio || 1), r = cv.getBoundingClientRect();
   const w = Math.round((r.width || W) * dpr), h = Math.round(w * H / W);
   if (cv.width !== w) { cv.width = w; cv.height = h; }
@@ -362,7 +387,7 @@ const cellCenter = i => { const [x, y] = cellXY(i); return [x + CELL / 2, y + CE
 
 // ---------- Log ----------
 let logT = 0;
-function say(msg) { const el = $('log'); el.textContent = msg; el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); logT = 0; }
+function say(msg) { const el = $('log'); const h = el.offsetHeight; el.textContent = msg; el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); logT = 0; if (el.offsetHeight !== h) fit(); }
 const COASTS = ['the Isle of Marrow', 'Cape Dismal', 'the Jade Shallows', 'Port Elsewhere', 'the Bay of Quiet Gulls', 'the Salt Kingdoms', 'a lighthouse with one keeper', 'the far side of the fog', 'the Coral Parliament', 'a beach with no name yet'];
 const CARD_LINES = [
   d => `“Your ${d} washed up here and we made it king. It is a good king. It squeaks at the tide.”`,
