@@ -43,20 +43,13 @@
   header p { margin: 0 0 12px; color: var(--p1); font-size: 14px; }
   .game { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 20px; align-items: start; }
   @media (max-width: 760px) { .game { grid-template-columns: 1fr; } }
-  /* fit() sizes the stage so the stats, meter and log under it stay in the window. */
   .stagebox {
-    max-width: 100%;
+    max-width: min(100%, calc(76vh * 640 / 600));
     border: 2px solid var(--p2); border-radius: 14px; overflow: hidden; background: var(--p5);
     box-shadow: 0 0 0 1px var(--p3), 0 0 18px #d0379166, inset 0 0 22px #d0379144;
   }
   canvas#stage { display: block; width: 100%; height: auto; aspect-ratio: 640 / 600; touch-action: none; cursor: grab; }
   canvas#stage.dragging { cursor: grabbing; }
-  /* Short, wide windows: stats, meter and log sit beside the stage so it can use the full height. */
-  main.side { display: flex; gap: 20px; align-items: flex-start; }
-  main.side .info { flex: 1; min-width: 0; }
-  main.side .stats { margin-top: 0; }
-  main.side .meter .label { flex-direction: column; }
-  @media (max-height: 760px) and (min-width: 761px) { header h1 { font-size: 40px; } header p { margin-bottom: 8px; } }
   .stats { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 2px 4px; font-size: 15px; }
   .stats b { color: var(--p1); font-weight: 400; text-shadow: 0 0 8px #fe6c9088; }
   .meter { margin: 8px 2px 0; }
@@ -264,17 +257,6 @@ createMusic(A, { song }).then(m => { music = m; music.update(); if (DEBUG) Objec
 const cv = $('stage'), g = cv.getContext('2d');
 const W = 640, H = 600, CELL = 76, POND_R = 632, POND_B = 500;
 function fit() {
-  // Wide screens: the stage gets as big as the window allows with the stats, meter and log still in
-  // view, either under it or, when that leaves it small, beside it.
-  const box = cv.parentElement, main = box.parentElement, info = main.querySelector('.info');
-  if (innerWidth > 760) {
-    main.classList.remove('side');
-    const room = innerHeight - (box.getBoundingClientRect().top + scrollY) - 16, mainW = main.clientWidth;
-    const under = Math.min(mainW, (room - info.offsetHeight - 10) * W / H);
-    const beside = Math.min(mainW - 260, room * W / H);
-    main.classList.toggle('side', beside > under);
-    box.style.maxWidth = Math.max(320, Math.max(under, beside)) + 'px';
-  } else { main.classList.remove('side'); box.style.maxWidth = ''; }
   const dpr = Math.min(2, devicePixelRatio || 1), r = cv.getBoundingClientRect();
   const w = Math.round((r.width || W) * dpr), h = Math.round(w * H / W);
   if (cv.width !== w) { cv.width = w; cv.height = h; }
@@ -387,7 +369,7 @@ const cellCenter = i => { const [x, y] = cellXY(i); return [x + CELL / 2, y + CE
 
 // ---------- Log ----------
 let logT = 0;
-function say(msg) { const el = $('log'); const h = el.offsetHeight; el.textContent = msg; el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); logT = 0; if (el.offsetHeight !== h) fit(); }
+function say(msg) { const el = $('log'); el.textContent = msg; el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); logT = 0; }
 const COASTS = ['the Isle of Marrow', 'Cape Dismal', 'the Jade Shallows', 'Port Elsewhere', 'the Bay of Quiet Gulls', 'the Salt Kingdoms', 'a lighthouse with one keeper', 'the far side of the fog', 'the Coral Parliament', 'a beach with no name yet'];
 const CARD_LINES = [
   d => `“Your ${d} washed up here and we made it king. It is a good king. It squeaks at the tide.”`,
