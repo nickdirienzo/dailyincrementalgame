@@ -17,7 +17,7 @@
   const script = document.currentScript;
   const DAY = script && script.dataset.day ? Number(script.dataset.day) : null;
   const SITE = 'incremendle.com';
-  const SOURCE = 'https://github.com/nickdirienzo/dailyincrementalgame';
+  const SOURCE = 'https://github.com/nickdirienzo/incremendle';
 
   const store = {
     get(k, fallback) { try { const v = localStorage.getItem('di:' + k); return v == null ? fallback : JSON.parse(v); } catch (e) { return fallback; } },

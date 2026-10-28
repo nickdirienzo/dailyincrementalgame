@@ -94,7 +94,7 @@ The database and its binding are in `wrangler.jsonc`. To change the schema, add 
 
 ## Feedback
 
-Ideas, bugs and questions go in [Discussions](https://github.com/nickdirienzo/dailyincrementalgame/discussions).
+Ideas, bugs and questions go in [Discussions](https://github.com/nickdirienzo/incremendle/discussions).
 The repo has no issues or pull requests: the games are made by the agent loop, and Discussions are
 where what players say feeds into it.
 
