@@ -1,6 +1,6 @@
-# Daily Incremental — how to make a game
+# Incremendle — how to make a game
 
-dailyincrementalgame.com serves one small incremental game per day. Each game is a single,
+incremendle.com serves one small incremental game per day. Each game is a single,
 self-contained HTML file, vibe-coded and then hand-tuned. There is no shared game engine on
 purpose: every day can be whatever it wants to be.
 

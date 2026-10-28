@@ -1,4 +1,4 @@
-// Daily Incremental shared runtime.
+// Incremendle shared runtime.
 // Include on every page:  <script src="/shared/daily.js" data-day="N" defer></script>
 // N is the game's "n" in games.json: an internal id for saves and streaks, never shown to players.
 // Add data-credits when the game has a credits.json next to it (npm run credits -- <slug>): the top
@@ -16,7 +16,7 @@
 (() => {
   const script = document.currentScript;
   const DAY = script && script.dataset.day ? Number(script.dataset.day) : null;
-  const SITE = 'dailyincrementalgame.com';
+  const SITE = 'incremendle.com';
   const SOURCE = 'https://github.com/nickdirienzo/dailyincrementalgame';
 
   const store = {
@@ -63,7 +63,7 @@
   // ---------- Share card ----------
   let cardEl = null;
   function shareText(game, lines) {
-    const head = game ? `Daily Incremental: ${game.title}${game.emoji ? ' ' + game.emoji : ''}` : 'Daily Incremental';
+    const head = game ? `Incremendle: ${game.title}${game.emoji ? ' ' + game.emoji : ''}` : 'Incremendle';
     const url = game ? `${SITE}/${game.slug}` : SITE;
     return [head, (lines || []).join(' · '), url].filter(Boolean).join('\n');
   }
@@ -220,7 +220,7 @@
     if (c.sounds && c.sounds.length) parts.push(`<h3><span>Sounds</span></h3><ul>${c.sounds.map(x => item(link(x.home, x.name), `by ${esc(x.author)} · ${esc(x.license)}`, '')).join('')}</ul>`);
     if (c.palette) parts.push(`<h3><span>Palette</span></h3><ul>${item(link(c.palette.home, c.palette.name), c.palette.author ? `by ${esc(c.palette.author)} · Lospec` : 'Lospec', 'https://lospec.com/supporters')}</ul>`);
     if (c.fonts && c.fonts.length) parts.push(`<h3><span>Fonts</span></h3><ul>${c.fonts.map(f => item(link(f.home, f.name), `Google Fonts · ${esc(LICENSES[f.license] || f.license || 'Open Font License')}`, '')).join('')}</ul>`);
-    parts.push(`<h3><span>This site</span></h3><ul>${item(link(SOURCE, 'Daily Incremental source code'), 'AGPL-3.0, like Strudel', '')}${item(link('/privacy/', 'Privacy'), 'what we count, and what stays in your browser', '')}</ul>`);
+    parts.push(`<h3><span>This site</span></h3><ul>${item(link(SOURCE, 'Incremendle source code'), 'AGPL-3.0, like Strudel', '')}${item(link('/privacy/', 'Privacy'), 'what we count, and what stays in your browser', '')}</ul>`);
     return parts.join('');
   }
   function openCredits(c) {
@@ -392,7 +392,7 @@
     if (DAY == null) return;
     const bar = document.createElement('nav');
     bar.className = 'di-bar';
-    bar.innerHTML = `<a href="/">← Daily Incremental</a><span class="di-right"><span class="di-sound-wrap"><button type="button" class="di-sound-btn" aria-expanded="false"></button></span></span>`;
+    bar.innerHTML = `<a href="/">← Incremendle</a><span class="di-right"><span class="di-sound-wrap"><button type="button" class="di-sound-btn" aria-expanded="false"></button></span></span>`;
     document.body.prepend(bar);
     const saveLink = document.createElement('a');
     saveLink.href = '#save'; saveLink.className = 'di-save-link'; saveLink.textContent = 'Save';

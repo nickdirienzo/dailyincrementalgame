@@ -1,4 +1,4 @@
-# dailyincrementalgame.com
+# incremendle.com
 
 One tiny incremental game per day, built by Claude. It's an experiment in agentic game
 development: each game is rolled from a random theme, built and play-tested by an agent, then

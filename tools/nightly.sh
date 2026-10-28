@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Nightly: build the next Daily Incremental game with no one watching, check it, and ship it
+# Nightly: build the next Incremendle game with no one watching, check it, and ship it
 # to main (Workers Builds deploys). Runs from a launchd agent in its own clone,
 # so it never touches a working checkout. Logs go to ~/Library/Logs/dailyincremental/.
 # If anything fails, the work is pushed to nightly/failed-<date> instead and you get a notification.
@@ -15,7 +15,7 @@ print "=== nightly $(date)"
 
 notify() {
   print -r -- "$(date +%T) $1"
-  osascript -e "display notification \"$1\" with title \"Daily Incremental\"" || true
+  osascript -e "display notification \"$1\" with title \"Incremendle\"" || true
 }
 fail() {
   notify "Nightly failed: $1"

@@ -1,9 +1,9 @@
 ---
-description: Roll a theme and build the next Daily Incremental game, with a pacing sim and browser test
+description: Roll a theme and build the next Incremendle game, with a pacing sim and browser test
 argument-hint: "[optional steering, e.g. \"Use seed 12345\" or \"Make the interaction catch-falling-things\"]"
 ---
 
-Make the next Daily Incremental game. Read CLAUDE.md first and follow it exactly; it's the design bar and checklist.
+Make the next Incremendle game. Read CLAUDE.md first and follow it exactly; it's the design bar and checklist.
 
 Music uses `.agents/skills/slopwave/SKILL.md` automatically; read `docs/music.md`
 and `.slopwave/config.json`, setting up with `npm run music:setup` if needed. After

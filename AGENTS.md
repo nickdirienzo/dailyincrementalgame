@@ -1,4 +1,4 @@
-# Daily Incremental agent workflow
+# Incremendle agent workflow
 
 Read `CLAUDE.md` for the design bar, runtime rules, and new-game checklist. For a
 new game, follow `.claude/commands/new-game.md`, including any user steering.

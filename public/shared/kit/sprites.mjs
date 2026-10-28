@@ -1,4 +1,4 @@
-// Sprites for Daily Incremental games. Everything returns a plain <canvas>, which draws straight
+// Sprites for Incremendle games. Everything returns a plain <canvas>, which draws straight
 // into a 2D canvas (ctx.drawImage) or becomes a PixiJS texture (Texture.from(canvas)).
 //
 // The idea: open-licensed SVGs (npm run art) are source *shapes*. A game recolors them to its

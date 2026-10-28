@@ -5,6 +5,12 @@
   "name": "dailyincrementalgame",
   "main": "worker/index.js",
   "compatibility_date": "2026-10-19",
+  // dailyincrementalgame.com is the old name. It stays attached so its DNS record exists, and a
+  // Redirect Rule on that zone sends every request to incremendle.com before it reaches us.
+  "routes": [
+    { "pattern": "incremendle.com", "custom_domain": true },
+    { "pattern": "dailyincrementalgame.com", "custom_domain": true }
+  ],
   "assets": {
     "directory": "public",
     "binding": "ASSETS",

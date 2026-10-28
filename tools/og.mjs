@@ -19,7 +19,7 @@ import { serve } from './serve.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = path.join(ROOT, 'public');
-const SITE = 'https://dailyincrementalgame.com';
+const SITE = 'https://incremendle.com';
 const W = 1200, H = 630;
 const DESCRIPTION = "A new number-go-up game every day";
 
@@ -32,7 +32,7 @@ function writeMeta(htmlFile, { title, description, url, image, alt }) {
   let html = fs.readFileSync(htmlFile, 'utf8');
   html = html.replace(/^<meta (property="og:|name="twitter:)[^>]*>\n/gm, '');
   const tags = [
-    `<meta property="og:site_name" content="Daily Incremental">`,
+    `<meta property="og:site_name" content="Incremendle">`,
     `<meta property="og:type" content="website">`,
     `<meta property="og:title" content="${esc(title)}">`,
     `<meta property="og:description" content="${esc(description)}">`,
@@ -110,7 +110,7 @@ async function gameCard(browser, base, game) {
   <img class="art" src="${dataUrl(art)}">
   <div class="fade"></div>
   <img class="title" src="${dataUrl(title)}">
-  <div class="tag"><span>${esc(game.emoji || '')}</span>dailyincrementalgame.com</div>
+  <div class="tag"><span>${esc(game.emoji || '')}</span>incremendle.com</div>
 </body></html>`, out);
 
   writeMeta(path.join(PUBLIC, game.slug, 'index.html'), {
@@ -150,11 +150,11 @@ async function siteCard(browser, base) {
   await page.screenshot({ path: out });
   await context.close();
   writeMeta(path.join(PUBLIC, 'index.html'), {
-    title: 'Daily Incremental',
+    title: 'Incremendle',
     description: DESCRIPTION,
     url: `${SITE}/`,
     image: `${SITE}/og.png?v=${hash(out)}`,
-    alt: 'Daily Incremental, in bouncy rainbow letters on dotted paper.',
+    alt: 'Incremendle, in bouncy rainbow letters on dotted paper.',
   });
   console.log(`  ${path.relative(ROOT, out)}`);
 }

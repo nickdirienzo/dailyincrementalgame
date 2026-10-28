@@ -1,4 +1,4 @@
-// Sound and music for Daily Incremental games, synthesized with Web Audio (no audio files).
+// Sound and music for Incremendle games, synthesized with Web Audio (no audio files).
 //
 //   import { createAudio, scale } from '/shared/kit/audio.mjs';
 //   const A = createAudio({ sfxTrim: 1, musicTrim: 1 }); // unlocks on the first pointerdown/keydown
