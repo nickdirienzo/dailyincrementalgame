@@ -1,0 +1,1139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Very Bright, Actually · Incremendle</title>
+<meta name="description" content="A nervous lighthouse catches falling comets and keeps them frozen, to prove the Almanac wrong. Incremendle.">
+<meta property="og:site_name" content="Incremendle">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Very Bright, Actually">
+<meta property="og:description" content="A nervous lighthouse catches falling comets and keeps them frozen, to prove the Almanac wrong.">
+<meta property="og:url" content="https://incremendle.com/very-bright-actually/">
+<meta property="og:image" content="https://incremendle.com/very-bright-actually/og.png?v=feaf7028">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Very Bright, Actually: A nervous lighthouse catches falling comets and keeps them frozen, to prove the Almanac wrong.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/shared/fonts/sniglet/font.css">
+<link rel="stylesheet" href="/shared/fonts/nunito/font.css">
+<style>
+  /* POLLEN8: #73464c #ab5675 #ee6a7c #ffa7a5 #ffe07e #ffe7d6 #72dcbb #34acba */
+  :root {
+    --plum: #73464c; --mauve: #ab5675; --coral: #ee6a7c; --pink: #ffa7a5; --yellow: #ffe07e; --cream: #ffe7d6; --mint: #72dcbb; --teal: #34acba;
+    --bg: var(--plum); --ink: var(--cream); --felt: #6a3f45; --type: 'Nunito', system-ui, sans-serif; --head: 'Sniglet', 'Nunito', sans-serif;
+    color-scheme: dark;
+  }
+  html, body { background: var(--bg); color: var(--ink); }
+  /* Keep this: any display rule (flex, grid) would otherwise override the hidden attribute. */
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; font: 15px/1.45 var(--type);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: max(14px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+    background-image: radial-gradient(ellipse at 30% 0%, #ab567555, transparent 60%);
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; }
+  header h1 { font: 800 clamp(30px, 6vw, 46px)/1.05 var(--head); margin: 4px 0 2px; color: var(--yellow); text-shadow: 2px 3px 0 var(--mauve); letter-spacing: .5px; }
+  header p { margin: 0 0 10px; color: var(--pink); font-size: 14px; }
+  .game { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .game { grid-template-columns: 1fr; } }
+  /* Felt panels: a solid layer with a running stitch just inside the edge. */
+  .felt { background: var(--felt); border-radius: 14px; box-shadow: 0 3px 0 #4f2e33, inset 0 0 0 4px var(--felt), inset 0 0 0 5.5px #ffe7d655; }
+  .stagebox { max-width: min(100%, calc(56vh * 640 / 480)); border-radius: 18px; overflow: hidden; padding: 6px; }
+  canvas#stage { display: block; width: 100%; height: auto; aspect-ratio: 640 / 480; touch-action: none; border-radius: 12px; cursor: none; }
+  canvas#stage.retired { cursor: default; }
+  .stats { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 10px 2px 2px; font-size: 15px; }
+  .stats b { color: var(--yellow); font-weight: 700; }
+  .stats .clock b { color: var(--mint); }
+  .meter { margin: 6px 2px 0; }
+  .meter .label { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--pink); }
+  .meter .label .stars { color: var(--yellow); letter-spacing: 1px; font-size: 15px; }
+  .bar { position: relative; height: 12px; border-radius: 7px; background: #5a3439; box-shadow: inset 0 0 0 1.5px #ffe7d633; overflow: hidden; }
+  .bar i { position: absolute; inset: 0 auto 0 0; width: 0; background: repeating-linear-gradient(90deg, var(--yellow) 0 7px, #ffd25c 7px 9px); border-radius: 7px; transition: width .4s; }
+  .rota { display: grid; gap: 6px; margin: 10px 2px 0; padding: 8px 12px; }
+  .shift { display: grid; grid-template-columns: 74px 70px minmax(60px, 1fr) 70px; align-items: center; gap: 8px; font-size: 14px; opacity: .62; }
+  .shift.on { opacity: 1; }
+  .shift .when { font: 400 15px var(--head); color: var(--yellow); }
+  .shift .r { text-align: right; }
+  .shift b { color: var(--yellow); }
+  .shift input { width: 100%; accent-color: var(--coral); }
+  .shift .zz { color: var(--pink); font-size: 12px; }
+  .log { margin: 10px 2px 0; min-height: 3em; font-size: 15px; color: var(--cream); }
+  .log.fresh { animation: fresh .9s ease-out; }
+  @keyframes fresh { from { color: var(--yellow); } }
+  /* The column stays in view and scrolls on its own, so nothing on it is ever below the fold. */
+  aside { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain;
+          padding: 10px 4px 4px; margin-top: -10px; scrollbar-width: thin; scrollbar-color: var(--mauve) transparent; }
+  @media (max-width: 760px) { aside { position: static; max-height: none; overflow: visible; } }
+  aside h2 { font: 400 22px var(--head); margin: 2px 0 10px; color: var(--yellow); }
+  #afford { font: 13px var(--type); color: var(--pink); }
+  .actions { display: flex; flex-direction: column; gap: 8px; margin: 0 0 14px; }
+  .actions:not(:has(.btn:not([hidden]))) { display: none; }
+  .btn {
+    font: 400 17px var(--head); color: var(--plum); background: var(--yellow); border: 0; border-radius: 12px; padding: 9px 14px;
+    cursor: pointer; text-align: left; box-shadow: 0 3px 0 #c9a54a, inset 0 0 0 3px var(--yellow), inset 0 0 0 4.5px #73464c66;
+  }
+  .btn small { display: block; font: 12px var(--type); color: var(--plum); }
+  .btn[aria-disabled="true"] { background: #8b5a60; color: var(--cream); box-shadow: 0 3px 0 #4f2e33, inset 0 0 0 3px #8b5a60, inset 0 0 0 4.5px #ffe7d644; cursor: default; }
+  .btn[aria-disabled="true"] small { color: var(--pink); }
+  .btn.ring { animation: ring 1.2s ease-in-out infinite; }
+  @keyframes ring { 50% { transform: rotate(-1.5deg) scale(1.02); box-shadow: 0 3px 0 #c9a54a, 0 0 16px var(--yellow); } }
+  .btn.ghost { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 2px #ffe7d688; }
+  #plea, #almanac { margin: 0 0 14px; padding: 14px 16px; }
+  #plea .who { font: 400 15px var(--head); color: var(--yellow); }
+  #plea p { margin: 4px 0 12px; }
+  #plea .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  #almanac { background: var(--cream); color: var(--plum); box-shadow: 0 3px 0 #c9a5a0, inset 0 0 0 4px var(--cream), inset 0 0 0 5.5px #73464c55; font-size: 14px; }
+  #almanac .t { font: 400 12px var(--head); letter-spacing: 2px; color: var(--mauve); }
+  #almanac s { color: var(--mauve); }
+  #almanac b { font: 400 17px var(--head); color: var(--coral); }
+  .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tabs button { flex: 1; position: relative; font: 400 15px var(--head); color: var(--pink); background: var(--felt); border: 0; border-radius: 10px; padding: 6px 8px; cursor: pointer;
+                 box-shadow: inset 0 0 0 1.5px #ffe7d633; }
+  .tabs button[aria-selected="true"] { color: var(--plum); background: var(--pink); box-shadow: 0 2px 0 #c97f7e; }
+  .tabs button small { font: 12px var(--type); }
+  .tabs button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+  .tabs button.fresh::after { content: ""; position: absolute; top: 4px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); }
+  #shop { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  #shop .tabnote { grid-column: 1 / -1; margin: -2px 0 2px; font-size: 13px; color: var(--pink); }
+  @media (max-width: 760px) and (min-width: 520px) { #shop { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  /* Two to a row, name over price. What it does is in the tooltip. */
+  .up {
+    position: relative; display: flex; flex-direction: column; min-width: 0; text-align: left; font: 14px/1.3 var(--type); color: var(--cream);
+    background: var(--felt); border: 0; border-radius: 10px; padding: 6px 10px; cursor: pointer; box-shadow: inset 0 0 0 1.5px #ffe7d633;
+  }
+  .up b { font: 400 14px var(--head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .up em { font-style: normal; font-size: 13px; color: var(--pink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .up.can { background: #85505a; box-shadow: inset 0 0 0 2px var(--yellow); }
+  .up.can em { color: var(--yellow); }
+  .up[aria-disabled="true"] { cursor: default; }
+  .up[aria-disabled="true"]:not(.can) { opacity: .66; }
+  .up.odd { box-shadow: inset 0 0 0 1.5px transparent; outline: 1.5px dashed #ffe7d677; outline-offset: -4px; }
+  .up.odd.can { outline-color: var(--yellow); }
+  .up.lens { background: #3f6f73; }
+  .up.lens.can { background: #2f8d96; }
+  .up .ring { position: absolute; top: 5px; right: 8px; font-size: 11px; color: var(--mint); }
+  .up .tag { position: absolute; top: -8px; right: 8px; font: 11px var(--type); padding: 0 6px; border-radius: 8px; background: var(--yellow); color: var(--plum); }
+  .up.new { animation: pulse 1.6s ease-in-out 4; }
+  @keyframes pulse { 50% { box-shadow: inset 0 0 0 2px var(--yellow), 0 0 14px var(--yellow); } }
+  #tip {
+    position: fixed; z-index: 50; width: 236px; padding: 10px 13px; pointer-events: none; font: 14px/1.38 var(--type); color: var(--plum);
+    background: var(--cream); border-radius: 12px; box-shadow: 0 4px 0 #c9a5a0, inset 0 0 0 4px var(--cream), inset 0 0 0 5.5px #ab567577;
+  }
+  #tip b { display: block; font: 400 16px var(--head); color: var(--coral); margin-bottom: 2px; }
+  #tip small { display: block; margin-top: 5px; font-size: 12px; color: var(--mauve); }
+  #ending { margin: 26px auto 10px; max-width: 660px; text-align: center; padding: 22px; }
+  #ending h2 { font: 800 40px/1.1 var(--head); margin: 0 0 10px; color: var(--yellow); text-shadow: 2px 3px 0 var(--mauve); }
+  #ending p { margin: 8px 0; }
+  #ending .entry { display: inline-block; margin: 10px 0 14px; padding: 10px 18px; background: var(--cream); color: var(--plum); border-radius: 8px; transform: rotate(-1.5deg); font-size: 14px; }
+  #ending .entry b { font: 400 18px var(--head); color: var(--coral); }
+  #ending .btn { text-align: center; }
+  @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh, .btn.ring { animation: none; } .bar i { transition: none; } }
+</style>
+<!-- Libraries from /shared/lib/libs.json, by version. List only what this game imports: the credits tool reads these.
+     Strudel's soundfonts import @strudel/core and @strudel/webaudio, which are both inside the @strudel/web bundle. -->
+<script type="importmap">
+{ "imports": {
+  "@strudel/web": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/core": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/webaudio": "/shared/lib/@strudel/web@1.3.0/index.mjs"
+} }
+</script>
+<!-- Shared site runtime: top bar, credits, share card, streaks. data-day is this game's "n" from games.json (an internal id, never shown). -->
+<script src="/shared/daily.js" data-day="7" data-credits data-why></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Very Bright, Actually</h1>
+    <p>Move the net under the falling comets. Sallow keeps them frozen for later.</p>
+  </header>
+  <div class="game">
+    <main>
+      <div class="stagebox felt"><canvas id="stage" width="640" height="480" aria-label="A felt diorama of Sallow Point at night: a striped lighthouse with nervous button eyes, a yarn sea, and felt comets falling from the sky."></canvas></div>
+      <div class="stats">
+        <span>☄ Comets <b id="comets">0</b></span>
+        <span>✦ Shine <b id="shine">0</b></span>
+        <span>Brightness <b id="bright">0</b></span>
+        <span class="clock" id="clock"></span>
+      </div>
+      <div class="meter">
+        <div class="label"><span id="meterLabel"></span><span id="meterVal"></span></div>
+        <div class="bar"><i id="meterFill"></i></div>
+      </div>
+      <div class="rota felt" id="rota" hidden>
+        <div class="shift" id="nightRow"><span class="when">🌙 Night</span><span>Nets <b id="nNet">0</b></span><input type="range" id="nightSplit" min="0" max="100" step="5" aria-label="Night shift: share of Wool Folk on the lamp instead of the nets"><span class="r">Lamp <b id="nLamp">0</b></span></div>
+        <div class="shift" id="dayRow"><span class="when">☀ Day</span><span>Cellar <b id="dCellar">0</b></span><input type="range" id="daySplit" min="0" max="100" step="5" aria-label="Day shift: share of Wool Folk on the beach instead of the cellar"><span class="r">Beach <b id="dBeach">0</b></span></div>
+      </div>
+      <div class="log" id="log" aria-live="polite"></div>
+    </main>
+    <aside id="side">
+      <div class="actions">
+        <button class="btn" id="bellBtn" type="button" hidden>🔔 Ring the shift bell<small id="bellSub"></small></button>
+        <button class="btn" id="thawBtn" type="button" hidden>❄ The Great Thaw<small id="thawSub"></small></button>
+      </div>
+      <div id="almanac" hidden>
+        <div class="t">MARINERS' ALMANAC · SALLOW POINT</div>
+        <div id="almanacText"></div>
+      </div>
+      <div id="plea" class="felt" hidden>
+        <div class="who" id="pleaWho"></div>
+        <p id="pleaText"></p>
+        <div class="row">
+          <button class="btn ghost" id="stayBtn" type="button">You're right</button>
+          <button class="btn" id="goBtn" type="button">Thaw them anyway</button>
+        </div>
+      </div>
+      <h2>Workshop <span id="afford"></span></h2>
+      <div class="tabs" id="tabs" role="tablist" hidden></div>
+      <div id="shop" role="tabpanel"></div>
+      <div id="tip" role="tooltip" hidden></div>
+    </aside>
+  </div>
+  <section id="ending" class="felt" hidden>
+    <h2>Very bright, actually.</h2>
+    <p id="endText"></p>
+    <div class="entry">MARINERS' ALMANAC, NEXT EDITION<br><b>SALLOW POINT ★★★★★</b><br><s>sallow by name, sallow by nature; adequate</s><br>Very bright, actually. Once, extremely.</div>
+    <p id="endStats"></p>
+    <button class="btn" id="shareBtn" type="button">Share result</button>
+  </section>
+</div>
+<script type="module">
+import { createAudio, scale } from '/shared/kit/audio.mjs';
+import { createMusic } from '/shared/kit/music.mjs';
+import { createSoundtrack } from './music.mjs';
+import * as Sprites from '/shared/kit/sprites.mjs';
+import * as FX from '/shared/kit/fx.mjs';
+import * as E from './economy.mjs';
+
+const $ = id => document.getElementById(id);
+const DEBUG = location.search.includes('debug');
+const KEY = window.DailyGame ? DailyGame.storageKey('save') : 'di:7:save';
+let S = E.newState();
+try { const raw = localStorage.getItem(KEY); if (raw) S = E.load(JSON.parse(raw)); } catch (e) {}
+const save = () => { S.lastSeen = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const C = { plum: '#73464c', mauve: '#ab5675', coral: '#ee6a7c', pink: '#ffa7a5', yellow: '#ffe07e', cream: '#ffe7d6', mint: '#72dcbb', teal: '#34acba' };
+const fmt = E.fmt;
+const fmtS = n => n < 10 ? (Math.floor(n * 10) / 10).toFixed(1) : fmt(n);
+
+// ---------- Sound ----------
+// Everything on C major pentatonic, the soundtrack's key.
+const A = createAudio({ sfxTrim: 1, musicTrim: 1 });
+const N = scale('major pentatonic', 60);
+let combo = 0, comboT = 0;
+const sfx = {
+  catch() {
+    combo = comboT > 0 ? Math.min(combo + 1, 9) : 0; comboT = 1.6;
+    A.tone({ type: 'pluck', freq: N(5 + combo), dur: 0.12, vol: 0.2 });
+  },
+  freeze() { A.tone({ type: 'bell', freq: N(13 + (Math.random() * 3 | 0)), dur: 0.06, vol: 0.06 }); A.tone({ type: 'bell', freq: N(15), dur: 0.05, vol: 0.04, at: A.now + 0.05 }); },
+  miss() { A.noiseHit('whoosh', { vol: 0.03, dur: 0.35 }); },
+  gather() { A.tone({ type: 'pluck', freq: N(3 + (Math.random() * 3 | 0)), dur: 0.12, vol: 0.18 }); A.tone({ type: 'bell', freq: N(10), dur: 0.08, vol: 0.06, at: A.now + 0.06 }); },
+  buy() { [2, 4, 7].forEach((d, i) => A.tone({ type: 'keys', freq: N(d), dur: 0.16, vol: 0.15, at: A.now + i * 0.07 })); },
+  lens() { [5, 7, 9, 12].forEach((d, i) => A.tone({ type: 'bell', freq: N(d), dur: 0.3, vol: 0.09, at: A.now + i * 0.06 })); A.tone({ type: 'pad', freq: N(0), dur: 0.6, vol: 0.05, attack: 0.1 }); },
+  unlock() { A.tone({ type: 'bell', freq: N(9), dur: 0.3, vol: 0.09 }); A.tone({ type: 'bell', freq: N(11), dur: 0.35, vol: 0.08, at: A.now + 0.12 }); },
+  deny() { A.tone({ type: 'triangle', freq: N(1), dur: 0.08, vol: 0.12 }); A.tone({ type: 'triangle', freq: N(-1), dur: 0.12, vol: 0.11, at: A.now + 0.09 }); },
+  tick(k = 0) { A.tone({ type: 'triangle', freq: N(k % 2 ? 11 : 12), dur: 0.025, vol: 0.06, cutoff: 3200 }); },
+  dawn() { [4, 7, 9].forEach((d, i) => A.tone({ type: 'bell', freq: N(d), dur: 0.35, vol: 0.08, at: A.now + i * 0.16 })); },
+  dusk() { A.tone({ type: 'pad', freq: N(-3), dur: 1.2, vol: 0.07, attack: 0.3 }); A.tone({ type: 'pad', freq: N(0), dur: 1.2, vol: 0.05, attack: 0.4 }); },
+  bell() { A.tone({ type: 'bell', freq: N(7), dur: 0.5, vol: 0.12 }); A.tone({ type: 'bell', freq: N(7), dur: 0.5, vol: 0.09, at: A.now + 0.22 }); },
+  star() { [0, 2, 4, 5, 7].forEach((d, i) => A.tone({ type: 'keys', freq: N(d + 5), dur: 0.22, vol: 0.12, at: A.now + i * 0.09 })); A.tone({ type: 'bell', freq: N(12), dur: 0.5, vol: 0.08, at: A.now + 0.5 }); },
+  surveyor() { A.tone({ type: 'pad', freq: N(-5), dur: 1.6, vol: 0.09, attack: 0.4 }); A.tone({ type: 'bell', freq: N(7), dur: 0.8, vol: 0.07, at: A.now + 0.6 }); A.tone({ type: 'bell', freq: N(6), dur: 0.9, vol: 0.06, at: A.now + 1.0 }); },
+  plea() { A.tone({ type: 'keys', freq: N(2), dur: 0.45, vol: 0.12 }); A.tone({ type: 'keys', freq: N(1), dur: 0.5, vol: 0.1, at: A.now + 0.22 }); },
+  finale() {
+    for (let i = 0; i < 12; i++) A.tone({ type: 'bell', freq: N(5 + i), dur: 0.3, vol: 0.08, at: A.now + i * 0.07 });
+    [0, 4, 7].forEach(d => A.tone({ type: 'pad', freq: N(d), dur: 2.4, vol: 0.06, attack: 0.5, at: A.now + 0.8 }));
+    A.tone({ type: 'keys', freq: N(10), dur: 1.2, vol: 0.1, at: A.now + 1.0 });
+  },
+};
+// Per-effect levels, measured with npm run mix so every effect peaks near -10 dBFS.
+const LEVEL = {};
+for (const k of Object.keys(sfx)) {
+  const fn = sfx[k];
+  sfx[k] = (...a) => {
+    const tone = A.tone, hit = A.noiseHit, m = LEVEL[k] || 1;
+    A.tone = o => tone({ ...o, vol: (o.vol ?? 0.3) * m });
+    A.noiseHit = (kind, o = {}) => hit(kind, { ...o, vol: (o.vol ?? 0.25) * m });
+    try { fn(...a); } finally { A.tone = tone; A.noiseHit = hit; }
+  };
+}
+if (DEBUG) window.__game = { A, sfx, long: ['finale', 'surveyor', 'dusk'], S: () => S, E };
+
+// The game owns playback; music.mjs arranges the composed song per phase.
+const PHASE_KEYS = { 1: 'net', 2: 'rota', 3: 'knit', 4: 'surveyor', 5: 'finale' };
+let music = null, soundtrack = null;
+function song() {
+  soundtrack ||= createSoundtrack(music.strudel);
+  return soundtrack(PHASE_KEYS[E.phase(S)]);
+}
+createMusic(A, { song }).then(m => { music = m; music.update(); if (DEBUG) Object.assign(window.__game, { music: m, song }); });
+
+// ---------- Canvas ----------
+const cv = $('stage'), g = cv.getContext('2d');
+const W = 640, H = 480, SEA = 362, LX = 96;
+function fit() {
+  const dpr = Math.min(2, devicePixelRatio || 1), r = cv.getBoundingClientRect();
+  const w = Math.round((r.width || W) * dpr), h = Math.round(w * H / W);
+  if (cv.width !== w) { cv.width = w; cv.height = h; }
+}
+addEventListener('resize', fit);
+
+// ---------- Felt helpers ----------
+// Everything is cut from felt: a dark under-layer peeking out, the colour, and a running stitch
+// just inside the edge. A fibre texture over the whole scene does the rest.
+function felt(x, path, fill, { stitch = '#ffe7d6', alpha = 0.55, under = '#00000033', inset = 3 } = {}) {
+  x.save();
+  x.translate(1.5, 2.5); x.fillStyle = under; x.beginPath(); path(); x.fill();
+  x.restore();
+  x.fillStyle = fill; x.beginPath(); path(); x.fill();
+  if (stitch) {
+    // A dashed ring `inset` px inside the edge: a wide dashed stroke, clipped to the shape, with a
+    // narrower solid stroke of the fill over its outer part.
+    x.save(); x.beginPath(); path(); x.clip();
+    x.lineJoin = 'round';
+    x.strokeStyle = stitch; x.globalAlpha = alpha; x.setLineDash([3.5, 3]); x.lineWidth = (inset + 0.7) * 2; x.stroke();
+    x.globalAlpha = 1; x.setLineDash([]); x.strokeStyle = fill; x.lineWidth = (inset - 0.7) * 2; x.stroke();
+    x.restore();
+  }
+}
+// A stitched outline drawn inside a shape, for when the path is simple enough to inset by scaling.
+function stitchIn(x, cx, cy, k, path, color = '#ffe7d6', alpha = 0.55) {
+  x.save(); x.translate(cx, cy); x.scale(k, k); x.translate(-cx, -cy);
+  x.strokeStyle = color; x.globalAlpha = alpha; x.lineWidth = 1.3 / k; x.setLineDash([3.5 / k, 3 / k]); x.lineCap = 'round';
+  x.beginPath(); path(); x.stroke(); x.restore();
+}
+const fibres = (() => {
+  const c = Sprites.canvas(220, 220), x = c.getContext('2d');
+  for (let i = 0; i < 2600; i++) {
+    const px = Math.random() * 220, py = Math.random() * 220, a = Math.random() * Math.PI, l = 2 + Math.random() * 5;
+    x.strokeStyle = Math.random() < 0.5 ? 'rgba(255,231,214,0.16)' : 'rgba(60,20,30,0.16)'; x.lineWidth = 0.7;
+    x.beginPath(); x.moveTo(px, py); x.quadraticCurveTo(px + Math.cos(a + 1) * l * 0.4, py + Math.sin(a + 1) * l * 0.4, px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke();
+  }
+  return c;
+})();
+let fibrePat = null;
+
+// ---------- Sprites ----------
+const spr = {};
+// A felt pompom: a fuzzy ball of short fibres around a solid core.
+function pompom(color, light, r) {
+  const s = Math.ceil(r * 2 + 10), c = Sprites.canvas(s, s), x = c.getContext('2d'), m = s / 2;
+  x.fillStyle = '#00000030'; x.beginPath(); x.arc(m + 1, m + 2, r, 0, 7); x.fill();
+  x.fillStyle = color; x.beginPath(); x.arc(m, m, r, 0, 7); x.fill();
+  for (let i = 0; i < r * 14; i++) {
+    const a = Math.random() * 7, d = r * (0.55 + Math.random() * 0.5), l = 2 + Math.random() * 3;
+    x.strokeStyle = Math.random() < 0.45 ? light : color; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(m + Math.cos(a) * d, m + Math.sin(a) * d); x.lineTo(m + Math.cos(a) * (d + l), m + Math.sin(a) * (d + l)); x.stroke();
+  }
+  x.fillStyle = light; x.globalAlpha = 0.55; x.beginPath(); x.arc(m - r * 0.3, m - r * 0.35, r * 0.35, 0, 7); x.fill();
+  return c;
+}
+// Icons from the art folder, cut out of felt: recoloured, an under-layer, a running stitch, fibres.
+async function feltIcon(file, fill, size, stitch = C.cream) {
+  const src = await Sprites.loadSvg(file);
+  const base = await Sprites.svgToCanvas(Sprites.recolor(src, fill), size);
+  const inner = await Sprites.svgToCanvas(Sprites.recolor(src, '#000'), size * 0.9);
+  const pad = 6, c = Sprites.canvas(size + pad * 2, size + pad * 2), x = c.getContext('2d');
+  x.drawImage(Sprites.silhouette(base, '#00000040'), pad + 1.5, pad + 2.5);
+  x.drawImage(base, pad, pad);
+  // The stitch: the gap between the shape and a 90% copy, broken into dashes.
+  const ring = Sprites.canvas(size, size), r = ring.getContext('2d');
+  r.drawImage(Sprites.outline(Sprites.silhouette(inner, stitch), stitch, 1), size * 0.05 - 1, size * 0.05 - 1);
+  r.globalCompositeOperation = 'destination-out'; r.drawImage(inner, size * 0.05, size * 0.05);
+  for (let i = -size; i < size * 2; i += 7) { r.fillRect(i, 0, 3, size); }
+  r.globalCompositeOperation = 'destination-in'; r.drawImage(base, 0, 0);
+  x.globalAlpha = 0.7; x.drawImage(ring, pad, pad); x.globalAlpha = 1;
+  x.globalCompositeOperation = 'source-atop'; x.drawImage(fibres, 0, 0);
+  return c;
+}
+function doll(body, head = C.cream) {
+  const c = Sprites.canvas(30, 44), x = c.getContext('2d');
+  drawDoll(x, 15, 40, body, head, 0, null);
+  return c;
+}
+async function makeSprites() {
+  spr.comets = [pompom(C.mint, C.cream, 9), pompom(C.cream, '#fff6ee', 9), pompom(C.yellow, C.cream, 9), pompom(C.pink, C.cream, 9)];
+  spr.small = [pompom(C.mint, C.cream, 5), pompom(C.cream, '#fff6ee', 5), pompom(C.yellow, C.cream, 5)];
+  spr.ice = pompom('#bfeee0', '#ffffff', 7);
+  spr.comets.forEach((c, i) => Sprites.register(`comet ${i + 1}`, c));
+  Sprites.register('frozen comet', spr.ice);
+  spr.gull = Sprites.register('gull (felt)', await feltIcon('./art/game-icons--seagull.svg', C.cream, 40));
+  spr.boat = Sprites.register("Surveyor's boat (felt)", await feltIcon('./art/game-icons--sailboat.svg', C.teal, 70, C.mint));
+  spr.netIcon = Sprites.register('retired net (felt)', await feltIcon('./art/game-icons--fishing-net.svg', C.pink, 36, C.plum));
+  spr.dolls = [doll(C.mint), doll(C.coral), doll(C.yellow), doll(C.teal, C.pink)];
+  spr.dolls.forEach((c, i) => Sprites.register(`Wool Folk ${i + 1}`, c));
+  const sal = Sprites.canvas(170, 380); drawSallow(sal.getContext('2d'), 85, 0, { look: [200, 120], nerves: 0.3, hand: true });
+  Sprites.register('Sallow', sal);
+  const sv = Sprites.canvas(50, 80); drawSurveyor(sv.getContext('2d'), 25, 76, 0);
+  Sprites.register('the Surveyor', sv);
+  const nt = Sprites.canvas(110, 120); drawNet(nt.getContext('2d'), 55, 40, 36, 0);
+  Sprites.register('the net', nt);
+  const sun = Sprites.canvas(150, 150); drawSun(sun.getContext('2d'), 75, 75, 64, C.pink);
+  Sprites.register('synth sun (felt)', sun);
+}
+
+// ---------- Characters, drawn live ----------
+// Sallow: a striped lighthouse with button eyes. Origin is the top of the roof ball (x = centre).
+function drawSallow(x, cx, top, { look = [cx + 100, top + 120], nerves = 0, glow = 0, t = 0, hand = false, plate = false, permit = false } = {}) {
+  const base = top + 360, towerTop = top + 128;
+  const bw = 46, tw = 31;
+  const towerPath = () => { x.moveTo(cx - bw, base); x.lineTo(cx - tw, towerTop); x.lineTo(cx + tw, towerTop); x.lineTo(cx + bw, base); x.closePath(); };
+  felt(x, towerPath, C.cream, { stitch: null });
+  // Coral stripes, clipped to the tower.
+  x.save(); x.beginPath(); towerPath(); x.clip();
+  x.fillStyle = C.coral;
+  for (let k = 0; k < 4; k++) { const y = towerTop + 34 + k * 56; x.beginPath(); x.moveTo(cx - 60, y + 6); x.lineTo(cx + 60, y - 6); x.lineTo(cx + 60, y + 22); x.lineTo(cx - 60, y + 34); x.fill(); }
+  x.restore();
+  stitchIn(x, cx, (base + towerTop) / 2, 0.92, towerPath, C.plum, 0.45);
+  // Cellar window, glowing when comets are thawing, cold blue otherwise.
+  const wy = base - 52;
+  felt(x, () => x.roundRect(cx - 17, wy, 34, 26, 6), glow > 0 ? mix(C.mint, C.coral, glow) : C.mint, { stitch: C.cream });
+  x.fillStyle = '#ffffff66'; x.fillRect(cx - 12, wy + 4, 10, 4);
+  // Door.
+  felt(x, () => { x.moveTo(cx - 13, base); x.lineTo(cx - 13, base - 24); x.arc(cx, base - 24, 13, Math.PI, 0); x.lineTo(cx + 13, base); x.closePath(); }, C.mauve, { stitch: C.cream });
+  if (plate) { felt(x, () => x.roundRect(cx - 22, wy - 30, 44, 12, 3), C.yellow, { stitch: null }); x.fillStyle = C.plum; x.font = '700 7px Nunito, sans-serif'; x.textAlign = 'center'; x.fillText('SALLOW POINT', cx, wy - 21); }
+  if (permit) { felt(x, () => x.rect(cx + 18, wy - 80, 14, 18), C.cream, { stitch: null }); x.fillStyle = C.coral; x.fillRect(cx + 21, wy - 76, 8, 2); x.fillRect(cx + 21, wy - 71, 6, 2); }
+  // Eyes: two big buttons on the tower that look at things and get worse near dawn.
+  const ey = towerTop + 26, jitter = reduced ? 0 : nerves * Math.sin(t * 37) * 1.2;
+  for (const s of [-1, 1]) {
+    const ex = cx + s * 13 + jitter;
+    felt(x, () => x.ellipse(ex, ey, 10, 11, 0, 0, 7), C.cream, { stitch: null, under: '#73464c55' });
+    const a = Math.atan2(look[1] - ey, look[0] - ex), d = 4.2;
+    const px = ex + Math.cos(a) * d, py = ey + Math.sin(a) * d;
+    x.fillStyle = C.plum; x.beginPath(); x.arc(px, py, 4.5 - nerves * 1.2, 0, 7); x.fill();
+    x.fillStyle = C.cream; x.beginPath(); x.arc(px - 1, py - 1, 1.1, 0, 7); x.fill();
+    // Worried brows: yarn, tilted up in the middle.
+    x.strokeStyle = C.plum; x.lineWidth = 2.4; x.lineCap = 'round';
+    x.beginPath(); x.moveTo(ex - 8 * s, ey - 15 + nerves * 2); x.lineTo(ex + 6 * s, ey - 18 - nerves * 4); x.stroke();
+  }
+  // A small wobbly mouth.
+  x.strokeStyle = C.plum; x.lineWidth = 2; x.beginPath();
+  for (let i = 0; i <= 8; i++) { const mx = cx - 8 + i * 2, my = ey + 20 + Math.sin(i * 1.7 + t * (2 + nerves * 10)) * (0.6 + nerves * 1.6); i ? x.lineTo(mx, my) : x.moveTo(mx, my); }
+  x.stroke();
+  if (nerves > 0.6) { // a bead of sweat (felt, of course)
+    const sy = ey - 8 + ((t * 18) % 22);
+    felt(x, () => { x.moveTo(cx + 27, sy - 5); x.quadraticCurveTo(cx + 31, sy + 2, cx + 27, sy + 4); x.quadraticCurveTo(cx + 23, sy + 2, cx + 27, sy - 5); }, C.mint, { stitch: null });
+  }
+  // Gallery and lamp room.
+  felt(x, () => x.roundRect(cx - 44, towerTop - 10, 88, 12, 4), C.mauve, { stitch: C.cream });
+  x.strokeStyle = C.plum; x.lineWidth = 2; x.setLineDash([]);
+  for (let k = -40; k <= 40; k += 10) { x.beginPath(); x.moveTo(cx + k, towerTop - 10); x.lineTo(cx + k, towerTop - 24); x.stroke(); }
+  x.beginPath(); x.moveTo(cx - 42, towerTop - 24); x.lineTo(cx + 42, towerTop - 24); x.stroke();
+  felt(x, () => x.roundRect(cx - 24, towerTop - 62, 48, 52, 6), C.yellow, { stitch: C.mauve, under: '#73464c66' });
+  x.fillStyle = '#ffffff88'; x.beginPath(); x.ellipse(cx, towerTop - 36, 11, 16, 0, 0, 7); x.fill();
+  x.strokeStyle = C.mauve; x.lineWidth = 2; x.beginPath(); x.moveTo(cx - 8, towerTop - 62); x.lineTo(cx - 8, towerTop - 10); x.moveTo(cx + 8, towerTop - 62); x.lineTo(cx + 8, towerTop - 10); x.stroke();
+  felt(x, () => { x.moveTo(cx - 32, towerTop - 60); x.lineTo(cx, towerTop - 100); x.lineTo(cx + 32, towerTop - 60); x.closePath(); }, C.mauve, { stitch: C.cream });
+  felt(x, () => x.arc(cx, towerTop - 104, 6, 0, 7), C.coral, { stitch: null });
+  if (hand) { // the net, hanging by the door once it's retired (or ready, on the sprite sheet)
+    x.strokeStyle = C.plum; x.lineWidth = 3; x.beginPath(); x.moveTo(cx + 50, base - 70); x.lineTo(cx + 64, base - 30); x.stroke();
+  }
+}
+function mix(a, b, k) {
+  const p = s => [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16));
+  const [r1, g1, b1] = p(a), [r2, g2, b2] = p(b);
+  return `rgb(${Math.round(r1 + (r2 - r1) * k)},${Math.round(g1 + (g2 - g1) * k)},${Math.round(b1 + (b2 - b1) * k)})`;
+}
+// A Wool Folk: a knitted doll with button eyes. (x, y) is its feet.
+function drawDoll(x, cx, fy, body, head, t, tool) {
+  const bob = reduced ? 0 : Math.sin(t * 3 + cx) * 1.2;
+  const by = fy - 14 + bob;
+  felt(x, () => x.roundRect(cx - 8, by - 4, 16, 18, 6), body, { stitch: null });
+  x.strokeStyle = '#00000022'; x.lineWidth = 1;
+  for (let k = 0; k < 4; k++) { x.beginPath(); x.moveTo(cx - 7, by + k * 4); x.lineTo(cx + 7, by + k * 4); x.stroke(); }
+  felt(x, () => x.arc(cx, by - 11, 9, 0, 7), head, { stitch: null });
+  x.fillStyle = C.plum; x.beginPath(); x.arc(cx - 3.5, by - 12, 1.9, 0, 7); x.arc(cx + 3.5, by - 12, 1.9, 0, 7); x.fill();
+  x.strokeStyle = C.plum; x.lineWidth = 1; x.beginPath(); x.moveTo(cx - 2, by - 7); x.lineTo(cx + 2, by - 7); x.stroke();
+  x.strokeStyle = body; x.lineWidth = 2.5; x.lineCap = 'round';
+  x.beginPath(); x.moveTo(cx - 3, by - 20); x.quadraticCurveTo(cx, by - 25, cx + 4, by - 21); x.stroke();
+  if (tool === 'net') {
+    x.strokeStyle = C.plum; x.lineWidth = 1.5; x.beginPath(); x.moveTo(cx + 7, by + 4); x.lineTo(cx + 13, by - 14); x.stroke();
+    x.fillStyle = '#ffe7d655'; x.beginPath(); x.moveTo(cx + 8, by - 18); x.quadraticCurveTo(cx + 15, by - 6, cx + 21, by - 16); x.fill();
+    x.strokeStyle = C.coral; x.lineWidth = 2; x.beginPath(); x.ellipse(cx + 15, by - 17, 7, 3, -0.4, 0, 7); x.stroke();
+  }
+  if (tool === 'bucket') felt(x, () => { x.moveTo(cx + 7, by + 4); x.lineTo(cx + 17, by + 4); x.lineTo(cx + 15, by + 13); x.lineTo(cx + 9, by + 13); x.closePath(); }, C.yellow, { stitch: null });
+  if (tool === 'lamp') { x.fillStyle = C.yellow; x.beginPath(); x.arc(cx + 11, by - 2, 4, 0, 7); x.fill(); x.fillStyle = '#ffe07e33'; x.beginPath(); x.arc(cx + 11, by - 2, 10, 0, 7); x.fill(); }
+  if (tool === 'ice') felt(x, () => x.roundRect(cx + 6, by - 2, 11, 11, 2), '#bfeee0', { stitch: null });
+}
+// The Surveyor of the Mariners' Almanac. Where a face should be, there is a lantern.
+function drawSurveyor(x, cx, fy, t) {
+  felt(x, () => { x.moveTo(cx - 13, fy); x.lineTo(cx - 9, fy - 40); x.lineTo(cx + 9, fy - 40); x.lineTo(cx + 13, fy); x.closePath(); }, C.teal, { stitch: C.mint });
+  felt(x, () => x.roundRect(cx - 8, fy - 58, 16, 18, 4), C.yellow, { stitch: null });
+  const fl = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(t * 9);
+  x.fillStyle = `rgba(255,224,126,${0.25 + fl * 0.2})`; x.beginPath(); x.arc(cx, fy - 49, 15, 0, 7); x.fill();
+  x.fillStyle = C.coral; x.beginPath(); x.ellipse(cx, fy - 48, 3, 5 + fl, 0, 0, 7); x.fill();
+  felt(x, () => { x.moveTo(cx - 15, fy - 56); x.quadraticCurveTo(cx, fy - 74, cx + 15, fy - 56); x.closePath(); }, C.yellow, { stitch: C.mauve });
+}
+// The knitted net: a hoop, a mesh bag and a handle. (cx, cy) is the middle of the hoop.
+function drawNet(x, cx, cy, r, t) {
+  x.strokeStyle = C.plum; x.lineWidth = 4; x.lineCap = 'round';
+  x.beginPath(); x.moveTo(cx + r * 0.7, cy + 4); x.lineTo(cx + r * 1.25, cy + 62); x.stroke();
+  const sway = reduced ? 0 : Math.sin(t * 4) * 3;
+  const bag = () => { x.moveTo(cx - r, cy); x.quadraticCurveTo(cx - r * 0.6 + sway, cy + r * 1.3, cx + sway * 0.5, cy + r * 1.25); x.quadraticCurveTo(cx + r * 0.6 + sway, cy + r * 1.3, cx + r, cy); x.closePath(); };
+  x.fillStyle = '#ffe7d622'; x.beginPath(); bag(); x.fill();
+  x.save(); x.beginPath(); bag(); x.clip();
+  x.strokeStyle = C.cream; x.globalAlpha = 0.8; x.lineWidth = 1.4;
+  for (let k = -r * 2; k < r * 2; k += 8) { x.beginPath(); x.moveTo(cx + k, cy); x.lineTo(cx + k + r, cy + r * 1.4); x.moveTo(cx + k, cy); x.lineTo(cx + k - r, cy + r * 1.4); x.stroke(); }
+  x.restore();
+  x.strokeStyle = C.coral; x.lineWidth = 5; x.beginPath(); x.ellipse(cx, cy, r, r * 0.28, 0, 0, 7); x.stroke();
+  x.strokeStyle = C.cream; x.lineWidth = 1.2; x.setLineDash([3, 3]); x.beginPath(); x.ellipse(cx, cy, r, r * 0.28, 0, 0, 7); x.stroke(); x.setLineDash([]);
+}
+// The felt sun: a synthwave sun, stripes cut out of the bottom half.
+function drawSun(x, cx, cy, r, sky) {
+  const gr = x.createLinearGradient(0, cy - r, 0, cy + r);
+  gr.addColorStop(0, C.yellow); gr.addColorStop(1, C.coral);
+  felt(x, () => x.arc(cx, cy, r, 0, 7), gr, { stitch: C.cream, under: '#ab567555' });
+  x.fillStyle = sky;
+  for (let k = 0; k < 5; k++) { const y = cy + r * 0.12 + k * r * 0.19, hgt = 2 + k * 1.6; x.fillRect(cx - r - 2, y, r * 2 + 4, hgt); }
+}
+
+// ---------- Scene state ----------
+let T = 0;
+const net = { x: 330, y: 250, tx: 330, ty: 250, r: 34 };
+const comets = [];   // falling: { x, y, vx, vy, s, deco, tail: [] }
+const flying = [];   // caught comets on their way to the cellar
+const fx = [];       // text pops and splashes
+let spawnAcc = 0, decoAcc = 0;
+const STARS = Array.from({ length: 34 }, (_, i) => [((i * 97) % 600) + 20, ((i * 53) % 230) + 14, (i * 13) % 7]);
+const LUMPS = [[372, 420], [418, 428], [462, 418], [506, 430], [548, 420], [590, 429], [618, 417], [338, 431]];
+const pop = (x, y, text, color = C.yellow) => fx.push({ kind: 'text', x, y, t: 0, life: 1.3, text, color });
+const splash = (x, y) => fx.push({ kind: 'ring', x, y, t: 0, life: 0.8 });
+
+// ---------- Input: the net follows the pointer ----------
+function toStage(e) { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; }
+function aim(e) {
+  const [px, py] = toStage(e);
+  net.tx = Math.max(150, Math.min(620, px));
+  net.ty = Math.max(110, Math.min(E.isNight(S) ? 340 : 410, py));
+}
+cv.addEventListener('pointermove', aim);
+cv.addEventListener('pointerdown', e => { aim(e); try { cv.setPointerCapture(e.pointerId); } catch (_) {} poke(...toStage(e)); });
+addEventListener('keydown', e => {
+  if (S.rota || S.ended || e.target.closest('input, button')) return;
+  const k = { ArrowLeft: [-40, 0], ArrowRight: [40, 0], ArrowUp: [0, -30], ArrowDown: [0, 30] }[e.key];
+  if (k) { e.preventDefault(); net.tx = Math.max(150, Math.min(620, net.tx + k[0])); net.ty = Math.max(110, Math.min(410, net.ty + k[1])); }
+});
+// Tapping things that aren't comets.
+function poke(px, py) {
+  if (Math.abs(px - LX) < 46 && py > 40 && py < 360) {
+    say(['Sallow flinches. Please don\'t poke the lighthouse. It is already nervous.', 'Sallow blinks both buttons at you. It would like you to know it is fine.', 'A small voice from the lamp room: “Is it bright? Is it bright enough? Be honest.”'][Math.floor(Math.random() * 3)]);
+  } else if (S.folk > 0 && py > 300 && px > 150 && px < 340 && S.rota) {
+    say(['The Wool Folk stop. They wait for you to look away. You don\'t. Neither do they.', 'One of the Wool Folk waves. Its arm was not knitted to bend that way.', 'The Wool Folk have the keeper\'s initials stitched on their backs. Nobody stitched them.'][Math.floor(Math.random() * 3)]);
+  }
+}
+
+// ---------- Log ----------
+let logT = 0;
+function say(msg) { const el = $('log'); el.textContent = msg; el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); logT = 0; }
+const AMBIENT = [
+  'Something in the cellar knocks three times. It\'s the comets. They do that.',
+  'The fog comes in, has a look around, and leaves without saying anything.',
+  'A gull lands on the gallery, looks Sallow in the eye, and says nothing for a very long time.',
+  'Sallow checks the cellar. All frozen. Sallow checks again. Still frozen. Sallow checks again.',
+  'The keeper\'s boots are still by the door. They are pointing slightly differently than yesterday.',
+  'Far out at sea, another light blinks twice, then thinks better of it.',
+  'Sallow practises saying “very bright, actually” in a casual voice. It is not casual.',
+  'The tide goes out, comes back, and pretends nothing happened.',
+];
+const FOLK_AMBIENT = [
+  'One of the Wool Folk is facing the wall. Nobody saw it turn around.',
+  'The Wool Folk were knitted from the keeper\'s old jumper. The keeper went for a walk in 1911, in a vest.',
+  'You look away for a second. When you look back, the Wool Folk have done a great deal of work.',
+  'A Wool Folk drops a stitch. It picks it up again. Nobody mentions it.',
+];
+
+// ---------- Shop ----------
+const shop = $('shop');
+const RING_NUM = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+function priceText(it) { return it.cur === 'comets' ? `☄ ${fmt(it.cost)}` : `✦ ${fmt(it.cost)}`; }
+function shopItems() {
+  const items = E.items(S);
+  // Cheapest first within each tab; lens rings pair up side by side.
+  return items.sort((a, b) => (a.kind === 'lens') - (b.kind === 'lens') || (a.kind === 'lens' ? a.ring - b.ring || (a.side < b.side ? -1 : 1) : a.cost - b.cost));
+}
+const newUntil = {};
+const unseen = new Set();
+const TABS = [{ cur: 'comets', name: '☄ Comets' }, { cur: 'shine', name: '✦ Shine' }];
+let shopSig = '';
+function renderShop() {
+  const all = shopItems();
+  const tabs = TABS.filter(t => all.some(i => i.cur === t.cur));
+  const tab = tabs.some(t => t.cur === S.shopTab) ? S.shopTab : (tabs[0]?.cur || 'comets');
+  for (const it of all) if (!S.seen.includes(it.id)) {
+    S.seen.push(it.id); if (S.t > 2) sfx.unlock();
+    if (it.cur === tab) newUntil[it.id] = performance.now() + 9000; else unseen.add(it.id);
+  }
+  const items = all.filter(i => i.cur === tab);
+  const sig = tab + '#' + all.map(i => i.id + ':' + i.cost).join('|');
+  if (sig !== shopSig) {
+    shopSig = sig;
+    for (const it of items) if (unseen.delete(it.id)) newUntil[it.id] = performance.now() + 9000;
+    $('tabs').hidden = tabs.length < 2;
+    $('tabs').replaceChildren(...tabs.map(t => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.role = 'tab'; b.dataset.cur = t.cur; b.setAttribute('aria-selected', String(t.cur === tab));
+      b.innerHTML = `${t.name} <small></small>`;
+      b.addEventListener('click', () => { S.shopTab = t.cur; renderShop(); });
+      return b;
+    }));
+    shop.innerHTML = '';
+    if (tab === 'shine' && items.some(i => i.kind === 'lens')) { const p = document.createElement('p'); p.className = 'tabnote'; p.textContent = 'Each lens ring holds one lens. Pick one of each pair.'; shop.append(p); }
+    for (const it of items) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'up' + (it.kind === 'odd' ? ' odd' : '') + (it.kind === 'lens' ? ' lens' : '');
+      b.dataset.id = it.id; b.dataset.cost = it.cost; b.dataset.cur = it.cur;
+      b.innerHTML = '<b></b><em></em>';
+      b.querySelector('b').textContent = it.name;
+      b.querySelector('em').textContent = priceText(it) + (it.kind === 'lvl' && it.max > 1 && it.id !== 'folk' ? ` · ${it.l}` : it.id === 'folk' ? ` · ${S.folk}` : '');
+      if (it.kind === 'lens') { const r = document.createElement('i'); r.className = 'ring'; r.textContent = RING_NUM[it.ring]; r.style.fontStyle = 'normal'; b.append(r); }
+      b.setAttribute('aria-describedby', 'tip');
+      b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showTip(b, upTip(it)); });
+      b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+      b.addEventListener('focus', () => { if (!b.dataset.touch) showTip(b, upTip(it)); });
+      b.addEventListener('blur', hideTip);
+      b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+      // On touch the first tap shows what it does; the second buys.
+      b.addEventListener('click', () => {
+        if (b.dataset.touch && tipFor !== it.id) { showTip(b, upTip(it)); return; }
+        if (b.getAttribute('aria-disabled') !== 'true') doBuy(it.id); else sfx.deny();
+      });
+      shop.append(b);
+    }
+  }
+  const have = cur => cur === 'comets' ? S.comets : S.shine;
+  const now = performance.now();
+  for (const b of shop.querySelectorAll('button.up')) {
+    const can = have(b.dataset.cur) >= Number(b.dataset.cost) && !S.ended;
+    b.setAttribute('aria-disabled', String(!can)); b.classList.toggle('can', can);
+    const isNew = (newUntil[b.dataset.id] || 0) > now;
+    b.classList.toggle('new', isNew);
+    let tag = b.querySelector('.tag');
+    if (isNew && !tag) { tag = document.createElement('i'); tag.className = 'tag'; tag.textContent = 'new'; tag.style.fontStyle = 'normal'; b.append(tag); }
+    if (!isNew && tag) tag.remove();
+  }
+  // The heading counts everything affordable; each tab says how much of it is behind that tab.
+  let n = 0;
+  for (const b of $('tabs').children) {
+    const c = all.filter(i => i.cur === b.dataset.cur && have(i.cur) >= i.cost && !S.ended).length;
+    n += c; b.querySelector('small').textContent = c ? `· ${c}` : '';
+    b.classList.toggle('fresh', all.some(i => i.cur === b.dataset.cur && unseen.has(i.id)));
+  }
+  if (tabs.length < 2) n = all.filter(i => have(i.cur) >= i.cost).length;
+  $('afford').textContent = n ? `· ${n} affordable` : '';
+}
+let tipFor = null;
+function upTip(it) {
+  let foot = it.cur === 'comets' ? `${fmt(it.cost)} comets` : `${fmt(it.cost)} Shine`;
+  if (it.kind === 'lvl' && it.max > 1 && it.id !== 'folk') foot += ` · level ${it.l} of ${it.max}`;
+  if (it.id === 'folk') foot += ` · you have ${S.folk}`;
+  if (it.kind === 'lens') { const R = E.RINGS[it.ring], other = R[it.side === 'a' ? 'b' : 'a'][0]; foot += ` · ring ${RING_NUM[it.ring]}: choosing this rules out the ${other}`; }
+  return { id: it.id, name: it.name, desc: it.desc, foot };
+}
+function showTip(b, it) {
+  const tip = $('tip'); tipFor = it.id;
+  tip.innerHTML = '<b></b><span></span><small></small>';
+  tip.querySelector('b').textContent = it.name;
+  tip.querySelector('span').textContent = it.desc;
+  tip.querySelector('small').textContent = it.foot || '';
+  tip.querySelector('small').hidden = !it.foot;
+  tip.hidden = false;
+  const r = b.getBoundingClientRect(), t = tip.getBoundingClientRect();
+  if (r.left > t.width + 24 && innerWidth > 760) {
+    const col = $('side').getBoundingClientRect();
+    tip.style.left = `${col.left - t.width - 10}px`;
+    tip.style.top = `${Math.max(8, Math.min(innerHeight - t.height - 8, r.top + r.height / 2 - t.height / 2))}px`;
+  } else {
+    tip.style.left = `${Math.max(8, Math.min(innerWidth - t.width - 8, r.left))}px`;
+    tip.style.top = `${r.bottom + t.height + 14 < innerHeight ? r.bottom + 6 : r.top - t.height - 6}px`;
+  }
+}
+function hideTip() { $('tip').hidden = true; tipFor = null; }
+addEventListener('scroll', hideTip, true);
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.up, .tipped')) hideTip(); });
+// The bell and the Thaw explain themselves too. On touch, the first tap of the session explains.
+const ACTION_TIPS = {
+  bellBtn: () => ({ id: 'bell', name: 'The shift bell', desc: 'The Wool Folk don\'t notice dawn or dusk. Ring the bell and they swap to the other shift: Nets and Lamp at night, Cellar and Beach by day. Set the splits with the sliders under the scene.', foot: E.bellNeeded(S) ? (E.isNight(S) ? 'It\'s night and they\'re still on the day shift.' : 'It\'s day and they\'re still on the night shift.') : 'Everyone\'s on the right shift.' }),
+  thawBtn: () => ({ id: 'thaw', name: 'The Great Thaw', desc: `Open the cellar and thaw every comet in it at once, in the lamp. Pointless. The Almanac only goes to five stars. It would be very, very bright.`, foot: E.canThaw(S) ? `${fmt(S.comets)} comets ready. This ends the game.` : `Needs ${fmt(E.THAW_GOAL)} comets in the cellar · you have ${fmt(S.comets)}` }),
+};
+const explained = new Set();
+for (const [id, tipOf] of Object.entries(ACTION_TIPS)) {
+  const b = $(id); b.classList.add('tipped'); b.setAttribute('aria-describedby', 'tip');
+  b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showTip(b, tipOf()); });
+  b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+  b.addEventListener('focus', () => { if (!b.dataset.touch) showTip(b, tipOf()); });
+  b.addEventListener('blur', hideTip);
+  b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+  b.addEventListener('click', e => {
+    if (b.dataset.touch && !explained.has(id)) { explained.add(id); showTip(b, tipOf()); e.stopImmediatePropagation(); }
+  }, { capture: true });
+}
+
+const BUY_LINES = {
+  net: 'Another round of knitting on the net. It is wider now, and slightly more confident.',
+  felt: 'Felting needles in the net. The comets come in matted together, several to a lump.',
+  whistle: 'Sallow blows the comet whistle. Nothing happens. Then more comets than before.',
+  tails: 'Sallow combs the tails as they come in. They come out glossy.',
+  door: 'A thicker felt door for the cellar. The comets knock on it from the inside. Politely.',
+  folk: 'Sallow unpicks another row of the keeper\'s jumper and knits a Wool Folk. It stands up before it\'s finished.',
+  needles: 'New needles. The Wool Folk\'s nets are tighter, and they knit them faster than seems possible.',
+  rota: 'The Rota Board goes up. Sallow hangs the net on a nail by the door, where it can see it. The Wool Folk have the nets now.',
+  wicks: 'Woollen wicks for the lamp. They shouldn\'t burn. They burn beautifully.',
+  buckets: 'Little felt buckets for the beach crew. They hold more than they should.',
+  socks: 'Thermal socks for the cellar crew. The cellar gets colder. The socks get warmer.',
+  knit: 'The Wool Folk knit a rota of their own and pin it over yours. They change shifts on time now, without the bell. Nobody taught them that.',
+  plate: 'A brass name plate: SALLOW POINT LIGHT. Under it, smaller, Sallow has engraved: “very bright, actually.”',
+  count: 'Sallow counts the cellar. Then counts it again. There is one more comet than there should be. There always will be.',
+  chair: 'The keeper\'s armchair, reupholstered in felt. It is still warm. It has been warm since 1911.',
+  sixth: 'Sallow writes to the Almanac, purely out of interest, to ask whether there is a sixth star. Sallow posts it before it can change its mind.',
+  permit: 'A Fireworks Permit, framed: one (1) large light, once. Sallow has no plans. Sallow would just like to have it.',
+  polish: 'Sallow polishes the lens with a felt cloth until it squeaks. From far away it looks brighter.',
+  mirror: 'Silvered felt behind the lamp. It shouldn\'t reflect anything. It reflects everything.',
+  call: 'Long, short, long. Comets are drawn to bright things, and they come down in bigger clumps to see what\'s flashing.',
+};
+function doBuy(id) {
+  const out = [];
+  if (!E.buy(S, id, out)) { sfx.deny(); return; }
+  delete newUntil[id];
+  hideTip();
+  const ev = out[0];
+  if (ev.kind === 'lens') { const ring = Number(id[1]), side = id[2]; sfx.lens(); say(`The ${ev.name} goes into lens ring ${RING_NUM[ring]}. ${E.RINGS[ring][side][1]}`); }
+  else { sfx.buy(); say(BUY_LINES[id] || `Bought: ${ev.name}.`); }
+  if (id === 'rota') { cv.classList.add('retired'); hud(); }
+  if (id === 'sixth') sixthT = 25;
+  if (id === 'rota' || id === 'knit') { if (music) music.update(); }
+  save(); renderShop();
+}
+let sixthT = 0;
+
+// ---------- The shift rota ----------
+const nightSplit = $('nightSplit'), daySplit = $('daySplit');
+nightSplit.value = Math.round(S.split.night * 100); daySplit.value = Math.round(S.split.day * 100);
+nightSplit.addEventListener('input', () => { S.split.night = nightSplit.value / 100; rotaHud(); });
+daySplit.addEventListener('input', () => { S.split.day = daySplit.value / 100; rotaHud(); });
+function rotaHud() {
+  $('rota').hidden = !S.rota || S.ended;
+  if ($('rota').hidden) return;
+  const lamp = Math.round(S.folk * S.split.night), beach = Math.round(S.folk * S.split.day);
+  $('nNet').textContent = S.folk - lamp; $('nLamp').textContent = lamp;
+  $('dCellar').textContent = S.folk - beach; $('dBeach').textContent = beach;
+  $('nightRow').classList.toggle('on', S.shift === 'night');
+  $('dayRow').classList.toggle('on', S.shift === 'day');
+}
+$('bellBtn').addEventListener('click', () => {
+  const out = E.ringBell(S);
+  if (out[0]?.type === 'shift') { sfx.bell(); say(E.isNight(S) ? 'Clang. The Wool Folk put down the buckets and pick up the nets. Some go up to the lamp.' : 'Clang. The Wool Folk climb down from the lamp and out of the nets: half to the cellar, half to the beach.'); }
+  else { sfx.bell(); say('Clang. The Wool Folk look up at the bell, then at you, then go back to what they were doing.'); }
+  hud();
+});
+
+// ---------- The ending: Sallow has to be talked out of it ----------
+const PLEAS = [
+  { who: 'The Surveyor', text: '“You have five stars. The scale ends at five. Thawing them all at once will not change the scale. I would know. I am the scale.”' },
+  { who: 'The gulls of Gull Rock', text: 'Every gull on Gull Rock lands on the railing at once. They have never seen noon at midnight and they would like to keep it that way.' },
+  { who: 'The Wool Folk', text: 'The Wool Folk hold up a tiny felt sign: PLEASE. Then they turn it over. The other side says: WE WOULD HAVE TO CATCH THEM ALL AGAIN.' },
+];
+let pleaStep = 0;
+$('thawBtn').addEventListener('click', () => {
+  if ($('thawBtn').getAttribute('aria-disabled') === 'true') { sfx.deny(); say(`Not yet. Sallow wants ${fmt(E.THAW_GOAL)} comets down there first, for the look of it.`); return; }
+  pleaStep = 0; showPlea();
+});
+function showPlea() {
+  const p = PLEAS[pleaStep];
+  $('plea').hidden = false; $('thawBtn').hidden = true;
+  $('pleaWho').textContent = p.who; $('pleaText').textContent = p.text;
+  $('goBtn').textContent = pleaStep === PLEAS.length - 1 ? 'Thaw them. All of them.' : 'Thaw them anyway';
+  sfx.plea();
+}
+$('stayBtn').addEventListener('click', () => {
+  $('plea').hidden = true; pleaStep = 0; actions();
+  say(['Sallow closes the cellar door again. For now.', 'Sallow agrees. Sallow keeps looking at the cellar door.', 'All right. All right. Sallow is fine. Sallow is completely fine.'][Math.floor(Math.random() * 3)]);
+});
+$('goBtn').addEventListener('click', () => {
+  pleaStep++;
+  if (pleaStep < PLEAS.length) { showPlea(); return; }
+  $('plea').hidden = true;
+  const out = []; E.thaw(S, out); if (out.length) end(false);
+});
+
+// ---------- Events from the rules ----------
+const STAR_LINES = [
+  '',
+  'A fisherman on the jetty squints up and says “oh, there it is.” Sallow will think about this for weeks.',
+  'The gulls on Gull Rock turn round to look. They don\'t like it, but they look.',
+  'Port Mallow\'s harbourmaster writes “bright?” in the log. Sallow would like the question mark removed.',
+  'Someone on the cliffs of Ord has started a rumour that there are two moons.',
+  '',
+];
+let surveyorSeq = -1, seqT = 0;
+const SURVEYOR_SEQ = [
+  () => 'A small boat comes out of the fog. In it stands the Surveyor of the Mariners\' Almanac. Where a face should be, there is a lantern.',
+  () => { almanac(1); return 'The Surveyor looks up at Sallow for exactly one second, opens the Almanac, and crosses something out.'; },
+  () => { almanac(2); return 'Five stars. Sallow asks, casually, very casually, whether there might be a sixth.'; },
+  () => S.asked ? '“You wrote to us about that,” says the Surveyor. “Several times. There is no sixth star.”' : '“There is no sixth star,” says the Surveyor.',
+  () => { actions(); return `Sallow looks down at the cellar. ${fmt(E.THAW_GOAL)} comets, it thinks. All at once. That would be very bright. That would be very bright, actually.`; },
+];
+function almanac(stage) {
+  S.almanac = Math.max(S.almanac || 0, stage);
+  $('almanac').hidden = S.ended || !S.almanac;
+  $('almanacText').innerHTML = S.almanac >= 2 ? '<s>sallow by name, sallow by nature; adequate</s><br><b>★★★★★ very bright, actually</b>' : '<s>sallow by name, sallow by nature; adequate</s>';
+}
+function handle(out) {
+  for (const ev of out) {
+    switch (ev.type) {
+      case 'dusk':
+        sfx.dusk();
+        if (S.odd.count) S.comets += 1;
+        if (!S.rota) say(S.night === 2 ? 'Dusk. The comets start falling again. Get under them.' : ['Night falls, and so do the comets.', 'Dusk. Sallow lights the lamp, nervously.', 'The sun goes down behind the sea. Sallow is relieved, then immediately nervous again.'][S.night % 3]);
+        else if (S.knit) { if (Math.random() < 0.3) say('Dusk. The Wool Folk change shifts without being told. It\'s fine. It\'s good, actually.'); }
+        else say('Dusk. The Wool Folk are still on the beach in the dark, holding buckets. Ring the shift bell.');
+        if (music && E.phase(S) !== lastPhase) music.update();
+        break;
+      case 'dawn':
+        sfx.dawn(); combo = 0;
+        if (!S.rota && S.lumps > 0) say('Dawn. The comets you missed wash up on the sandbar, still cold from the sea. Scoop them up before the sun gets to them.');
+        else if (S.rota && !S.knit) say('Dawn. The Wool Folk are still standing at the nets, waiting for the bell.');
+        else if (Math.random() < 0.4) say('Dawn. The sun comes up and starts on the cellar. Keep it cold.');
+        break;
+      case 'star':
+        sfx.star();
+        if (ev.stars < 5) say(`★ ${ev.stars}: Sallow can be seen from ${E.PLACES[ev.stars]}. ${STAR_LINES[ev.stars]}`);
+        break;
+      case 'surveyor':
+        sfx.surveyor(); surveyorSeq = 0; seqT = 99;
+        if (music) music.update();
+        break;
+      case 'shift': if (ev.auto) sfx.tick(1); break;
+    }
+  }
+}
+
+// ---------- HUD ----------
+const bar = $('meterFill');
+function hud() {
+  $('comets').textContent = fmt(S.comets);
+  $('shine').textContent = fmt(S.shine);
+  const r = E.rates(S);
+  $('bright').textContent = S.ended ? 'extremely' : !E.isNight(S) ? '— (day)' : r.bright < 10 ? r.bright.toFixed(1) : fmt(r.bright);
+  const n = E.isNight(S), left = n ? E.nightLen(S) - S.clock : E.CYCLE - S.clock;
+  const mm = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`;
+  $('clock').innerHTML = S.ended ? '🌙 <b>the brightest night</b>' : n ? `🌙 Night ${S.night} · dawn in <b>${mm}</b>` : `☀ Day · dusk in <b>${mm}</b>`;
+  const stars = '★'.repeat(S.stars) + '☆'.repeat(5 - S.stars);
+  let label, val, frac;
+  if (S.ended) { label = `Almanac <span class="stars">★★★★★</span>`; val = 'once, extremely'; frac = 1; }
+  else if (!S.surveyor) {
+    const lo = Math.log10(Math.max(1, E.STAR_AT[S.stars])), hi = Math.log10(E.STAR_AT[S.stars + 1]);
+    frac = S.stars === 0 ? Math.min(1, S.peak / E.STAR_AT[1]) : Math.max(0, Math.min(1, (Math.log10(Math.max(1, S.peak)) - lo) / (hi - lo)));
+    label = `Almanac <span class="stars">${stars}</span> · seen from ${S.stars ? E.PLACES[S.stars] : 'nowhere yet'}`;
+    val = `peak ${fmtS(S.peak)} / ${fmt(E.STAR_AT[S.stars + 1])} for ${E.PLACES[S.stars + 1]}`;
+  } else {
+    frac = Math.min(1, S.comets / E.THAW_GOAL);
+    label = `The cellar · for the Great Thaw`; val = `${fmt(S.comets)} / ${fmt(E.THAW_GOAL)} comets`;
+  }
+  $('meterLabel').innerHTML = label; $('meterVal').textContent = val;
+  bar.style.width = `${(frac * 100).toFixed(1)}%`;
+  rotaHud(); actions();
+}
+function actions() {
+  const bell = $('bellBtn');
+  bell.hidden = !S.rota || S.knit || S.ended;
+  const need = E.bellNeeded(S);
+  bell.classList.toggle('ring', need && !reduced);
+  $('bellSub').textContent = need ? (E.isNight(S) ? 'it\'s night: the crew are still on the day shift' : 'it\'s day: the crew are still on the night shift') : `everyone\'s on the ${S.shift} shift`;
+  const thaw = $('thawBtn');
+  thaw.hidden = !(S.surveyor && surveyorSeq < 0) || S.ended || !$('plea').hidden;
+  const can = E.canThaw(S);
+  thaw.setAttribute('aria-disabled', String(!can));
+  $('thawSub').textContent = can ? `${fmt(S.comets)} comets, all at once` : `${fmt(S.comets)} / ${fmt(E.THAW_GOAL)} comets in the cellar`;
+  almanac(0);
+}
+
+// ---------- Drawing ----------
+function skyColors() {
+  const nl = E.nightLen(S), c = S.clock;
+  // 0 = night, 1 = day, blended over a few seconds at dawn and dusk.
+  let d = c < nl ? 0 : 1;
+  if (c >= nl && c < nl + 5) d = (c - nl) / 5;
+  if (c > E.CYCLE - 5) d = (E.CYCLE - c) / 5;
+  if (S.ended) d = 0;
+  return d;
+}
+function draw() {
+  const k = cv.width / W;
+  g.setTransform(k, 0, 0, k, 0, 0);
+  const day = skyColors(), night = 1 - day;
+  // Sky.
+  const sky = g.createLinearGradient(0, 0, 0, SEA);
+  sky.addColorStop(0, mix(C.plum, C.pink, day)); sky.addColorStop(1, mix(C.mauve, C.cream, day));
+  g.fillStyle = sky; g.fillRect(0, 0, W, SEA);
+  if (S.ended) {
+    // The brightest night: a gold bloom around the lamp, the shower going back up.
+    const bl = g.createRadialGradient(LX, 84, 10, LX, 84, 520);
+    bl.addColorStop(0, `rgba(255,231,214,${0.75 + 0.1 * Math.sin(T * 1.3)})`); bl.addColorStop(0.35, 'rgba(255,224,126,0.35)'); bl.addColorStop(1, 'rgba(255,224,126,0)');
+    g.fillStyle = bl; g.fillRect(0, 0, W, SEA);
+  }
+  // Cross-stitch stars and a felt moon at night.
+  if (night > 0.05) {
+    g.globalAlpha = night; g.strokeStyle = C.cream; g.lineWidth = 1.6;
+    for (const [sx, sy, p] of STARS) { const s = 2.2 + (reduced ? 0 : Math.sin(T * 1.5 + p) * 0.8); g.beginPath(); g.moveTo(sx - s, sy - s); g.lineTo(sx + s, sy + s); g.moveTo(sx + s, sy - s); g.lineTo(sx - s, sy + s); g.stroke(); }
+    felt(g, () => { g.arc(300, 64, 24, 0, 7); }, C.cream, { stitch: C.mauve });
+    g.fillStyle = mix(C.plum, C.pink, day); g.beginPath(); g.arc(312, 56, 21, 0, 7); g.fill();
+    g.globalAlpha = 1;
+  }
+  // The synthwave sun crosses the day.
+  if (day > 0.02 && !S.ended) {
+    const nl = E.nightLen(S), p = Math.max(0, Math.min(1, (S.clock - nl) / (E.CYCLE - nl)));
+    const sy = SEA - Math.sin(p * Math.PI) * 190 + 30;
+    g.save(); g.beginPath(); g.rect(0, 0, W, SEA); g.clip();
+    g.globalAlpha = day; drawSun(g, 360 + p * 180, sy, 54, mix(C.mauve, C.cream, day)); g.restore();
+    g.globalAlpha = 1;
+  }
+  // Clock: felt face, night arc and day arc, hand ticking toward dawn.
+  drawClock(588, 54);
+  // Sea: teal felt with a yarn grid that runs off to the horizon.
+  felt(g, () => g.rect(0, SEA, W, H - SEA), mix(C.teal, C.mint, day * 0.25), { stitch: null });
+  g.save(); g.strokeStyle = C.mint; g.globalAlpha = 0.5; g.lineWidth = 1.3; g.setLineDash([5, 4]);
+  for (let i = -8; i <= 8; i++) { g.beginPath(); g.moveTo(330 + i * 12, SEA); g.lineTo(330 + i * 120, H); g.stroke(); }
+  for (let j = 0; j < 6; j++) { const y = SEA + Math.pow(j / 5, 1.8) * (H - SEA) + 4; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+  g.restore();
+  // Yarn waves.
+  g.strokeStyle = C.cream; g.lineWidth = 2; g.lineCap = 'round'; g.globalAlpha = 0.7;
+  for (let j = 0; j < 3; j++) {
+    g.beginPath();
+    for (let x = 0; x <= W; x += 8) { const y = SEA + 6 + j * 18 + Math.sin(x / 28 + T * (reduced ? 0 : 1.2) + j * 2) * 3; x ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+  // The sandbar where misses wash up.
+  felt(g, () => { g.moveTo(320, H); g.quadraticCurveTo(360, 404, 460, 408); g.quadraticCurveTo(580, 404, 640, 412); g.lineTo(640, H); g.closePath(); }, C.pink, { stitch: C.cream });
+  for (let i = 0; i < S.lumps; i++) {
+    const [lx, ly] = LUMPS[i]; const s = spr.ice;
+    g.drawImage(s, lx - s.width / 2, ly - s.height / 2 + (reduced ? 0 : Math.sin(T * 2 + i) * 1.2));
+    if (!reduced && (T * 3 + i) % 4 < 0.3) { g.fillStyle = '#fff'; g.fillRect(lx + 4, ly - 6, 2, 2); }
+  }
+  // Rocks and Sallow.
+  felt(g, () => { g.moveTo(20, H); g.quadraticCurveTo(10, 360, 60, 350); g.quadraticCurveTo(110, 336, 160, 352); g.quadraticCurveTo(200, 368, 190, H); g.closePath(); }, C.mauve, { stitch: C.pink });
+  // The beam, at night: a soft cone that sweeps the sea.
+  if (night > 0.05) {
+    const ang = reduced ? 0.2 : 0.18 + Math.sin(T * 0.5) * 0.28, len = 560, spread = 0.13 + S.stars * 0.012;
+    g.save(); g.globalAlpha = night * (0.12 + S.stars * 0.035 + (S.ended ? 0.25 : 0));
+    const bg = g.createRadialGradient(LX, 84, 10, LX, 84, len); bg.addColorStop(0, C.yellow); bg.addColorStop(1, 'rgba(255,224,126,0)');
+    g.fillStyle = bg; g.beginPath(); g.moveTo(LX, 84); g.arc(LX, 84, len, ang - spread, ang + spread); g.closePath(); g.fill(); g.restore();
+  }
+  const thawing = !E.isNight(S) && S.comets > 1 && !S.ended;
+  const look = comets.length && !S.rota ? [comets[0].x, comets[0].y] : S.surveyor ? [430, 330] : [net.x, net.y];
+  const nl = E.nightLen(S), nerves = S.ended ? 0 : E.isNight(S) ? Math.max(0, 1 - (nl - S.clock) / 20) : thawing ? 0.35 : 0.1;
+  drawSallow(g, LX, -6, { look, nerves, glow: thawing ? 0.6 + 0.3 * Math.sin(T * 3) : 0, t: T, hand: S.rota, plate: !!S.odd.plate, permit: !!S.odd.permit });
+  if (S.rota && !S.ended) g.drawImage(spr.netIcon, LX + 46, 286);
+  if (S.odd.chair) { felt(g, () => g.roundRect(150, 330, 24, 22, 5), C.coral, { stitch: C.cream }); felt(g, () => g.roundRect(146, 320, 32, 14, 5), C.coral, { stitch: C.cream }); }
+  // Steam off the thawing cellar: wasted glow.
+  if (thawing && !reduced) for (let i = 0; i < 3; i++) {
+    const p = (T * 0.6 + i / 3) % 1;
+    g.strokeStyle = `rgba(255,231,214,${0.6 * (1 - p)})`; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(LX + 20 + i * 4, 300 - p * 60); g.quadraticCurveTo(LX + 30 + Math.sin(T * 3 + i) * 8, 290 - p * 70, LX + 26 + i * 5, 278 - p * 80); g.stroke();
+  }
+  drawFolk();
+  // The Surveyor's boat, once it arrives.
+  if (S.surveyor) {
+    const bx = 430 + (reduced ? 0 : Math.sin(T * 0.4) * 10), by = SEA - 34 + (reduced ? 0 : Math.sin(T * 1.6) * 2);
+    g.drawImage(spr.boat, bx - 41, by - 34);
+    drawSurveyor(g, bx - 4, by + 18, T);
+  }
+  // Gulls that sit on the gallery and watch.
+  if (S.stars >= 2) g.drawImage(spr.gull, LX + 30, 92, 34, 34);
+  // Falling comets with yarn tails.
+  for (const c of comets) {
+    if (c.tail.length > 1) {
+      g.strokeStyle = c.deco ? '#ffe7d688' : C.yellow; g.lineWidth = c.deco ? 1.5 : 2.4; g.lineCap = 'round';
+      for (let s = 0; s < (c.deco ? 1 : 3); s++) {
+        g.beginPath(); g.globalAlpha = 0.85 - s * 0.2;
+        c.tail.forEach(([tx, ty], i) => { const w = Math.sin(i * 0.9 + T * 8 + s * 2) * (1 + s) * 0.8; i ? g.lineTo(tx + w, ty) : g.moveTo(tx + w, ty); });
+        g.stroke();
+      }
+      g.globalAlpha = 1;
+    }
+    const s = c.deco ? spr.small[c.s % 3] : spr.comets[c.s % 4];
+    g.drawImage(s, c.x - s.width / 2, c.y - s.height / 2);
+  }
+  for (const f of flying) { const s = spr.ice; g.globalAlpha = 1 - f.t * 0.3; g.drawImage(s, f.x - s.width / 2, f.y - s.height / 2); g.globalAlpha = 1; }
+  // The net (until it's retired).
+  if (!S.rota && !S.ended) drawNet(g, net.x, net.y, net.r, T);
+  // Pops and splashes.
+  for (const f of fx) {
+    const p = f.t / f.life;
+    if (f.kind === 'text') { g.globalAlpha = 1 - p; g.fillStyle = f.color; g.font = '400 16px Sniglet, sans-serif'; g.textAlign = 'center'; g.fillText(f.text, f.x, f.y - p * 26); }
+    if (f.kind === 'ring') { g.globalAlpha = 1 - p; g.strokeStyle = C.cream; g.lineWidth = 2; g.beginPath(); g.ellipse(f.x, f.y, 6 + p * 22, 2 + p * 6, 0, 0, 7); g.stroke(); }
+    if (f.kind === 'frost') { g.globalAlpha = 1 - p; g.strokeStyle = '#ffffff'; g.lineWidth = 1.5; for (let a = 0; a < 6; a++) { const r1 = 4 + p * 14; g.beginPath(); g.moveTo(f.x, f.y); g.lineTo(f.x + Math.cos(a) * r1, f.y + Math.sin(a) * r1); g.stroke(); } }
+    g.globalAlpha = 1;
+  }
+  // Felt fibres over everything.
+  fibrePat ||= g.createPattern(fibres, 'repeat');
+  g.save(); g.globalAlpha = 0.6; g.fillStyle = fibrePat; g.fillRect(0, 0, W, H); g.restore();
+  FX.grain(g, W, H, { amount: 0.05 });
+}
+function drawClock(cx, cy) {
+  const r = 26, nl = E.nightLen(S) / E.CYCLE;
+  felt(g, () => g.arc(cx, cy, r, 0, 7), C.cream, { stitch: C.mauve });
+  const a0 = -Math.PI / 2;
+  g.fillStyle = C.plum; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, r - 5, a0, a0 + nl * Math.PI * 2); g.closePath(); g.fill();
+  g.fillStyle = C.yellow; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, r - 5, a0 + nl * Math.PI * 2, a0 + Math.PI * 2); g.closePath(); g.fill();
+  const a = a0 + (S.ended ? 0.3 : S.clock / E.CYCLE) * Math.PI * 2;
+  g.strokeStyle = C.coral; g.lineWidth = 3; g.lineCap = 'round'; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * (r - 4), cy + Math.sin(a) * (r - 4)); g.stroke();
+  g.fillStyle = C.coral; g.beginPath(); g.arc(cx, cy, 3.5, 0, 7); g.fill();
+}
+function drawFolk() {
+  if (S.folk <= 0 && !S.ended) return;
+  const night = S.rota ? S.shift === 'night' : E.isNight(S);
+  const lamp = S.rota && night ? Math.round(S.folk * S.split.night) : 0;
+  const beach = S.rota && !night ? Math.round(S.folk * S.split.day) : 0;
+  const nets = night ? S.folk - lamp : 0, cellar = S.rota && !night ? S.folk - beach : 0;
+  const idle = !S.rota && !night ? S.folk : 0;
+  const group = (n, x0, y0, step, tool, max = 7) => {
+    const shown = Math.min(n, max);
+    for (let i = 0; i < shown; i++) drawDoll(g, x0 + i * step, y0 + (i % 2) * 3 * (tool !== 'lamp'), [C.mint, C.coral, C.yellow, C.teal][i % 4], i % 4 === 3 ? C.pink : C.cream, T + i, tool);
+    if (n > max || n > 1) { g.fillStyle = C.cream; g.font = '400 13px Sniglet, sans-serif'; g.textAlign = 'left'; g.fillText(`×${n}`, x0 + shown * step - 4, y0 - 32); }
+  };
+  if (S.ended) { group(S.folk || 64, 190, 362, 18, 'net', 8); return; }
+  if (nets) group(nets, 200, 362, 18, 'net');
+  if (idle) group(idle, 200, 362, 18, null, 5);
+  if (lamp) { g.save(); g.translate(LX + 40, 116); g.scale(0.62, 0.62); group(lamp, 0, 0, 16, 'lamp', 4); g.restore(); }
+  if (beach) group(beach, 380, 414, 22, 'bucket', 8);
+  if (cellar) group(cellar, 168, 364, 16, 'ice', 5);
+}
+
+// ---------- Falling comets ----------
+let tickWas = -1;
+function updateComets(dt) {
+  const st = E.stats(S), night = E.isNight(S) && !S.ended;
+  // Hand comets: real ones, each worth a catch.
+  if (night && st.hand) {
+    spawnAcc += st.spawn * dt;
+    while (spawnAcc >= 1) { spawnAcc--; comets.push({ x: 170 + Math.random() * 440, y: -14, vx: (Math.random() - 0.5) * 40, vy: 70 + Math.random() * 45, s: Math.random() * 4 | 0, deco: false, tail: [] }); }
+  }
+  // Little comets for the Wool Folk's nets (the economy counts these; they're for show).
+  const crewNets = night && S.folk > 0 && (!S.rota || S.shift === 'night');
+  if (crewNets || S.ended) {
+    decoAcc += (S.ended ? 9 : Math.min(4, 0.6 + S.folk * 0.08)) * dt;
+    while (decoAcc >= 1) {
+      decoAcc--;
+      if (S.ended) comets.push({ x: LX + (Math.random() - 0.5) * 30, y: 60, vx: (Math.random() - 0.3) * 160, vy: -90 - Math.random() * 120, s: Math.random() * 3 | 0, deco: true, up: true, tail: [] });
+      else comets.push({ x: 200 + Math.random() * 400, y: -10, vx: -30 - Math.random() * 40, vy: 90 + Math.random() * 40, s: Math.random() * 3 | 0, deco: true, tail: [] });
+    }
+  }
+  for (let i = comets.length - 1; i >= 0; i--) {
+    const c = comets[i];
+    if (!c.deco && S.lens[1] === 'a') c.vx += Math.sign(net.x - c.x) * Math.min(90, Math.abs(net.x - c.x)) * 1.4 * dt;
+    if (c.deco && !c.up) c.vx += ((260 - c.x) * 0.25) * dt;
+    c.x += c.vx * dt; c.y += c.vy * dt;
+    c.tail.unshift([c.x, c.y]); if (c.tail.length > (c.deco ? 6 : 10)) c.tail.pop();
+    if (c.up) { if (c.y < -40) comets.splice(i, 1); continue; }
+    if (!c.deco && !S.rota && Math.hypot(c.x - net.x, (c.y - net.y) * 1.4) < net.r + 6 && c.y < net.y + 20) {
+      comets.splice(i, 1);
+      const out = E.catchOne(S); handle(out);
+      const ev = out.find(e => e.type === 'catch');
+      if (ev) { sfx.catch(); pop(net.x, net.y - 14, `+${fmt(ev.n)}`); flying.push({ x: net.x, y: net.y, sx: net.x, sy: net.y, t: 0 }); }
+      continue;
+    }
+    if (c.deco && c.y > SEA - 30) { comets.splice(i, 1); if (Math.random() < 0.3) fx.push({ kind: 'frost', x: c.x, y: c.y, t: 0, life: 0.4 }); continue; }
+    if (c.y > SEA + 4) { comets.splice(i, 1); splash(c.x, SEA + 6); if (!c.deco && !S.rota) sfx.miss(); }
+  }
+  // Caught comets fly down to the cellar and freeze on arrival.
+  for (let i = flying.length - 1; i >= 0; i--) {
+    const f = flying[i]; f.t += dt * 1.8;
+    const p = Math.min(1, f.t), tx = LX, ty = 318;
+    f.x = f.sx + (tx - f.sx) * p; f.y = f.sy + (ty - f.sy) * p - Math.sin(p * Math.PI) * 60;
+    if (p >= 1) { flying.splice(i, 1); fx.push({ kind: 'frost', x: tx, y: ty, t: 0, life: 0.5 }); sfx.freeze(); }
+  }
+  // Scoop the washed-up comets by day.
+  if (!E.isNight(S) && S.lumps > 0 && !S.rota) {
+    for (let j = 0; j < S.lumps; j++) {
+      const [qx, qy] = LUMPS[j];
+      if (Math.hypot(qx - net.x, qy - (net.y + net.r * 0.6)) < net.r + 8) {
+        LUMPS.push(LUMPS.splice(j, 1)[0]); // the scooped one goes to the end of the list
+        const out = E.gather(S); const ev = out[0];
+        if (ev) { sfx.gather(); pop(qx, qy - 16, `+${fmt(ev.n)}`, C.cream); }
+        break;
+      }
+    }
+  }
+  // The ticking clock: soft ticks in the last ten seconds before dawn.
+  if (night) {
+    const left = E.nightLen(S) - S.clock, sec = Math.floor(left);
+    if (left < 10 && sec !== tickWas) { tickWas = sec; sfx.tick(sec); }
+  }
+}
+
+// ---------- Loop ----------
+let last = performance.now(), saveT = 0, ambT = 0, hudT = 0, lastPhase = E.phase(S);
+function frame(now) {
+  const dt = Math.min(0.25, (now - last) / 1000); last = now; T += dt;
+  if (!S.ended) {
+    const out = []; E.step(S, dt, out); if (out.length) handle(out);
+    if (comboT > 0) comboT -= dt;
+  }
+  net.x += (net.tx - net.x) * Math.min(1, dt * 14); net.y += (net.ty - net.y) * Math.min(1, dt * 14);
+  net.r = 30 + 5 * E.lvl(S, 'net');
+  updateComets(dt);
+  for (const f of fx) f.t += dt;
+  for (let k = fx.length - 1; k >= 0; k--) if (fx[k].t > fx[k].life) fx.splice(k, 1);
+  // The Surveyor's scene plays out a line at a time.
+  if (surveyorSeq >= 0 && (seqT += dt) > 6) {
+    seqT = 0; say(SURVEYOR_SEQ[surveyorSeq]()); surveyorSeq++;
+    if (surveyorSeq >= SURVEYOR_SEQ.length) surveyorSeq = -1;
+  }
+  if (sixthT > 0 && (sixthT -= dt) <= 0) { say('A letter from the Almanac: “The scale ends at five. There is no sixth star. Please stop writing.” Sallow keeps it in the lamp room, face down.'); sfx.unlock(); }
+  if (E.phase(S) !== lastPhase) { lastPhase = E.phase(S); if (music) music.update(); }
+  logT += dt; ambT += dt;
+  if (logT > 24 && ambT > 24 && !S.ended && surveyorSeq < 0) { ambT = 0; const pool = S.folk > 0 && Math.random() < 0.5 ? FOLK_AMBIENT : AMBIENT; say(pool[Math.floor(Math.random() * pool.length)]); }
+  hudT += dt; if (hudT > 0.2) { hudT = 0; hud(); renderShop(); }
+  saveT += dt; if (saveT > 4) { saveT = 0; save(); }
+  fit(); draw();
+  requestAnimationFrame(frame);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+addEventListener('pagehide', save);
+
+function end(resumed) {
+  S.ended = true; save();
+  $('ending').hidden = false; $('plea').hidden = true; $('almanac').hidden = true; document.querySelector('aside h2').hidden = true;
+  cv.classList.add('retired');
+  const thawed = S.thawed || E.THAW_GOAL;
+  const h = Math.floor(S.t / 3600), m = Math.floor(S.t / 60) % 60;
+  const time = h ? `${h}h${String(m).padStart(2, '0')}m` : `${m}m`;
+  $('endText').textContent = `At ten past three in the morning, Sallow Point thawed ${fmt(thawed)} comets at once. For one whole minute the coast was brighter than noon: every boat stopped, every gull shut its eyes, and the comets went back up where they came from, the whole shower in reverse. Then it was dark, and very quiet, and Sallow had never been so proud.`;
+  $('endStats').textContent = S.t > 1 ? `${time} · ${S.night} nights · ${S.folk} Wool Folk · ${fmt(thawed)} comets, all at once` : '';
+  hud(); renderShop();
+  if (music) music.update();
+  if (!resumed) {
+    sfx.finale();
+    say('The night goes white. Then gold. Then, very slowly, dark again. Somewhere, a gull opens one eye.');
+    if (window.DailyGame) DailyGame.finish({ lines: [`☄ ${fmt(thawed)} comets thawed at once`, `⏱ ${time} · 🌙 ${S.night} nights`, '⭐⭐⭐⭐⭐ (asked for a sixth)'] });
+  }
+  setTimeout(() => $('ending').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' }), resumed ? 0 : 1500);
+}
+$('shareBtn').addEventListener('click', () => window.DailyGame && DailyGame.share());
+
+// ---------- Start ----------
+await makeSprites();
+if (Sprites.sheetRequested()) Sprites.showSheet();
+fit();
+if (S.rota) cv.classList.add('retired');
+if (S.ended) { end(true); say('The cellar is empty and the sky is full. Sallow is still very proud.'); }
+else {
+  // While you were away: the Wool Folk work best when nobody is looking.
+  const away = S.lastSeen ? (Date.now() - S.lastSeen) / 1000 : 0;
+  const got = S.t > 1 ? E.offline(S, away) : null;
+  if (got && (got.comets >= 1 || got.shine >= 1)) {
+    const hrs = got.secs / 3600, t = hrs >= 1 ? `${hrs.toFixed(1)} hours` : `${Math.round(got.secs / 60)} minutes`;
+    say(`You were away ${t}${away > E.OFFLINE_CAP ? ' (the Wool Folk only count the first four)' : ''}. Someone kept ringing the shift bell. Nobody knows who. The Wool Folk caught ${fmt(got.comets)} comets${got.shine >= 1 ? ` and made ${fmt(got.shine)} Shine` : ''}.`);
+  } else say(S.t > 1 ? 'The lamp flickers back on. Sallow was not worried. Sallow was a little worried.' : 'Sallow Point, during the great comet shower. Move the net under a falling comet to catch it.');
+  if (S.surveyor) almanac(2);
+}
+if (DEBUG) Object.assign(window.__game, { net, comets });
+hud(); renderShop();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

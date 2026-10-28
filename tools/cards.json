@@ -262,5 +262,80 @@
    null,
    null
   ]
+ },
+ "very-bright-actually": {
+  "comets": 3200000,
+  "shine": 410000,
+  "caught": 9000000,
+  "shone": 2000000,
+  "t": 2400,
+  "clock": 30,
+  "night": 21,
+  "lv": {
+   "net": 5,
+   "felt": 9,
+   "whistle": 6,
+   "tails": 5,
+   "door": 4,
+   "folk": 32,
+   "needles": 3,
+   "wicks": 2,
+   "buckets": 2,
+   "socks": 1,
+   "polish": 6,
+   "mirror": 1,
+   "call": 2
+  },
+  "odd": {
+   "plate": 1,
+   "count": 1
+  },
+  "lens": {
+   "1": "a",
+   "2": "a",
+   "3": "b",
+   "4": "a"
+  },
+  "folk": 32,
+  "rota": true,
+  "split": {
+   "night": 0.3,
+   "day": 0.5
+  },
+  "shift": "night",
+  "peak": 300000,
+  "stars": 3,
+  "bells": 3,
+  "seen": [
+   "net",
+   "felt",
+   "whistle",
+   "tails",
+   "door",
+   "folk",
+   "needles",
+   "rota",
+   "wicks",
+   "buckets",
+   "socks",
+   "plate",
+   "count",
+   "polish",
+   "mirror",
+   "call",
+   "r1a",
+   "r1b",
+   "r2a",
+   "r2b",
+   "r3a",
+   "r3b",
+   "r4a",
+   "r4b",
+   "chair",
+   "sixth",
+   "r5a",
+   "r5b"
+  ],
+  "shopTab": "comets"
  }
 }

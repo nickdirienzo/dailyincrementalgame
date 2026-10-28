@@ -137,5 +137,38 @@
     "tone": "epic fantasy",
     "context": "none",
     "palette": "inkpink"
+  },
+  {
+    "n": 7,
+    "slug": "very-bright-actually",
+    "date": "2026-10-29",
+    "title": "Very Bright, Actually",
+    "tagline": "A nervous lighthouse catches falling comets and keeps them frozen, to prove the Almanac wrong.",
+    "emoji": "🗼☄️",
+    "scale": "billions",
+    "minutes": "90–150",
+    "seed": 4197351998,
+    "interaction": "catch falling things",
+    "arc": {
+      "drive": "pride",
+      "obstacle": "a ticking clock",
+      "turn": "a huge pointless spectacle",
+      "initial": "S"
+    },
+    "length": "short (1–3 hours)",
+    "structure": [
+      "tech tree with exclusive choices",
+      "the core action goes obsolete; you manage automation"
+    ],
+    "twist": "a day/night or weather cycle",
+    "ending": "an ending you have to be talked out of",
+    "look": "felt and yarn",
+    "music": {
+      "style": "synthwave",
+      "scale": "major pentatonic"
+    },
+    "tone": "mild horror",
+    "context": "none",
+    "palette": "pollen8"
   }
 ]
