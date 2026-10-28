@@ -50,17 +50,24 @@ Every game should have these bones:
   they lose the goal they were saving for. Mix real upgrades
   with a few silly one-offs that do little but add story.
   On desktop the column never runs below the fold: make it sticky, no taller than the window, with
-  its own scroll (`npm run check` measures it with the game's busy save from `tools/cards.json`).
-  Keep it short the way real incrementals do, by showing only what you decide with and putting
-  the words one hover away:
-  - Goals (the next tunnel, the next rank, the prestige) aren't shop items. Put them on their
-    meter or in the play area, as the thing you're working toward.
-  - One-time upgrades are small tiles: a sprite from the game's own art and a short price, five
-    or so to a row. A details box under the tiles shows whatever you point at (name, full price,
-    effect, joke), and the newest or cheapest tile when you point at nothing. On touch, the first
-    tap shows the details and the second buys. The joke also lands in the log when you buy it.
-  - Things you buy many of are one-line rows (name and count, short price, rate) and show in the
-    details box too.
+  its own scroll for emergencies (`npm run check` measures it with the game's busy save from
+  `tools/cards.json`). Aim for no scrolling at all at the busiest point, the way real incrementals
+  do it: show only what you decide with and put the words one hover away.
+  - Goals (the next tunnel, the next rank) aren't shop items. Put them on their meter or in the
+    play area, as the thing you're working toward. Buttons you press again and again (the
+    prestige, a booth, a pull) go at the top of the column, where they're always in view. Nothing
+    you press may start below the fold (the check fails on play-area buttons under it).
+  - Upgrades are compact cells, two to a row: the name over a short price (and the count, for
+    things you buy many of), or a small sprite tile when the game has art for it. Long names
+    trim with an ellipsis.
+  - Everything else is in a tooltip styled in the game's look: name, what it does, the joke, the
+    full price. It opens beside the column on desktop, never over the other upgrades, on hover
+    and on keyboard focus. On touch the first tap shows it and the second buys. Unaffordable
+    upgrades use `aria-disabled`, not `disabled`, so they still explain themselves. The joke also
+    lands in the log when you buy it.
+  - Any button whose effect isn't obvious from its label (a booth, a gamble, the prestige: what
+    resets and what stays) gets the same tooltip. On touch it explains on the first tap of the
+    session, then just works.
   - Once there's more than one currency to spend, one tab per currency. A tab shows how many of
     its upgrades are affordable and a dot when something new turned up behind it, and the heading
     still counts everything. Switching tabs isn't hiding: every revealed upgrade is one tap away,

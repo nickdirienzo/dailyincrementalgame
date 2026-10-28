@@ -178,8 +178,8 @@ async function checkGame(browser, base, game) {
   }
 
   // A busy mid-game save (the social card's, from tools/cards.json): on desktop the upgrade column has
-  // to fit in the window, never below the fold. Make it sticky with its own scroll, and keep it short
-  // so there's little to scroll: compact rows, one tab per currency (see CLAUDE.md).
+  // to fit in the window, never below the fold. Make it sticky, and keep it short enough not to scroll:
+  // compact cells two to a row with tooltips, one tab per currency (see CLAUDE.md).
   if (CARDS[slug]) {
     const storage = { [`di:${n}:save`]: JSON.stringify(CARDS[slug]) };
     const { page, context, errors } = await open(browser, url, { storage });

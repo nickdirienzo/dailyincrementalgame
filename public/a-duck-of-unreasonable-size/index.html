@@ -70,7 +70,7 @@
     font: 16px var(--type); color: var(--p0); background: var(--p5); border: 2px solid var(--p1); border-radius: 10px;
     padding: 8px 14px; cursor: pointer; box-shadow: 0 0 10px #fe6c9066, inset 0 0 8px #fe6c9044; text-shadow: 0 0 6px var(--p1);
   }
-  .btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
+  .btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: default; box-shadow: none; }
   .btn.big { font-size: 20px; padding: 10px 20px; border-color: var(--p0); }
   .btn small { display: block; font-size: 12px; color: var(--p1); text-shadow: none; }
   /* The column stays in view and scrolls on its own, so nothing on it is ever below the fold. */
@@ -80,17 +80,24 @@
   aside h2 { font: 400 22px var(--type); margin: 2px 0 10px; color: var(--p0); text-shadow: 0 0 8px var(--p2); }
   aside h3 { font: 400 17px var(--type); margin: 16px 0 8px; color: var(--p1); }
   #afford { font: 13px var(--type); color: var(--p1); text-shadow: none; }
-  #shop { display: grid; gap: 8px; }
-  @media (max-width: 760px) and (min-width: 520px) { #shop { grid-template-columns: 1fr 1fr; } }
+  #shop { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  #shop .tabnote { grid-column: 1 / -1; }
+  @media (max-width: 760px) and (min-width: 520px) { #shop { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   .up {
     position: relative; text-align: left; font: 14px/1.3 var(--type); color: var(--p0); background: #26113a;
     border: 1px solid var(--p3); border-radius: 10px; padding: 8px 10px; cursor: pointer;
   }
-  /* Two lines: name and price, then what it does. */
-  .up { display: grid; grid-template-columns: 1fr auto; gap: 1px 10px; padding: 6px 10px; }
-  .up b { font-weight: 400; font-size: 15px; }
-  .up em { font-style: normal; color: var(--p1); white-space: nowrap; align-self: baseline; }
-  .up span { grid-column: 1 / -1; color: #e9c3d6; font-size: 13px; }
+  /* Two to a row, name over price. What it does is in the tooltip. */
+  .up { display: flex; flex-direction: column; min-width: 0; padding: 5px 9px; }
+  .up b { font-weight: 400; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .up em { font-style: normal; font-size: 13px; color: var(--p1); white-space: nowrap; }
+  #tip {
+    position: fixed; z-index: 50; width: 230px; padding: 8px 12px; pointer-events: none;
+    font: 14px/1.35 var(--type); color: var(--p0); background: #26113a; border: 1px solid var(--p1); border-radius: 10px;
+    box-shadow: 0 0 14px #fe6c9066, inset 0 0 10px #fe6c9033;
+  }
+  #tip b { display: block; font-weight: 400; color: var(--p1); text-shadow: 0 0 6px #fe6c9088; margin-bottom: 2px; }
+  #tip small { display: block; margin-top: 4px; font-size: 12px; color: #e9c3d6; }
   /* One tab per currency once postcards arrive. */
   .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
   .tabs button { flex: 1; position: relative; font: 15px var(--type); color: var(--p1); background: #26113a; border: 1px solid var(--p3);
@@ -100,8 +107,8 @@
   .tabs button.fresh::after { content: ""; position: absolute; top: 4px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--p1); }
   .tabnote { margin: -2px 0 8px; font-size: 13px; color: var(--p1); }
   .up.can { border-color: var(--p1); box-shadow: 0 0 10px #fe6c9055; }
-  .up:disabled { cursor: default; }
-  .up:disabled:not(.can) { opacity: .62; }
+  .up[aria-disabled="true"] { cursor: default; }
+  .up[aria-disabled="true"]:not(.can) { opacity: .62; }
   .up.odd { border-style: dashed; }
   .up.ren { background: #2b0f2c; }
   .up .tag { position: absolute; top: -8px; right: 8px; font-size: 11px; padding: 0 6px; border-radius: 8px; background: var(--p1); color: var(--p5); }
@@ -172,6 +179,7 @@
       <h2>Wares &amp; Wonders <span id="afford"></span></h2>
       <div class="tabs" id="tabs" role="tablist" hidden></div>
       <div id="shop" role="tabpanel"></div>
+      <div id="tip" role="tooltip" hidden></div>
     </aside>
   </div>
   <section id="ending" hidden>
@@ -441,11 +449,20 @@ function renderShop() {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'up' + (it.odd ? ' odd' : '') + (it.ren ? ' ren' : '');
       b.dataset.id = it.id; b.dataset.cost = it.cost; b.dataset.cur = it.cur;
-      b.innerHTML = `<b></b><em></em><span></span>`;
+      b.innerHTML = `<b></b><em></em>`;
       b.querySelector('b').textContent = it.name;
-      b.querySelector('span').textContent = it.desc;
       b.querySelector('em').textContent = it.cur === 'coins' ? `${fmt(it.cost)} coins` : `${it.cost} ✉`;
-      b.addEventListener('click', () => doBuy(it.id));
+      b.setAttribute('aria-describedby', 'tip');
+      b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showTip(b, upTip(it)); });
+      b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+      b.addEventListener('focus', () => { if (!b.dataset.touch) showTip(b, upTip(it)); });
+      b.addEventListener('blur', hideTip);
+      b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+      // On touch the first tap shows what it does; the second buys.
+      b.addEventListener('click', () => {
+        if (b.dataset.touch && tipFor !== it.id) { showTip(b, upTip(it)); return; }
+        if (b.getAttribute('aria-disabled') !== 'true') doBuy(it.id);
+      });
       shop.append(b);
     }
   }
@@ -454,7 +471,7 @@ function renderShop() {
   const now = performance.now();
   for (const b of shop.querySelectorAll('button.up')) {
     const can = have(b.dataset.cur) >= Number(b.dataset.cost) && !S.ended;
-    b.disabled = !can; b.classList.toggle('can', can);
+    b.setAttribute('aria-disabled', String(!can)); b.classList.toggle('can', can);
     const isNew = (newUntil[b.dataset.id] || 0) > now;
     b.classList.toggle('new', isNew);
     let tag = b.querySelector('.tag');
@@ -470,11 +487,52 @@ function renderShop() {
   if (tabs.length < 2) n = shop.querySelectorAll('button.up.can').length;
   $('afford').textContent = n ? `· ${n} affordable` : '';
 }
+// The upgrade tooltip: beside the row on desktop (the column is on the right), under it on phones.
+let tipFor = null;
+const upTip = it => ({ id: it.id, name: it.name, desc: it.desc, foot: it.cur === 'coins' ? `${fmt(it.cost)} coins` : `${it.cost} postcards` });
+function showTip(b, it) {
+  const tip = $('tip'); tipFor = it.id;
+  tip.innerHTML = '<b></b><span></span><small></small>';
+  tip.querySelector('b').textContent = it.name;
+  tip.querySelector('span').textContent = it.desc;
+  tip.querySelector('small').textContent = it.foot || '';
+  tip.querySelector('small').hidden = !it.foot;
+  tip.hidden = false;
+  const r = b.getBoundingClientRect(), t = tip.getBoundingClientRect();
+  if (r.left > t.width + 24) {
+    tip.style.left = `${r.left - t.width - 10}px`;
+    tip.style.top = `${Math.max(8, Math.min(innerHeight - t.height - 8, r.top + r.height / 2 - t.height / 2))}px`;
+  } else {
+    tip.style.left = `${Math.max(8, Math.min(innerWidth - t.width - 8, r.left))}px`;
+    tip.style.top = `${r.bottom + t.height + 14 < innerHeight ? r.bottom + 6 : r.top - t.height - 6}px`;
+  }
+}
+function hideTip() { $('tip').hidden = true; tipFor = null; }
+addEventListener('scroll', hideTip, true);
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.up, .tipped')) hideTip(); });
+// The booth and the Flotilla explain themselves too. On touch, the first tap of the session explains.
+const ACTION_TIPS = {
+  hookBtn: () => ({ id: 'hook', name: 'Hook a duck', desc: `Pay Barnaby, hook a duck from the booth, and it lands in an empty spot at the back of your pond: anything from two to five sizes up, as big as Juniper's forms allow. About one in seven is a silly form to stamp instead.`, foot: `${E.boothCost(S)} coins · the price creeps up each hook until your next Flotilla` }),
+  launchBtn: () => ({ id: 'launch', name: 'Launch a Flotilla', desc: 'Send every duck in the pond out to sea. Bigger ducks bring back more postcards, which buy wares kept forever and grow the Legend of Sepia that bigger forms ask for.', foot: 'Coins, coin wares and the pond reset. Postcards, Legend and filed forms stay.' }),
+};
+const explained = new Set();
+for (const [id, tipOf] of Object.entries(ACTION_TIPS)) {
+  const b = $(id); b.classList.add('tipped'); b.setAttribute('aria-describedby', 'tip');
+  b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showTip(b, tipOf()); });
+  b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+  b.addEventListener('focus', () => { if (!b.dataset.touch) showTip(b, tipOf()); });
+  b.addEventListener('blur', hideTip);
+  b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+  b.addEventListener('click', e => {
+    if (b.dataset.touch && !explained.has(id)) { explained.add(id); showTip(b, tipOf()); e.stopImmediatePropagation(); }
+  }, { capture: true });
+}
+
 function doBuy(id) {
   const out = [];
   if (!E.buy(S, id, out)) return;
   delete newUntil[id];
-  handle(out); save(); renderShop();
+  hideTip(); handle(out); save(); renderShop();
 }
 
 // ---------- Events from the rules ----------
@@ -597,12 +655,12 @@ function showActions() {
   hb.hidden = !S.booth || S.ended;
   lb.hidden = !S.flotillaOpen || S.ended || S.jubilee;
   $('sailBtn').hidden = !S.jubilee || S.ended;
-  if (!hb.hidden) { hb.innerHTML = `🎣 Hook a duck <small>${E.boothCost(S)} coins</small>`; hb.disabled = S.coins < E.boothCost(S); }
+  if (!hb.hidden) { hb.innerHTML = `🎣 Hook a duck <small>${E.boothCost(S)} coins</small>`; hb.setAttribute('aria-disabled', String(S.coins < E.boothCost(S))); }
   if (!lb.hidden) {
     const v = E.flotillaValue(S), top = E.legalTop(S), gate = top < E.TOP ? E.TIERS[top + 1].form.legend : 0;
     const note = gate && S.legend < gate ? ` · ${Math.max(0, gate - S.legend - v)} more for Form ${E.TIERS[top + 1].form.code}` : '';
     lb.innerHTML = `⛵ Launch a Flotilla <small>+${v} postcards · coins &amp; wares reset${note}</small>`;
-    lb.disabled = v < 1;
+    lb.setAttribute('aria-disabled', String(v < 1));
   }
 }
 $('hookBtn').addEventListener('click', () => { const out = []; E.hook(S, out); handle(out); save(); showActions(); });
