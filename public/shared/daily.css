@@ -1,5 +1,20 @@
 /* Shared chrome injected into every game page. Scoped under .di-* so it never fights a game's own styles.
-   Colors are fixed (not tied to any game's theme) so the share card reads the same on every game. */
+   The panels (<di-modal>) and the Sound popover wear the site's own sketchbook look, the landing and
+   privacy pages' dotted paper, wobbly ink and handwriting, light or dark with the system. The colors are
+   fixed, not tied to any game's theme, so they read the same on every game. Change them here and in
+   public/index.html together. */
+di-modal, .di-sound {
+  --paper: #fbf7ee; --dot: #e6dfcd; --ink: #2b2a33; --mute: #7a7466; --card: #fff;
+  --hand: "Gaegu", "Patrick Hand", "Comic Sans MS", cursive;
+  --text: "Patrick Hand", "Comic Sans MS", cursive;
+  --mono: ui-monospace, Menlo, Consolas, monospace;
+  --c1: #ff6b6b; --c3: #ffd43b; --c5: #4dabf7; --hl: 70%;
+  --wobble: 255px 12px 225px 12px / 12px 225px 12px 255px;
+}
+@media (prefers-color-scheme: dark) {
+  di-modal, .di-sound { --paper: #23252b; --dot: #33363e; --ink: #f1ede4; --mute: #a39d8f; --card: #2d3038; --hl: 30%; }
+  .di-sound, .di-card { color-scheme: dark; }
+}
 .di-bar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   max-width: 1140px; margin: 0 auto 10px;
@@ -12,107 +27,92 @@
 .di-sound-btn:hover, .di-sound-btn:focus-visible, .di-sound-btn[aria-expanded="true"] { opacity: 1; text-decoration: underline; }
 .di-sound {
   position: absolute; right: 0; top: calc(100% + 8px); z-index: 1001; width: min(280px, calc(100vw - 32px));
-  display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 12px;
-  background: #f6f6fd; color: #191b33; box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
-  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-.di-sound[hidden] { display: none !important; }
-.di-slider { display: grid; grid-template-columns: 62px 1fr 40px; align-items: center; gap: 8px; }
-.di-slider input { width: 100%; accent-color: #ff5a36; }
-.di-slider output { text-align: right; color: #62668a; font-variant-numeric: tabular-nums; }
-.di-mute { display: flex; align-items: center; gap: 8px; }
-.di-mute input { accent-color: #ff5a36; }
-.di-sound-note { margin: 0; color: #62668a; font-size: 12px; }
-.di-bar a:hover, .di-bar a:focus-visible { opacity: 1; text-decoration: underline; }
-
-.di-overlay {
-  position: fixed; inset: 0; z-index: 1000;
-  display: flex; align-items: center; justify-content: center;
-  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
-  background: rgba(10, 11, 22, .6);
-  animation: di-fade .25s ease;
-}
-.di-overlay[hidden] { display: none !important; }
-.di-card {
-  position: relative; width: min(420px, 100%);
-  display: flex; flex-direction: column; gap: 12px;
-  padding: 24px; border-radius: 16px;
-  background: #f6f6fd; color: #191b33;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
-  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-.di-eyebrow { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: #62668a; }
-.di-title { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.01em; }
-.di-share {
-  margin: 0; padding: 14px; border-radius: 10px;
-  background: #fff; border: 1px solid #d5d8ef;
-  font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace;
-  white-space: pre-wrap; word-break: break-word;
-}
-.di-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.di-btn {
-  all: unset; cursor: pointer; box-sizing: border-box;
-  padding: 10px 16px; border-radius: 10px;
-  background: #ff5a36; color: #fff; font-weight: 700; font-size: 14px;
-}
-.di-btn.di-ghost { background: transparent; color: #191b33; box-shadow: inset 0 0 0 1px #d5d8ef; }
-.di-btn:focus-visible, .di-close:focus-visible { outline: 2px solid #191b33; outline-offset: 2px; }
-.di-streak { margin: 0; color: #62668a; font-size: 13px; }
-.di-code {
-  box-sizing: border-box; width: 100%; margin: 0; padding: 10px 12px; border-radius: 10px; resize: vertical;
-  background: #fff; color: #191b33; border: 1px solid #d5d8ef;
-  font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; word-break: break-all;
-}
-.di-code:focus-visible { outline: 2px solid #191b33; outline-offset: 1px; }
-.di-streak:empty { display: none; }
-.di-runs h3 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: #62668a; font-weight: 600; }
-.di-runs ol { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; max-height: 168px; overflow-y: auto; }
-.di-runs li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 6px 10px; border-radius: 8px; background: #fff; border: 1px solid #e4e6f5; font-size: 13px; }
-.di-runs li.di-run-last { border-color: #d5d8ef; box-shadow: inset 3px 0 0 #ff5a36; }
-.di-run-n { font-weight: 700; }
-.di-run-at { color: #62668a; }
-.di-run-lines { flex-basis: 100%; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; word-break: break-word; }
-.di-run-best { margin-left: auto; padding: 1px 7px; border-radius: 99px; background: #ffe7df; color: #b8381b; font-size: 11px; font-weight: 700; }
-.di-close {
-  all: unset; cursor: pointer; position: absolute; top: 10px; right: 14px;
-  font-size: 22px; line-height: 1; color: #62668a;
-}
-/* Credits, What?? and Save wear the site's own sketchbook look (landing and privacy pages): dotted paper, a wobbly
-   inked frame and handwriting, light or dark with the system. */
-.di-credits {
-  --paper: #fbf7ee; --dot: #e6dfcd; --ink: #2b2a33; --mute: #7a7466;
-  --hand: "Gaegu", "Patrick Hand", "Comic Sans MS", cursive;
-  --text: "Patrick Hand", "Comic Sans MS", cursive;
-  --c1: #ff6b6b; --c3: #ffd43b; --c5: #4dabf7; --hl: 70%;
-  box-sizing: border-box; width: min(520px, 100%); max-height: calc(100vh - 32px); overflow: auto;
-  padding: 26px clamp(18px, 5vw, 32px) 22px;
+  display: flex; flex-direction: column; gap: 10px; padding: 14px 18px; box-sizing: border-box;
   color: var(--ink); color-scheme: light;
   background: var(--paper) radial-gradient(var(--dot) 1.4px, transparent 1.6px) 0 0 / 22px 22px;
-  border: 2px solid var(--ink);
-  border-radius: 255px 12px 225px 12px / 12px 225px 12px 255px;
+  border: 2px solid var(--ink); border-radius: 255px 12px 225px 12px / 12px 225px 12px 255px;
+  box-shadow: 4px 5px 0 rgba(0, 0, 0, .25);
+  font: 18px/1.3 var(--text);
+}
+.di-sound[hidden] { display: none !important; }
+.di-slider { display: grid; grid-template-columns: 62px 1fr 44px; align-items: center; gap: 8px; }
+.di-slider input { width: 100%; accent-color: var(--c1); }
+.di-slider output { text-align: right; color: var(--mute); font-variant-numeric: tabular-nums; }
+.di-mute { display: flex; align-items: center; gap: 8px; }
+.di-mute input { accent-color: var(--c1); }
+.di-sound-note { margin: 0; color: var(--mute); font-size: 15px; }
+.di-bar a:hover, .di-bar a:focus-visible { opacity: 1; text-decoration: underline; }
+
+/* <di-modal>: the host is layout-free; its native <dialog> sits in the top layer above any game. */
+di-modal { display: contents; }
+.di-card {
+  box-sizing: border-box; width: min(460px, calc(100% - 32px)); max-width: none; max-height: calc(100dvh - 32px);
+  margin: auto; overflow: auto; padding: 26px clamp(18px, 5vw, 32px) 22px;
+  color: var(--ink); color-scheme: light;
+  background: var(--paper) radial-gradient(var(--dot) 1.4px, transparent 1.6px) 0 0 / 22px 22px;
+  border: 2px solid var(--ink); border-radius: var(--wobble);
   box-shadow: 5px 6px 0 rgba(0, 0, 0, .25);
   font: 18px/1.4 var(--text);
 }
-@media (prefers-color-scheme: dark) {
-  .di-credits { --paper: #23252b; --dot: #33363e; --ink: #f1ede4; --mute: #a39d8f; --hl: 30%; color-scheme: dark; }
+.di-card[open] { display: flex; flex-direction: column; gap: 12px; animation: di-fade .25s ease; }
+.di-card::backdrop { background: rgba(10, 11, 22, .6); animation: di-fade .25s ease; }
+.di-body { display: contents; }
+.di-eyebrow { margin: 0; padding-right: 28px; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+.di-title { margin: 0; font: 700 46px/1 var(--hand); color: var(--c1); text-wrap: balance; }
+.di-card h3 { margin: 8px 0 4px; font: 700 24px/1.1 var(--hand); color: var(--ink); }
+.di-card h3 span { background: linear-gradient(transparent 58%, color-mix(in srgb, var(--c3) var(--hl), transparent) 58%); padding: 0 4px; }
+.di-streak { margin: 0; color: var(--mute); font-size: 16px; }
+.di-streak:empty { display: none; }
+.di-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.di-btn {
+  all: unset; cursor: pointer; box-sizing: border-box;
+  padding: 4px 16px; font: 700 22px/1.2 var(--hand); color: #2b2a33; background: var(--c3);
+  border: 2px solid var(--ink); border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; transform: rotate(-1.5deg);
 }
-.di-credits .di-eyebrow { font-family: var(--text); font-size: 15px; letter-spacing: .08em; color: var(--mute); }
-.di-credits .di-title { font-family: var(--hand); font-size: 46px; font-weight: 700; line-height: 1; color: var(--c1); }
-.di-credits h3 { margin: 8px 0 4px; font: 700 24px/1.1 var(--hand); color: var(--ink); }
-.di-credits h3 span { background: linear-gradient(transparent 58%, color-mix(in srgb, var(--c3) var(--hl), transparent) 58%); padding: 0 4px; }
-.di-credits ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.di-credits li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; font-size: 17px; }
-.di-credits a { color: inherit; text-decoration-color: var(--c5); text-underline-offset: 3px; }
+.di-btn.di-ghost { background: var(--paper); color: var(--ink); transform: rotate(1deg); }
+.di-btn:hover { filter: brightness(1.05); }
+.di-btn:focus-visible { outline: 2px dashed var(--ink); outline-offset: 3px; }
+.di-close {
+  all: unset; cursor: pointer; position: absolute; top: 12px; right: 20px;
+  font: 30px/1 var(--hand); color: var(--mute);
+}
+.di-close:focus-visible { outline: 2px dashed var(--ink); outline-offset: 2px; }
+.di-card a { color: inherit; text-decoration-color: var(--c5); text-underline-offset: 3px; }
+/* Inked boxes, like the landing page's tallies: the share text and save codes. */
+.di-share, .di-code {
+  box-sizing: border-box; width: 100%; margin: 0; padding: 10px 14px;
+  background: var(--card); color: var(--ink); border: 2px solid var(--ink); border-radius: 255px 10px 225px 10px / 10px 225px 10px 255px;
+}
+.di-share { font: 15px/1.5 var(--mono); white-space: pre-wrap; word-break: break-word; }
+.di-share:focus-visible { outline: 2px dashed var(--c5); outline-offset: 2px; }
+.di-code { resize: vertical; font: 12px/1.4 var(--mono); word-break: break-all; }
+.di-code::placeholder { color: var(--mute); }
+.di-code:focus-visible { outline: 2px dashed var(--c5); outline-offset: 2px; }
+.di-save-msg, .di-again-msg { color: var(--c1); }
+/* Share card: every finished run of this game. */
+.di-runs h3 { margin-top: 0; }
+.di-runs ol { margin: 0; padding: 2px; list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 190px; overflow-y: auto; }
+.di-runs li {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; padding: 4px 12px;
+  background: var(--card); border: 2px solid color-mix(in srgb, var(--ink) 25%, transparent); border-radius: 255px 10px 225px 10px / 10px 225px 10px 255px;
+}
+.di-runs li.di-run-last { border-color: var(--ink); }
+.di-run-n { font: 700 22px/1.1 var(--hand); }
+.di-run-at { color: var(--mute); font-size: 16px; }
+.di-run-lines { flex-basis: 100%; font: 13px/1.4 var(--mono); word-break: break-word; }
+.di-run-best { margin-left: auto; padding: 0 8px; font: 700 17px/1.3 var(--hand); color: #2b2a33; background: var(--c3); border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; transform: rotate(2deg); }
+/* Credits */
+.di-credits > .di-card { width: min(520px, calc(100% - 32px)); }
+.di-credits ul, .di-why ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.di-credits li, .di-why li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; font-size: 17px; }
 .di-credit-name { font-weight: 700; }
 .di-credit-meta { color: var(--mute); font-size: 16px; flex: 1 1 200px; overflow-wrap: anywhere; }
 .di-credit-meta a { color: inherit; }
 .di-credits .di-support { font-size: 16px; color: var(--c1); text-decoration: none; white-space: nowrap; }
 .di-credits .di-support:hover { text-decoration: underline; }
-.di-credits .di-streak { color: var(--mute); font-size: 16px; }
-.di-credits .di-close { font-family: var(--hand); font-size: 30px; top: 12px; right: 20px; color: var(--mute); }
-.di-credits .di-close:focus-visible { outline-color: var(--ink); }
 @keyframes di-fade { from { opacity: 0; } }
-/* What?? panel: the Credits sketchbook, with each roll's explanation under it. */
+/* What?? panel: each roll's explanation under it. */
+.di-why > .di-card { width: min(520px, calc(100% - 32px)); }
 .di-why li { flex-direction: column; gap: 2px; }
 .di-why-became { color: var(--ink); font-size: 17px; }
 .di-why .di-credit-name { color: var(--mute); font-size: 16px; }
@@ -120,20 +120,5 @@
 .di-why ul + .di-why-intro { margin-top: 12px; }
 .di-why-reveal { all: unset; cursor: pointer; color: var(--c1); text-decoration: underline; text-underline-offset: 3px; }
 .di-why-reveal:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-/* Save panel: the sketchbook too, with wobbly inked boxes like the landing page's tallies. */
-.di-save { width: min(460px, 100%); gap: 10px; }
-.di-save .di-code {
-  background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
-  border-radius: 255px 10px 225px 10px / 10px 225px 10px 255px; padding: 10px 14px;
-}
-.di-save .di-code::placeholder { color: var(--mute); }
-.di-save .di-code:focus-visible { outline: 2px dashed var(--c5); outline-offset: 2px; }
-.di-save .di-btn {
-  padding: 4px 16px; font: 700 22px/1.2 var(--hand); color: #2b2a33; background: var(--c3);
-  border: 2px solid var(--ink); border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; transform: rotate(-1.5deg);
-}
-.di-save .di-btn.di-ghost { background: var(--paper); color: var(--ink); box-shadow: none; transform: rotate(1deg); }
-.di-save .di-btn:hover { filter: brightness(1.05); }
-.di-save .di-btn:focus-visible { outline: 2px dashed var(--ink); outline-offset: 3px; }
-.di-save .di-save-msg { color: var(--c1); }
-@media (prefers-reduced-motion: reduce) { .di-overlay { animation: none; } }
+.di-save > .di-card[open] { gap: 10px; }
+@media (prefers-reduced-motion: reduce) { .di-card[open], .di-card::backdrop { animation: none; } }

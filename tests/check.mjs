@@ -255,7 +255,7 @@ async function checkGame(browser, base, game) {
     if (await share.isVisible()) {
       await share.click();
       await page.waitForTimeout(400);
-      check(`Share opens the share card (${label})`, await page.locator('.di-overlay').isVisible());
+      check(`Share opens the share card (${label})`, await page.locator('di-modal[open] dialog').isVisible());
       await shot(page, `${slug}-share-${label}.png`);
     } else check(`Share button visible at the ending (${label})`, false);
     check(`no console errors (ending, ${label})`, errors.length === 0, errors.join(' | '));

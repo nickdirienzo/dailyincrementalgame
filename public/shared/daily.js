@@ -79,6 +79,63 @@
     return count;
   }
 
+  // ---------- Panels ----------
+  // <di-modal> is every site panel (share card, Credits, What??, Save): a native <dialog> in the site's
+  // sketchbook look (daily.css, the landing page's paper and ink), with the eyebrow, title, close
+  // button, Escape, backdrop click and focus handled once. Children become the panel's body.
+  //   <di-modal class="di-save" eyebrow="Play on another device" heading="Your save">…</di-modal>
+  //   el.show('.di-save-copy')   opens it and focuses that element (the close button by default)
+  //   el.close()
+  let modalId = 0;
+  class DiModal extends HTMLElement {
+    static observedAttributes = ['eyebrow', 'heading'];
+    connectedCallback() {
+      if (this.dialog) return;
+      const kids = [...this.childNodes];
+      const id = `di-modal-${++modalId}`;
+      const d = this.dialog = document.createElement('dialog');
+      d.className = 'di-card';
+      d.setAttribute('aria-labelledby', id);
+      d.innerHTML = `<p class="di-eyebrow"></p><h2 class="di-title" id="${id}"></h2><div class="di-body"></div>`
+        + `<button type="button" class="di-close" aria-label="Close">×</button>`;
+      this.body = d.querySelector('.di-body');
+      this.body.append(...kids);
+      this.append(d);
+      d.querySelector('.di-close').addEventListener('click', () => this.close());
+      // A click on the backdrop lands on the dialog itself, outside its box.
+      d.addEventListener('click', e => {
+        if (e.target !== d) return;
+        const r = d.getBoundingClientRect();
+        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) this.close();
+      });
+      d.addEventListener('close', () => this.removeAttribute('open'));
+      this.sync();
+    }
+    attributeChangedCallback() { this.sync(); }
+    sync() {
+      if (!this.dialog) return;
+      this.dialog.querySelector('.di-eyebrow').textContent = this.getAttribute('eyebrow') || '';
+      this.dialog.querySelector('.di-title').textContent = this.getAttribute('heading') || '';
+    }
+    show(focus) {
+      if (!this.dialog.open) this.dialog.showModal();
+      this.setAttribute('open', '');
+      const el = (focus && this.querySelector(focus)) || this.dialog.querySelector('.di-close');
+      el.focus();
+    }
+    close() { this.dialog.close(); }
+  }
+  if (!customElements.get('di-modal')) customElements.define('di-modal', DiModal);
+  function modal(cls, eyebrow, heading, html) {
+    const m = document.createElement('di-modal');
+    m.className = cls;
+    m.setAttribute('eyebrow', eyebrow);
+    m.setAttribute('heading', heading);
+    m.innerHTML = html;
+    document.body.appendChild(m);
+    return m;
+  }
+
   // ---------- Share card ----------
   let cardEl = null;
   function shareText(game, lines, run = 1) {
@@ -96,27 +153,16 @@
     const s = streak(list);
 
     if (!cardEl) {
-      cardEl = document.createElement('div');
-      cardEl.className = 'di-overlay';
-      cardEl.innerHTML = `
-        <div class="di-card" role="dialog" aria-modal="true" aria-labelledby="di-card-title">
-          <p class="di-eyebrow">You finished today's game</p>
-          <h2 id="di-card-title" class="di-title"></h2>
-          <pre class="di-share" id="di-share" tabindex="0"></pre>
-          <div class="di-row">
-            <button type="button" class="di-btn di-copy">Copy result</button>
-            <a class="di-btn di-ghost" href="/">More games</a>
-            <button type="button" class="di-btn di-ghost di-again">Play again</button>
-          </div>
-          <p class="di-streak di-again-msg" aria-live="polite"></p>
-          <div class="di-runs" hidden><h3>Your runs</h3><ol></ol></div>
-          <p class="di-streak di-streak-count"></p>
-          <button type="button" class="di-close" aria-label="Close">×</button>
-        </div>`;
-      document.body.appendChild(cardEl);
-      cardEl.addEventListener('click', e => { if (e.target === cardEl) closeCard(); });
-      cardEl.querySelector('.di-close').addEventListener('click', closeCard);
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCard(); });
+      cardEl = modal('di-share-card', '', '', `
+        <pre class="di-share" id="di-share" tabindex="0"></pre>
+        <div class="di-row">
+          <button type="button" class="di-btn di-copy">Copy result</button>
+          <a class="di-btn di-ghost" href="/">More games</a>
+          <button type="button" class="di-btn di-ghost di-again">Play again</button>
+        </div>
+        <p class="di-streak di-again-msg" aria-live="polite"></p>
+        <div class="di-runs" hidden><h3><span>Your runs</span></h3><ol></ol></div>
+        <p class="di-streak di-streak-count"></p>`);
       cardEl.querySelector('.di-copy').addEventListener('click', async e => {
         const btn = e.currentTarget;
         const pre = cardEl.querySelector('.di-share');
@@ -143,8 +189,8 @@
     const again = cardEl.querySelector('.di-again');
     delete again.dataset.armed; again.textContent = 'Play again';
     cardEl.querySelector('.di-again-msg').textContent = '';
-    cardEl.querySelector('.di-eyebrow').textContent = game && game.date !== localDate() ? 'You finished it' : 'You finished today\'s game';
-    cardEl.querySelector('.di-title').textContent = game ? game.title : document.title;
+    cardEl.setAttribute('eyebrow', game && game.date !== localDate() ? 'You finished it' : 'You finished today\'s game');
+    cardEl.setAttribute('heading', game ? game.title : document.title);
     cardEl.querySelector('.di-share').textContent = text;
     cardEl.querySelector('.di-streak-count').textContent = s > 0 ? `Streak: ${s} day${s === 1 ? '' : 's'}` : '';
     const history = cardEl.querySelector('.di-runs');
@@ -154,10 +200,8 @@
     history.querySelector('ol').innerHTML = runs.map((r, i) => `<li${i === runs.length - 1 ? ' class="di-run-last"' : ''}>`
       + `<span class="di-run-n">#${i + 1}</span><span class="di-run-at">${esc(shortDate(r.at))}</span>`
       + (i === best ? '<span class="di-run-best">fastest</span>' : '') + `<span class="di-run-lines">${esc((r.lines || []).join(' · '))}</span></li>`).join('');
-    cardEl.hidden = false;
-    cardEl.querySelector('.di-copy').focus();
+    cardEl.show('.di-copy');
   }
-  function closeCard() { if (cardEl) cardEl.hidden = true; }
 
   function finish({ lines = [] } = {}) {
     if (DAY == null) return;
@@ -224,25 +268,12 @@
   }
   function openCredits(c) {
     if (!creditsEl) {
-      creditsEl = document.createElement('div');
-      creditsEl.className = 'di-overlay';
-      creditsEl.innerHTML = `
-        <div class="di-card di-credits" role="dialog" aria-modal="true" aria-labelledby="di-credits-title">
-          <p class="di-eyebrow">Made with open things</p>
-          <h2 id="di-credits-title" class="di-title">Credits</h2>
-          <div class="di-credits-body"></div>
-          <p class="di-streak">These are free because people gave their time. If one made you smile, consider supporting it.</p>
-          <button type="button" class="di-close" aria-label="Close">×</button>
-        </div>`;
-      document.body.appendChild(creditsEl);
-      const close = () => { creditsEl.hidden = true; };
-      creditsEl.addEventListener('click', e => { if (e.target === creditsEl) close(); });
-      creditsEl.querySelector('.di-close').addEventListener('click', close);
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+      creditsEl = modal('di-credits', 'Made with open things', 'Credits', `
+        <div class="di-credits-body"></div>
+        <p class="di-streak">These are free because people gave their time. If one made you smile, consider supporting it.</p>`);
     }
     creditsEl.querySelector('.di-credits-body').innerHTML = creditsHtml(c);
-    creditsEl.hidden = false;
-    creditsEl.querySelector('.di-close').focus();
+    creditsEl.show();
   }
 
   // ---------- What is even happening ----------
@@ -265,27 +296,13 @@
   }
   function openWhy(w) {
     if (!whyEl) {
-      whyEl = document.createElement('div');
-      whyEl.className = 'di-overlay';
-      whyEl.innerHTML = `
-        <div class="di-card di-credits di-why" role="dialog" aria-modal="true" aria-labelledby="di-why-title">
-          <p class="di-eyebrow">Rolled by dice, explained by the maker</p>
-          <h2 id="di-why-title" class="di-title">What is even happening</h2>
-          <div class="di-credits-body"></div>
-          <button type="button" class="di-close" aria-label="Close">×</button>
-        </div>`;
-      document.body.appendChild(whyEl);
-      const close = () => { whyEl.hidden = true; };
+      whyEl = modal('di-why', 'Rolled by dice, explained by the maker', 'What is even happening', `<div class="di-credits-body"></div>`);
       whyEl.addEventListener('click', e => {
-        if (e.target === whyEl) close();
         if (e.target.closest('.di-why-reveal')) whyEl.querySelector('.di-credits-body').innerHTML = whyHtml(w, true);
       });
-      whyEl.querySelector('.di-close').addEventListener('click', close);
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
     }
     whyEl.querySelector('.di-credits-body').innerHTML = whyHtml(w, false);
-    whyEl.hidden = false;
-    whyEl.querySelector('.di-close').focus();
+    whyEl.show();
   }
 
   // ---------- Sound settings ----------
@@ -386,27 +403,15 @@
   let saveEl = null;
   function openSave() {
     if (!saveEl) {
-      saveEl = document.createElement('div');
-      saveEl.className = 'di-overlay';
-      saveEl.innerHTML = `
-        <div class="di-card di-credits di-save" role="dialog" aria-modal="true" aria-labelledby="di-save-title">
-          <p class="di-eyebrow">Play on another device</p>
-          <h2 id="di-save-title" class="di-title">Your save</h2>
-          <p class="di-streak">Your save lives in this browser. Copy the code, then paste it on the other device under Save.</p>
-          <textarea class="di-code" id="di-code-out" readonly rows="3" aria-label="Save code for this game"></textarea>
-          <div class="di-row"><button type="button" class="di-btn di-save-copy">Copy save code</button></div>
-          <label class="di-streak" for="di-code-in">Got a code from another device?</label>
-          <textarea class="di-code" id="di-code-in" rows="3" placeholder="Paste a save code"></textarea>
-          <div class="di-row"><button type="button" class="di-btn di-ghost di-save-load">Load save</button></div>
-          <p class="di-streak di-save-msg" aria-live="polite"></p>
-          <button type="button" class="di-close" aria-label="Close">×</button>
-        </div>`;
-      document.body.appendChild(saveEl);
-      const close = () => { saveEl.hidden = true; };
+      saveEl = modal('di-save', 'Play on another device', 'Your save', `
+        <p class="di-streak">Your save lives in this browser. Copy the code, then paste it on the other device under Save.</p>
+        <textarea class="di-code" id="di-code-out" readonly rows="3" aria-label="Save code for this game"></textarea>
+        <div class="di-row"><button type="button" class="di-btn di-save-copy">Copy save code</button></div>
+        <label class="di-streak" for="di-code-in">Got a code from another device?</label>
+        <textarea class="di-code" id="di-code-in" rows="3" placeholder="Paste a save code"></textarea>
+        <div class="di-row"><button type="button" class="di-btn di-ghost di-save-load">Load save</button></div>
+        <p class="di-streak di-save-msg" aria-live="polite"></p>`);
       const msg = t => { saveEl.querySelector('.di-save-msg').textContent = t; };
-      saveEl.addEventListener('click', e => { if (e.target === saveEl) close(); });
-      saveEl.querySelector('.di-close').addEventListener('click', close);
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
       saveEl.querySelector('.di-save-copy').addEventListener('click', async e => {
         const btn = e.currentTarget, out = saveEl.querySelector('#di-code-out');
         out.value = saveCode();
@@ -428,8 +433,7 @@
     }
     saveEl.querySelector('#di-code-out').value = saveCode();
     saveEl.querySelector('.di-save-msg').textContent = '';
-    saveEl.hidden = false;
-    saveEl.querySelector('.di-save-copy').focus();
+    saveEl.show('.di-save-copy');
   }
 
   // ---------- Top bar on game pages ----------
@@ -463,8 +467,8 @@
     panelLink('data-credits', 'credits.json', c => (c.libs || []).length || (c.art || []).length || c.palette || (c.fonts || []).length, 'di-credits-link', 'Credits', openCredits);
   }
 
-  // Stylesheet lives next to this script, plus the site's handwriting fonts for the Credits, What?? and
-  // Save panels (declared only; the browser fetches them when the panel first shows).
+  // Stylesheet lives next to this script, plus the site's handwriting fonts for the panels and the
+  // Sound popover (declared only; the browser fetches them when a panel first shows).
   for (const href of ['/shared/daily.css', '/shared/fonts/gaegu/font.css', '/shared/fonts/patrick-hand/font.css']) {
     const css = document.createElement('link');
     css.rel = 'stylesheet';
