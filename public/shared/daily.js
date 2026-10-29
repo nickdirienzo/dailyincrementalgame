@@ -13,6 +13,9 @@
 //       updates the streak, and opens the share card.
 //       Finishing again after "Play again" on the share card adds another run to the history.
 //   DailyGame.share()      Reopen the share card (e.g. from a "Share" button).
+//   A Play again button (#againBtn) is added next to the ending's #shareBtn automatically, unless the
+//       ending has its own restart button (#again). A game that restarts in place some other way calls
+//   DailyGame.newRun()     so its next finish counts as a new run.
 //   DailyGame.day          This page's game number, or null.
 //   DailyGame.storageKey(name)  -> 'di:<day>:<name>', for the game's own saves. Keep every save under
 //       this prefix: the top bar's Save panel moves all of di:<day>:* to another device.
@@ -218,6 +221,12 @@
     openCard();
   }
 
+  // Marks the next finish as a new run. For games that restart in place (an ending's own #again
+  // button); playAgain() calls it too.
+  function newRun() {
+    try { localStorage.setItem(runKey(), String(runsOf(completions()[DAY]).length + 1)); } catch (e) {}
+  }
+
   // Clears this game's save (every di:<n>:* key) and reloads into a fresh start. Finished runs live
   // in di:done, so they stay.
   function playAgain() {
@@ -226,8 +235,8 @@
       const old = [];
       for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith(prefix)) old.push(k); }
       old.forEach(k => localStorage.removeItem(k));
-      localStorage.setItem(runKey(), String(runsOf(completions()[DAY]).length + 1));
     } catch (e) {}
+    newRun();
     freezeSave();
     location.reload();
   }
@@ -436,9 +445,37 @@
     saveEl.show('.di-save-copy');
   }
 
+  // ---------- Play again at the ending ----------
+  // Every ending has a Share result button (#shareBtn). Beside it goes Play again, wearing the share
+  // button's classes plus "quiet" (the template's secondary style); games that style #shareBtn by id
+  // list #againBtn with it. Two taps: the first asks, the second starts over. A game whose ending
+  // already restarts in place (#again) keeps its own button, which just starts a new run.
+  function addAgain() {
+    const own = document.getElementById('again');
+    if (own) { own.addEventListener('click', newRun); return; }
+    const share = document.getElementById('shareBtn');
+    if (!share || document.getElementById('againBtn')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.id = 'againBtn';
+    btn.className = (share.className + ' quiet').trim();
+    btn.textContent = 'Play again';
+    let timer = 0;
+    btn.addEventListener('click', () => {
+      if (!btn.dataset.armed) {
+        btn.dataset.armed = '1'; btn.textContent = 'Start over? Tap again';
+        timer = setTimeout(() => { delete btn.dataset.armed; btn.textContent = 'Play again'; }, 4000);
+        return;
+      }
+      clearTimeout(timer);
+      playAgain();
+    });
+    share.after(' ', btn);
+  }
+
   // ---------- Top bar on game pages ----------
   function addBar() {
     if (DAY == null) return;
+    addAgain();
     const bar = document.createElement('nav');
     bar.className = 'di-bar';
     bar.innerHTML = `<a href="/">← Incremendle</a><span class="di-right"><span class="di-sound-wrap"><button type="button" class="di-sound-btn" aria-expanded="false"></button></span></span>`;
@@ -483,6 +520,7 @@
     day: DAY,
     finish,
     share: openCard,
+    newRun,
     storageKey: name => `di:${DAY}:${name}`,
     // Helpers used by the landing page.
     manifest, released, streak, completions, localDate,

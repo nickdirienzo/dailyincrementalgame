@@ -110,6 +110,10 @@ doesn't become the only kind of satisfaction.
    " · ". Keep them short and emoji-led: time, a headline number, one in-joke.
 5. Give the ending a "Share result" button that calls `DailyGame.share()`. Keep the template's ids:
    `#ending` for the ending, `#shareBtn` for the button, and upgrades as buttons inside `#shop`.
+   `daily.js` adds a Play again button (`#againBtn`, the share button's classes plus `quiet`) that
+   clears the save and starts over; every finish is kept in the share card's run history. If you
+   style `#shareBtn` by id, style `#againBtn` with it. A game that restarts in place instead gives
+   the ending its own `#again` button (or calls `DailyGame.newRun()`), so the next finish counts.
 6. Add an entry to `public/games.json` with `n`, `slug`, `date` (YYYY-MM-DD, the day it goes live),
    `title`, `tagline`, `emoji` (one or two), `scale`, `minutes`, plus, if the theme was
    rolled, `seed` and every field from `tools/roll.py` except subject, verb and object

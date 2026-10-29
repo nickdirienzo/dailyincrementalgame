@@ -262,23 +262,37 @@ async function checkGame(browser, base, game) {
     await context.close();
   }
 
-  // Play again: two taps on the share card clear the save and reload into a fresh start, and the
-  // next finish becomes run 2 in the card's history. (Seeded once, not by an init script, so the
-  // reload doesn't bring the finished save back.)
+  // Play again: the ending's own restart (#again), or two taps on the share card's Play again, which
+  // clear the save and reload into a fresh start. Either way the next finish becomes run 2. (Seeded on the first load only, so the reload
+  // doesn't bring the finished save back.)
   {
-    const { page, context, errors } = await open(browser, url);
-    await page.evaluate(([n, date]) => {
+    const context = await browser.newContext({ viewport: DESKTOP });
+    await context.addInitScript(([n, date]) => {
+      if (sessionStorage.getItem('seeded')) return;
+      sessionStorage.setItem('seeded', '1');
       localStorage.setItem(`di:${n}:save`, JSON.stringify({ ended: true }));
       localStorage.setItem('di:done', JSON.stringify({ [n]: { at: date, lines: ['⏱ 9m', '🧪 test run'] } }));
     }, [n, game.date]);
-    await page.reload({ waitUntil: 'load' });
+    const page = await context.newPage();
+    const errors = [];
+    page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    page.on('pageerror', e => errors.push(String(e)));
+    await page.goto(url, { waitUntil: 'load' });
     await page.waitForTimeout(1500);
-    await page.evaluate(() => DailyGame.share());
-    await page.waitForTimeout(400);
-    const again = page.locator('.di-again');
-    await again.click();
-    await Promise.all([page.waitForEvent('load', { timeout: 3000 }).catch(() => {}), again.click()]);
-    await page.waitForTimeout(1500);
+    const own = page.locator('#again, #againBtn').first();
+    check('the ending has a Play again button', await own.isVisible());
+    if (await page.locator('#again').count()) {
+      // The game restarts in place with its own button.
+      await page.locator('#again').click();
+      await page.waitForTimeout(600);
+    } else {
+      await page.evaluate(() => DailyGame.share());
+      await page.waitForTimeout(400);
+      const again = page.locator('.di-again');
+      await again.click();
+      await Promise.all([page.waitForEvent('load', { timeout: 3000 }).catch(() => {}), again.click()]);
+      await page.waitForTimeout(1500);
+    }
     check('Play again starts the game over', !(await page.locator('#ending').isVisible()));
     await page.evaluate(() => DailyGame.finish({ lines: ['⏱ 1m2s', '🧪 replay'] }));
     await page.waitForTimeout(400);

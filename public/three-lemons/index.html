@@ -175,9 +175,10 @@
   #ending p { margin: 0; max-width: 64ch; color: var(--p5); }
   #ending .slip { font: 15px/1.5 var(--type); color: var(--p4); border-left: 3px solid var(--p3); padding-left: 12px; }
   #ending .row { display: flex; gap: 10px; flex-wrap: wrap; }
-  #shareBtn { all: unset; cursor: pointer; padding: 11px 20px; font: 17px/1 var(--type); background: var(--p5); color: var(--p0);
+  #shareBtn, #againBtn { all: unset; cursor: pointer; padding: 11px 20px; font: 17px/1 var(--type); background: var(--p5); color: var(--p0);
               border-radius: 12px 7px 11px 6px / 7px 11px 6px 12px; }
-  #shareBtn:focus-visible { outline: 2px solid var(--p5); outline-offset: 3px; }
+  #shareBtn:focus-visible, #againBtn:focus-visible { outline: 2px solid var(--p5); outline-offset: 3px; }
+  #againBtn { background: transparent; color: var(--p5); box-shadow: inset 0 0 0 2px var(--p5); }
 
   @media (prefers-reduced-motion: reduce) { .up.new, .goalbtn.new, .log.fresh { animation: none; } .bar i { transition: none; } }
 </style>

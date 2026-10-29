@@ -104,8 +104,9 @@
   #ending p { margin: 0; max-width: 60ch; color: var(--p6); }
   #ending .slip { font: italic 15px/1.45 var(--fell); color: var(--p5); border-left: 3px solid var(--p3); padding-left: 12px; }
   #ending .row { display: flex; gap: 10px; flex-wrap: wrap; }
-  #shareBtn { all: unset; cursor: pointer; padding: 10px 18px; font: 18px/1 var(--fell); background: var(--p7); color: var(--p0); border: 2px solid var(--lead); border-radius: 3px; }
-  #shareBtn:focus-visible { outline: 2px solid var(--p7); outline-offset: 2px; }
+  #shareBtn, #againBtn { all: unset; cursor: pointer; padding: 10px 18px; font: 18px/1 var(--fell); background: var(--p7); color: var(--p0); border: 2px solid var(--lead); border-radius: 3px; }
+  #shareBtn:focus-visible, #againBtn:focus-visible { outline: 2px solid var(--p7); outline-offset: 2px; }
+  #againBtn { background: transparent; color: var(--p7); }
 
   @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh { animation: none; } .bar i { transition: none; } }
 </style>
