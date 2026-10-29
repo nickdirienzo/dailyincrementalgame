@@ -141,7 +141,24 @@
   #ending p { margin: 8px 0; }
   .form-final { display: inline-block; margin: 10px 0; padding: 10px 16px; background: var(--p0); color: var(--p5); border-radius: 4px; transform: rotate(-2deg); text-align: left; font-size: 14px; }
   .form-final b { color: var(--p2); }
-  @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh { animation: none; } .bar i { transition: none; } }
+  /* The Bought shelf: what has left the shop, to reread. Nothing on it is for sale. */
+  #bought { margin-top: 14px; border-top: 1px solid var(--p3); padding-top: 8px; }
+  #bought summary { cursor: pointer; list-style: none; font: 15px var(--type); color: var(--p1); padding: 2px 2px 4px; border-radius: 6px; }
+  #bought summary::-webkit-details-marker { display: none; }
+  #bought summary::before { content: "▸"; display: inline-block; width: 1em; transition: transform .2s; }
+  #bought[open] summary::before { transform: rotate(90deg); }
+  #bought summary:hover { color: var(--p0); text-shadow: 0 0 6px var(--p1); }
+  #bought summary:focus-visible { outline: 2px solid var(--p0); outline-offset: 2px; }
+  #shelf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
+  @media (max-width: 760px) and (min-width: 520px) { #shelf { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+  .bought {
+    min-width: 0; padding: 4px 6px; font: 12px/1.25 var(--type); color: #e9c3d6; background: #1f0c2e; cursor: help;
+    border: 1px solid var(--p4); border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bought.odd { border: 1px dashed var(--p3); }
+  .bought.ren { background: #2b0f2c; }
+  .bought:hover, .bought:focus-visible, .bought.on { color: var(--p0); border-color: var(--p1); box-shadow: 0 0 8px #fe6c9055; outline: none; }
+  @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh { animation: none; } .bar i { transition: none; } #bought summary::before { transition: none; } }
 </style>
 <!-- Libraries from /shared/lib/libs.json, by version. List only what this game imports: the credits tool reads these.
      Strudel's soundfonts import @strudel/core and @strudel/webaudio, which are both inside the @strudel/web bundle. -->
@@ -195,6 +212,7 @@
       <h2>Wares &amp; Wonders <span id="afford"></span></h2>
       <div class="tabs" id="tabs" role="tablist" hidden></div>
       <div id="shop" role="tabpanel"></div>
+      <details id="bought" hidden><summary>Bought · <span id="boughtN">0</span></summary><div id="shelf"></div></details>
       <div id="tip" role="tooltip" hidden></div>
     </aside>
   </div>
@@ -414,6 +432,33 @@ const AMBIENT = [
 ];
 
 // ---------- Shop ----------
+// What the log says when each ware is bought. The Bought shelf shows it again.
+const BUY_LINES = {
+  sign: 'A neon sign: DUCKS. The pier glows pink and the coins come faster.',
+  arms: 'Sepia unties another tentacle from the railing. More paint, more hands.',
+  sac: 'A deeper ink sac. The pot holds more.', gym: 'Squid calisthenics. Very undignified. Very effective.',
+  crab: 'An Apprentice Crab joins, and drops ducklets into the pond whenever it likes.',
+  dredge: 'The pond is dredged. More room, and one very surprised eel.',
+  notary: 'A Night-Shift Notary crab arrives. It stamps whatever Juniper gives it.',
+  lights: 'Pier lights! The front row now dazzles the tourists.',
+  rich: 'Richer ink: some ducklets come out as whole ducks.',
+  tidy: 'The Tidy Tentacle squishes matching ducks while you are not looking.',
+  sign2: '“OPEN LATE.” It was always open late. Now everyone knows.',
+  booth: 'Barnaby opens the Hook-a-Duck Booth. “The bottoms are a mystery even to me.”',
+  sail: 'Sepia paints a tiny sail on one duck. It points out to sea. Sepia looks at it for a long time.',
+  jeff: 'One duck is now named Jeff. Jeff is not a size. Jeff is a feeling.',
+  frame: 'Form 7-B is framed and hung in the shed. The “Will be missed?” box is still blank.',
+  postcard: 'A postcard of somewhere else. Sepia keeps it in the beret, for later.',
+  hat: 'Juniper wears the hat to work. Juniper does not mention the hat. Juniper wears it every day.',
+  shanty: 'Barnaby learns the shanty. It is about leaving. Barnaby sings it wrong on purpose.',
+  pilgrims: 'Pilgrims arrive, clutching postcards, to see the pond where the ducks are born.',
+  pond: 'The Harbour leases you another row of water. Juniper made you fill in a form, of course.',
+  brushes: 'Ancestral brushes, mailed back from far coasts. Two more tentacles, every run.',
+  seal: 'The Seal of Good Standing. Juniper now accepts fewer stamps from you, grudgingly.',
+  apprentices: 'The Apprentice and the Notary will be waiting every time you start again.',
+  marks: 'Lucky marks: twice as many prizes painted under ducks.',
+  ink: 'Ink of the Deep. The pot refills faster, forever.',
+};
 const shop = $('shop');
 const fmt = n => n < 1000 ? String(Math.floor(n)) : n.toLocaleString('en-US', { maximumFractionDigits: 0 });
 function shopItems() {
@@ -502,6 +547,7 @@ function renderShop() {
   }
   if (tabs.length < 2) n = shop.querySelectorAll('button.up.can').length;
   $('afford').textContent = n ? `· ${n} affordable` : '';
+  renderShelf();
 }
 // The upgrade tooltip: beside the row on desktop (the column is on the right), under it on phones.
 let tipFor = null;
@@ -514,18 +560,19 @@ function showTip(b, it) {
   tip.querySelector('small').textContent = it.foot || '';
   tip.querySelector('small').hidden = !it.foot;
   tip.hidden = false;
-  const r = b.getBoundingClientRect(), t = tip.getBoundingClientRect();
-  if (r.left > t.width + 24) {
-    tip.style.left = `${r.left - t.width - 10}px`;
+  // Beside the column, not over it, so the tip never covers the other upgrades.
+  const r = b.getBoundingClientRect(), t = tip.getBoundingClientRect(), col = $('side').getBoundingClientRect();
+  if (col.left > t.width + 24) {
+    tip.style.left = `${col.left - t.width - 10}px`;
     tip.style.top = `${Math.max(8, Math.min(innerHeight - t.height - 8, r.top + r.height / 2 - t.height / 2))}px`;
   } else {
     tip.style.left = `${Math.max(8, Math.min(innerWidth - t.width - 8, r.left))}px`;
     tip.style.top = `${r.bottom + t.height + 14 < innerHeight ? r.bottom + 6 : r.top - t.height - 6}px`;
   }
 }
-function hideTip() { $('tip').hidden = true; tipFor = null; }
+function hideTip() { $('tip').hidden = true; tipFor = null; for (const o of document.querySelectorAll('.bought.on')) o.classList.remove('on'); }
 addEventListener('scroll', hideTip, true);
-document.addEventListener('pointerdown', e => { if (!e.target.closest('.up, .tipped')) hideTip(); });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.up, .tipped, .bought')) hideTip(); });
 // The booth and the Flotilla explain themselves too. On touch, the first tap of the session explains.
 const ACTION_TIPS = {
   hookBtn: () => ({ id: 'hook', name: 'Hook a duck', desc: `Pay Barnaby, hook a duck from the booth, and it lands in an empty spot at the back of your pond: anything from two to five sizes up, as big as Juniper's forms allow. About one in seven is a silly form to stamp instead.`, foot: `${E.boothCost(S)} coins · the price creeps up each hook until your next Flotilla` }),
@@ -542,6 +589,58 @@ for (const [id, tipOf] of Object.entries(ACTION_TIPS)) {
   b.addEventListener('click', e => {
     if (b.dataset.touch && !explained.has(id)) { explained.add(id); showTip(b, tipOf()); e.stopImmediatePropagation(); }
   }, { capture: true });
+}
+
+// ---------- Bought shelf ----------
+// Everything that has left the shop, to reread. One-offs, the booth and postcard wares are kept
+// forever; coin wares only sit here while maxed this run, since a Flotilla puts them back on sale.
+const SHORT = {
+  sail: 'Tiny Sail', jeff: 'Jeff', frame: 'Form 7-B', postcard: 'Postcard', hat: 'Juniper’s Hat', shanty: 'Sea Shanty',
+  booth: 'Hook Booth', pilgrims: 'Pilgrims', pond: 'Harbour Lease', brushes: 'Brushes', seal: 'Seal',
+  apprentices: 'Apprentices', marks: 'Lucky Marks', ink: 'Deep Ink', sign: 'DUCKS Sign', arms: 'Tentacles', sac: 'Ink Sac',
+  gym: 'Calisthenics', crab: 'Crab', dredge: 'Dredge', notary: 'Notary', lights: 'Pier Lights', rich: 'Richer Ink',
+  tidy: 'Tidy Tentacle', sign2: 'OPEN LATE',
+};
+function boughtItems() {
+  const items = [], all = (n, run) => `${n > 1 ? `All ${n} levels bought${run ? ' this run' : ''}. ` : ''}`;
+  for (const o of E.ONEOFFS) if (S.odd[o.id]) items.push({ id: o.id, name: o.name, desc: o.desc, odd: true });
+  if (S.booth) items.push({ id: 'booth', name: 'Hook-a-Duck Booth', desc: 'Barnaby opens a booth. Pay, hook a duck, see what is painted underneath.' });
+  for (const r of E.RENOWN) if (E.rlvl(S, r.id) >= r.cost.length) items.push({ id: r.id, name: r.name, desc: r.desc, ren: true, pre: all(r.cost.length) });
+  for (const u of E.UPGRADES) if (E.lvl(S, u.id) >= u.cost.length) items.push({ id: u.id, name: u.name, desc: u.desc, pre: all(u.cost.length, true) + 'Back in the shop after a Flotilla. ' });
+  return items.map(it => ({ ...it, foot: (it.pre || '') + (BUY_LINES[it.id] || '') }));
+}
+const shelf = $('shelf');
+let shelfSig = '';
+// Whether the shelf is open is a view setting, kept beside the save (di:6:ui) rather than in it.
+const UI_KEY = window.DailyGame ? DailyGame.storageKey('ui') : 'di:6:ui';
+let UI = {};
+try { UI = JSON.parse(localStorage.getItem(UI_KEY)) || {}; } catch (e) {}
+$('bought').open = !!UI.boughtOpen;
+$('bought').addEventListener('toggle', () => {
+  UI.boughtOpen = $('bought').open; if (!UI.boughtOpen) hideTip();
+  try { localStorage.setItem(UI_KEY, JSON.stringify(UI)); } catch (e) {}
+});
+function renderShelf() {
+  const items = S.ended ? [] : boughtItems();
+  const sig = items.map(i => i.id).join('|');
+  if (sig === shelfSig) return;
+  shelfSig = sig;
+  $('bought').hidden = !items.length;
+  $('boughtN').textContent = items.length;
+  shelf.replaceChildren(...items.map(it => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'bought' + (it.odd ? ' odd' : '') + (it.ren ? ' ren' : '');
+    b.dataset.id = it.id; b.textContent = SHORT[it.id] || it.name;
+    b.setAttribute('aria-label', `${it.name} (bought)`); b.setAttribute('aria-describedby', 'tip');
+    const show = () => { for (const o of shelf.children) o.classList.toggle('on', o === b); showTip(b, it); };
+    b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') show(); });
+    b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { b.classList.remove('on'); hideTip(); } });
+    b.addEventListener('focus', show);
+    b.addEventListener('blur', () => { b.classList.remove('on'); hideTip(); });
+    // Nothing to buy here: a tap (or a click, or Enter) just shows what it was.
+    b.addEventListener('click', show);
+    return b;
+  }));
 }
 
 function doBuy(id) {
@@ -601,33 +700,7 @@ function handle(out) {
       }
       case 'buy': {
         sfx.buy();
-        const lines = {
-          sign: 'A neon sign: DUCKS. The pier glows pink and the coins come faster.',
-          arms: 'Sepia unties another tentacle from the railing. More paint, more hands.',
-          sac: 'A deeper ink sac. The pot holds more.', gym: 'Squid calisthenics. Very undignified. Very effective.',
-          crab: 'An Apprentice Crab joins, and drops ducklets into the pond whenever it likes.',
-          dredge: 'The pond is dredged. More room, and one very surprised eel.',
-          notary: 'A Night-Shift Notary crab arrives. It stamps whatever Juniper gives it.',
-          lights: 'Pier lights! The front row now dazzles the tourists.',
-          rich: 'Richer ink: some ducklets come out as whole ducks.',
-          tidy: 'The Tidy Tentacle squishes matching ducks while you are not looking.',
-          sign2: '“OPEN LATE.” It was always open late. Now everyone knows.',
-          booth: 'Barnaby opens the Hook-a-Duck Booth. “The bottoms are a mystery even to me.”',
-          sail: 'Sepia paints a tiny sail on one duck. It points out to sea. Sepia looks at it for a long time.',
-          jeff: 'One duck is now named Jeff. Jeff is not a size. Jeff is a feeling.',
-          frame: 'Form 7-B is framed and hung in the shed. The “Will be missed?” box is still blank.',
-          postcard: 'A postcard of somewhere else. Sepia keeps it in the beret, for later.',
-          hat: 'Juniper wears the hat to work. Juniper does not mention the hat. Juniper wears it every day.',
-          shanty: 'Barnaby learns the shanty. It is about leaving. Barnaby sings it wrong on purpose.',
-          pilgrims: 'Pilgrims arrive, clutching postcards, to see the pond where the ducks are born.',
-          pond: 'The Harbour leases you another row of water. Juniper made you fill in a form, of course.',
-          brushes: 'Ancestral brushes, mailed back from far coasts. Two more tentacles, every run.',
-          seal: 'The Seal of Good Standing. Juniper now accepts fewer stamps from you, grudgingly.',
-          apprentices: 'The Apprentice and the Notary will be waiting every time you start again.',
-          marks: 'Lucky marks: twice as many prizes painted under ducks.',
-          ink: 'Ink of the Deep. The pot refills faster, forever.',
-        };
-        say(lines[ev.id] || `Bought: ${ev.name}.`);
+        say(BUY_LINES[ev.id] || `Bought: ${ev.name}.`);
         if (ev.id === 'booth') showActions();
         break;
       }

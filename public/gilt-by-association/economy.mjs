@@ -241,6 +241,10 @@ export function items(S) {
   return ITEMS.filter(it => !owned(S, it) && (S.seen.includes(it.id) || it.show(S)))
     .map(it => ({ ...it, cost: cost(S, it), l: it.kind === 'deco' ? (S.bought[it.id] || 0) : L(S, it.id) }));
 }
+// The Bought shelf: everything that has left the shop for good (one-offs, the monogram, maxed upgrades).
+export function shelf(S) {
+  return ITEMS.filter(it => owned(S, it)).map(it => ({ ...it, l: it.kind === 'deco' ? (S.bought[it.id] || 0) : L(S, it.id) }));
+}
 export const have = (S, cur) => S[cur];
 
 export function buy(S, id, out = []) {

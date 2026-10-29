@@ -319,6 +319,9 @@ function available(S, id) {
   return false;
 }
 
+// Bought one-offs, in shop order: they leave the board for the Bought shelf.
+export const boughtOneoffs = S => ONEOFFS.filter(o => has(S, o.id)).map(o => o.id);
+
 export const canAfford = (S, id) => { const c = costOf(S, id); return !!c && Object.entries(c).every(([r, v]) => S[r] >= v); };
 export const canBuy = (S, id) => available(S, id) && canAfford(S, id);
 

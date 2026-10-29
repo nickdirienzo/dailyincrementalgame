@@ -267,6 +267,24 @@ export function items(S) {
   return out;
 }
 
+// The Bought shelf: everything that has left the shop for good, in the order the shop lists it.
+// Nothing here ever resets, so it only grows. [{ id, name, desc, kind, l?, max?, ring?, side? }]
+export function bought(S) {
+  const out = [];
+  for (const u of [...UPGRADES, LENS_POLISH, CALL, MIRROR]) {
+    const l = L(S, u.id);
+    const done = l >= u.max || (u.id === 'rota' && S.rota) || (u.id === 'knit' && S.knit);
+    if (done) out.push({ id: u.id, name: u.name, desc: u.desc, kind: u.max > 1 ? 'lvl' : 'one', l: Math.max(l, 1), max: u.max });
+  }
+  for (const o of ONEOFFS) if (S.odd[o.id]) out.push({ id: o.id, name: o.name, desc: o.desc, kind: 'odd' });
+  for (let r = 1; r < RINGS.length; r++) {
+    const side = S.lens[r];
+    if (side !== 'a' && side !== 'b') continue;
+    out.push({ id: `r${r}${side}`, name: RINGS[r][side][0], desc: RINGS[r][side][1], kind: 'lens', ring: r, side });
+  }
+  return out;
+}
+
 export function buy(S, id, out = []) {
   const it = items(S).find(i => i.id === id);
   if (!it) return false;

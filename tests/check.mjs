@@ -21,7 +21,7 @@ import { serve } from '../tools/serve.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = path.join(ROOT, 'public');
-const SHOTS = path.join(ROOT, 'tests', 'screenshots');
+const SHOTS = process.env.SHOTS ? path.resolve(process.env.SHOTS) : path.join(ROOT, 'tests', 'screenshots');
 const DESKTOP = { width: 1280, height: 900 };
 const CARDS = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'cards.json'), 'utf8'));
 const PHONE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 };
@@ -35,7 +35,12 @@ function check(name, ok, detail = '') {
 // Opens a page that records console errors, uncaught exceptions and requests to other sites.
 async function open(browser, url, { ctx = { viewport: DESKTOP }, storage = null } = {}) {
   const context = await browser.newContext(ctx);
-  if (storage) await context.addInitScript(s => { for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); }, storage);
+  // Seeded on the tab's first load only, so a reload sees what the game saved since.
+  if (storage) await context.addInitScript(s => {
+    if (sessionStorage.getItem('di-seeded')) return;
+    sessionStorage.setItem('di-seeded', '1');
+    for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v);
+  }, storage);
   const page = await context.newPage();
   const errors = [];
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
@@ -198,6 +203,21 @@ async function checkGame(browser, base, game) {
       .filter(b => b.getBoundingClientRect().bottom > innerHeight)
       .map(b => (b.id || b.textContent.trim()).slice(0, 30)));
     check('play-area buttons are above the fold (mid-game save)', low.length === 0, low.join(', '));
+    // The Bought shelf (CLAUDE.md): closed, opens to a tile per bought one-off, and stays open.
+    const shelf = page.locator('details#bought');
+    if (await shelf.count() && await shelf.isVisible()) {
+      check('Bought shelf starts closed', !(await shelf.evaluate(d => d.open)));
+      await shelf.locator('summary').click();
+      await page.waitForTimeout(200);
+      const tiles = await visibleCount(page, '#bought button.bought');
+      check('Bought shelf opens to its tiles', tiles > 0, `${tiles} tiles`);
+      await page.locator('#bought button.bought').first().hover();
+      await page.waitForTimeout(200);
+      await shot(page, `${slug}-bought.png`);
+      await page.reload({ waitUntil: 'load' });
+      await page.waitForTimeout(800);
+      check('Bought shelf remembers it was open', await page.locator('details#bought').evaluate(d => d.open));
+    } else console.log('  --   no Bought shelf at the mid-game save');
     await shot(page, `${slug}-midgame.png`, true);
     check('no console errors (mid-game save)', errors.length === 0, errors.join(' | '));
     await context.close();

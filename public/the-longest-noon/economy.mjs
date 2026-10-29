@@ -210,4 +210,7 @@ export function fmt(n) {
   return String(n);
 }
 
+// The Bought shelf: one-time upgrades you own, plus repeatables you've maxed (they left the shop too).
+export const bought = S => UPGRADES.filter(u => maxed(S, u));
+
 export const fmtCost = (S, u) => Object.entries(costOf(S, u)).map(([r, v]) => `${fmt(v)} ${r}`).join(' + ');

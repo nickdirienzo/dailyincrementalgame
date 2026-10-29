@@ -101,6 +101,28 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 8 / 5; touch-a
 .item .cost { font-family: var(--mono); font-weight: 700; color: var(--slime-ink); font-size: 13px; }
 .item.fresh { border-color: var(--wax); animation: fresh 1.1s ease-in-out 4; }
 @keyframes fresh { 50% { box-shadow: 0 0 0 4px rgba(184,64,47,.18); } }
+/* Bought shelf: finished upgrades, kept like pressed keepsakes so their jokes can be reread. */
+.shelf { border-top: 1.5px dashed var(--edge); padding-top: 8px; }
+.shelf summary { cursor: pointer; font-family: var(--display); font-size: 18px; color: var(--sepia); list-style: none; display: block; border-radius: 6px; }
+.shelf summary::-webkit-details-marker { display: none; }
+.shelf summary::before { content: '▸'; font-family: var(--body); font-size: 12px; color: var(--faded); transition: transform .15s; display: inline-block; margin-right: 6px; }
+.shelf[open] summary::before { transform: rotate(90deg); }
+.shelf summary:hover { color: var(--ink); }
+.shelf summary:focus-visible { outline: 2px solid var(--slime-ink); outline-offset: 2px; }
+.shelf-tiles { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.bought {
+  all: unset; box-sizing: border-box; cursor: help; max-width: 100%;
+  padding: 3px 9px; border: 1.5px solid var(--edge); border-radius: 999px; background: var(--paper-2);
+  font-size: 12px; font-weight: 800; color: var(--sepia); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: border-color .15s, color .15s;
+}
+.bought.silly { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 14px; padding-block: 1px; }
+.bought .lvl { font-family: var(--mono); font-weight: 400; font-style: normal; font-size: 11px; color: var(--faded); margin-left: 4px; }
+.bought:hover, .bought.on { border-color: var(--slime-ink); color: var(--ink); }
+.bought:focus-visible { outline: 2px solid var(--slime-ink); outline-offset: 2px; }
+.shelf-info { margin: 8px 0 0; padding: 8px 10px; border-radius: 6px; background: var(--paper-2); border: 1px solid var(--edge); font-size: 13px; color: var(--sepia); min-height: 3.2em; }
+.shelf-info b { color: var(--ink); font-weight: 800; }
+.shelf-info .joke { display: block; margin-top: 3px; font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink); }
 
 .ending { border: 2px solid var(--slime-ink); border-radius: 8px; background: var(--paper-2); padding: 22px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 .ending h2 { font-family: var(--display); font-weight: 400; font-size: 30px; margin: 0; text-wrap: balance; line-height: 1.1; }
@@ -116,7 +138,7 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 8 / 5; touch-a
   .side { position: static; max-height: none; overflow: visible; }
   .shop { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 }
-@media (prefers-reduced-motion: reduce) { .item.fresh { animation: none; } .bar i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .item.fresh { animation: none; } .bar i { transition: none; } .shelf summary::before, .bought { transition: none; } }
 </style>
 <script src="/shared/daily.js" data-day="3"></script>
 </head>
@@ -155,6 +177,11 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 8 / 5; touch-a
       <h2 class="side-h">Upgrades <span id="afford"></span></h2>
       <div class="shop" id="shop"></div>
       <p class="hint" id="shopEmpty">Stir up a few maps. Ways to send them out will show up here.</p>
+      <details class="shelf" id="bought" hidden>
+        <summary>Bought · <span id="boughtN">0</span></summary>
+        <div class="shelf-tiles" id="shelfTiles"></div>
+        <p class="shelf-info" id="shelfInfo" aria-live="polite"></p>
+      </details>
     </aside>
   </div>
 </div>
@@ -302,7 +329,7 @@ addEventListener('keydown', Snd.unlock, { capture: true });
 
 // ---------- State ----------
 const KEY = window.DailyGame ? DailyGame.storageKey('save') : 'di:3:save';
-const fresh = () => ({ maps: 0, total: 0, sent: 0, owned: {}, seen: {}, stirs: 0, perfects: 0, golds: 0, time: 0, ended: false });
+const fresh = () => ({ maps: 0, total: 0, sent: 0, owned: {}, seen: {}, stirs: 0, perfects: 0, golds: 0, time: 0, ended: false, shelfOpen: false, lastBuy: null });
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch (e) {}
 S.owned = S.owned || {}; S.seen = S.seen || {};
@@ -443,7 +470,32 @@ const IDLE_LINES = [
 ];
 function lineFor(u) { const l = BUY_LINES[u.id]; return Array.isArray(l) ? l[Math.min(lvl(S, u) - 1, l.length - 1)] : l; }
 
-const buttons = {};
+const buttons = {}, tiles = {};
+const shelfEl = document.getElementById('bought'), shelfTiles = document.getElementById('shelfTiles'), shelfInfo = document.getElementById('shelfInfo');
+shelfEl.open = !!S.shelfOpen;
+shelfEl.addEventListener('toggle', () => { if (S.shelfOpen !== shelfEl.open) { S.shelfOpen = shelfEl.open; save(); } });
+// The shelf's details line: name, what it did, and the joke from when it was bought.
+function showShelf(u) {
+  for (const id in tiles) tiles[id].classList.toggle('on', id === u.id);
+  shelfInfo.textContent = '';
+  const n = document.createElement('b'); n.textContent = u.name + (once(u) ? '' : ` (${lvl(S, u)}/${u.max})`);
+  const j = document.createElement('span'); j.className = 'joke'; j.textContent = lineFor(u);
+  shelfInfo.append(n, ' · ' + u.desc, j);
+}
+let shelfShown = -1;
+function refreshShelf() {
+  let n = 0, last = null;
+  for (const u of UP) {
+    const t = tiles[u.id]; if (!t) continue;
+    t.hidden = S.ended || !maxed(S, u);
+    if (!t.hidden) { n++; last = u; }
+  }
+  shelfEl.hidden = !n;   // nothing on the shelf until the first purchase (and the ending clears the column)
+  if (n === shelfShown) return;
+  shelfShown = n;
+  document.getElementById('boughtN').textContent = n;
+  if (n) showShelf(UP.find(u => u.id === S.lastBuy && tiles[u.id] && !tiles[u.id].hidden) || last);
+}
 for (const u of UP) {
   const b = document.createElement('button');
   b.type = 'button'; b.className = 'item' + (u.kind === 'silly' ? ' silly' : '') + (u.kind === 'final' ? ' final' : '');
@@ -454,11 +506,20 @@ for (const u of UP) {
   b.addEventListener('click', () => buy(u));
   b.addEventListener('pointerenter', () => { if (b.dataset.fresh) b.classList.remove('fresh'); });
   shopEl.appendChild(b); buttons[u.id] = b;
+  if (u.kind === 'final') continue;   // buying the finale ends the game, so it never sits on the shelf
+  const t = document.createElement('button');
+  t.type = 'button'; t.className = 'bought' + (u.kind === 'silly' ? ' silly' : ''); t.hidden = true;
+  t.textContent = u.name.length > 22 ? u.name.slice(0, 20).trimEnd() + '…' : u.name;
+  t.title = u.name;
+  if (!once(u)) { const l = document.createElement('span'); l.className = 'lvl'; l.textContent = `${u.max}/${u.max}`; t.appendChild(l); }
+  const show = () => showShelf(u);
+  t.addEventListener('pointerenter', show); t.addEventListener('focus', show); t.addEventListener('click', show);
+  shelfTiles.appendChild(t); tiles[u.id] = t;
 }
 function buy(u) {
   if (S.ended || finaleT >= 0 || maxed(S, u)) return;
   const c = price(S, u); if (S.maps < c) return;
-  S.maps -= c; S.sent += c; S.owned[u.id] = lvl(S, u) + 1;
+  S.maps -= c; S.sent += c; S.owned[u.id] = lvl(S, u) + 1; S.lastBuy = u.id;
   const b = buttons[u.id]; b.classList.remove('fresh'); delete b.dataset.fresh;
   if (u.kind === 'final') { startFinale(); refreshShop(); return; }
   if (u.kind === 'silly') Snd.silly(); else Snd.buy(lvl(S, u));
@@ -489,6 +550,7 @@ function refreshShop() {
     lv.classList.toggle('new', !!b.dataset.fresh);
     b.querySelector('.cost').textContent = fmt(c) + ' maps';
   }
+  refreshShelf();
   document.getElementById('afford').textContent = S.ended || !affordable ? '' : affordable + ' ready';
   const empty = document.getElementById('shopEmpty');
   empty.hidden = any && !S.ended;
@@ -563,6 +625,7 @@ document.getElementById('shareBtn').addEventListener('click', () => window.Daily
 document.getElementById('again').addEventListener('click', () => {
   S = fresh(); finaleT = -1; shownFriends = 0; arrivals.length = 0; crowd.length = 0; gold = null; goldNext = GOLD_FIRST;
   for (const id in buttons) { buttons[id].classList.remove('fresh'); delete buttons[id].dataset.fresh; }
+  shelfEl.open = false; shelfShown = -1;
   save(); document.getElementById('ending').hidden = true;
   say('A fresh sheet of parchment. Gloop is alone again, but it knows the trick now.', true);
   refreshShop(); paintStats();

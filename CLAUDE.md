@@ -72,6 +72,12 @@ Every game should have these bones:
     its upgrades are affordable and a dot when something new turned up behind it, and the heading
     still counts everything. Switching tabs isn't hiding: every revealed upgrade is one tap away,
     and the open tab is saved.
+  - Bought one-time upgrades leave the shop for a Bought shelf at the bottom of the column, so
+    players can reread them (the silly ones especially). It's a `<details id="bought">` whose
+    `<summary>` reads "Bought · N", closed by default and hidden until the first purchase, with its
+    open state saved. Inside, small tiles in the game's look (`<button class="bought">`, a sprite
+    or a trimmed name, the silly marker kept) open the same tooltip as the shop with the name,
+    what it did and the purchase joke. On touch one tap shows it; there's nothing to buy.
 - **Straightforward.** One core action you get within five seconds. No tutorial walls.
 - **Fairly cute.** A small premise with a character or two and a joke or two. Flavor text in a
   log line under the play area.

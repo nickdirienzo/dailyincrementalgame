@@ -125,13 +125,32 @@
   }
   #tip b { display: block; font: 400 16px var(--head); color: var(--coral); margin-bottom: 2px; }
   #tip small { display: block; margin-top: 5px; font-size: 12px; color: var(--mauve); }
+  /* On phones a Bought tile's tip opens in place under the shelf, so it never covers the shop. */
+  #tip.inline { position: static; width: auto; margin-top: 10px; }
+  #tip i { display: block; margin-top: 6px; font-style: normal; font-size: 13px; color: var(--plum); border-top: 1.5px dashed #ab567566; padding-top: 5px; }
+  /* The Bought shelf: everything that left the shop, small felt scraps to reread. */
+  #bought { margin: 14px 0 2px; }
+  #bought summary { display: flex; align-items: center; gap: 6px; font: 400 15px var(--head); color: var(--pink); cursor: pointer; list-style: none;
+                    padding: 5px 10px; border-radius: 10px; box-shadow: inset 0 0 0 1.5px #ffe7d633; }
+  #bought summary::-webkit-details-marker { display: none; }
+  #bought summary::before { content: "\25B8"; color: var(--yellow); transition: transform .2s; }
+  #bought[open] summary::before { transform: rotate(90deg); }
+  #bought summary:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+  .shelf { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .bought { max-width: 100%; font: 400 12px/1.2 var(--head); color: var(--cream); background: #5a3439; border: 0; border-radius: 8px; padding: 5px 9px;
+            cursor: help; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: inset 0 0 0 1.5px #ffe7d633; }
+  .bought.odd { box-shadow: none; outline: 1.5px dashed #ffe7d677; outline-offset: -3px; }
+  .bought.lens { background: #2f5458; }
+  .bought:hover, .bought.on { color: var(--yellow); box-shadow: inset 0 0 0 1.5px var(--yellow); }
+  .bought.odd:hover, .bought.odd.on { outline-color: var(--yellow); }
+  .bought:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
   #ending { margin: 26px auto 10px; max-width: 660px; text-align: center; padding: 22px; }
   #ending h2 { font: 800 40px/1.1 var(--head); margin: 0 0 10px; color: var(--yellow); text-shadow: 2px 3px 0 var(--mauve); }
   #ending p { margin: 8px 0; }
   #ending .entry { display: inline-block; margin: 10px 0 14px; padding: 10px 18px; background: var(--cream); color: var(--plum); border-radius: 8px; transform: rotate(-1.5deg); font-size: 14px; }
   #ending .entry b { font: 400 18px var(--head); color: var(--coral); }
   #ending .btn { text-align: center; }
-  @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh, .btn.ring { animation: none; } .bar i { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh, .btn.ring { animation: none; } .bar i, #bought summary::before { transition: none; } }
 </style>
 <!-- Libraries from /shared/lib/libs.json, by version. List only what this game imports: the credits tool reads these.
      Strudel's soundfonts import @strudel/core and @strudel/webaudio, which are both inside the @strudel/web bundle. -->
@@ -190,6 +209,7 @@
       <h2>Workshop <span id="afford"></span></h2>
       <div class="tabs" id="tabs" role="tablist" hidden></div>
       <div id="shop" role="tabpanel"></div>
+      <details id="bought" hidden><summary>Bought · <span id="boughtN">0</span></summary><div class="shelf" id="shelf"></div></details>
       <div id="tip" role="tooltip" hidden></div>
     </aside>
   </div>
@@ -623,6 +643,7 @@ function renderShop() {
   }
   if (tabs.length < 2) n = all.filter(i => have(i.cur) >= i.cost).length;
   $('afford').textContent = n ? `· ${n} affordable` : '';
+  renderShelf();
 }
 let tipFor = null;
 function upTip(it) {
@@ -634,12 +655,19 @@ function upTip(it) {
 }
 function showTip(b, it) {
   const tip = $('tip'); tipFor = it.id;
-  tip.innerHTML = '<b></b><span></span><small></small>';
+  tip.innerHTML = '<b></b><span></span><i></i><small></small>';
   tip.querySelector('b').textContent = it.name;
   tip.querySelector('span').textContent = it.desc;
+  tip.querySelector('i').textContent = it.joke || '';
+  tip.querySelector('i').hidden = !it.joke;
   tip.querySelector('small').textContent = it.foot || '';
   tip.querySelector('small').hidden = !it.foot;
+  const inline = !!it.inline && innerWidth <= 760;
+  tip.classList.toggle('inline', inline);
+  if (!it.inline) for (const o of document.querySelectorAll('.bought.on')) o.classList.remove('on');
+  if (inline) { if (tip.previousElementSibling !== $('shelf')) $('shelf').after(tip); } else if (tip.parentElement !== $('side')) { $('side').append(tip); tipMoved = performance.now(); }
   tip.hidden = false;
+  if (inline) { tip.style.left = tip.style.top = ''; tip.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' }); return; }
   const r = b.getBoundingClientRect(), t = tip.getBoundingClientRect();
   if (r.left > t.width + 24 && innerWidth > 760) {
     const col = $('side').getBoundingClientRect();
@@ -650,9 +678,20 @@ function showTip(b, it) {
     tip.style.top = `${r.bottom + t.height + 14 < innerHeight ? r.bottom + 6 : r.top - t.height - 6}px`;
   }
 }
-function hideTip() { $('tip').hidden = true; tipFor = null; }
-addEventListener('scroll', hideTip, true);
-document.addEventListener('pointerdown', e => { if (!e.target.closest('.up, .tipped')) hideTip(); });
+// A Bought tip shown in place (phones) stays as a details box under the shelf until something else
+// takes the tip, its tile is tapped again or the shelf closes: hiding it mid-tap would shift the page
+// under the finger.
+function hideTip(force) {
+  const tip = $('tip');
+  if (tip.classList.contains('inline') && force !== true) return;
+  tip.hidden = true; tip.classList.remove('inline'); tipFor = null;
+  for (const b of document.querySelectorAll('.bought.on')) b.classList.remove('on');
+}
+// Moving the tip out of the shelf shortens the page, and the scroll that follows isn't the player's.
+let tipMoved = 0;
+addEventListener('scroll', () => { if (performance.now() - tipMoved > 400) hideTip(); }, true);
+addEventListener('resize', () => { if (innerWidth > 760) hideTip(true); });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.up, .tipped, .bought')) hideTip(); });
 // The bell and the Thaw explain themselves too. On touch, the first tap of the session explains.
 const ACTION_TIPS = {
   bellBtn: () => ({ id: 'bell', name: 'The shift bell', desc: 'The Wool Folk don\'t notice dawn or dusk. Ring the bell and they swap to the other shift: Nets and Lamp at night, Cellar and Beach by day. Set the splits with the sliders under the scene.', foot: E.bellNeeded(S) ? (E.isNight(S) ? 'It\'s night and they\'re still on the day shift.' : 'It\'s day and they\'re still on the night shift.') : 'Everyone\'s on the right shift.' }),
@@ -693,6 +732,52 @@ const BUY_LINES = {
   mirror: 'Silvered felt behind the lamp. It shouldn\'t reflect anything. It reflects everything.',
   call: 'Long, short, long. Comets are drawn to bright things, and they come down in bigger clumps to see what\'s flashing.',
 };
+// ---------- The Bought shelf ----------
+// Everything that has left the shop, to reread. Same tooltip as the shop; nothing to buy.
+const shelfEl = $('bought');
+// Open or closed is a view preference, kept beside the save (di:7:ui) so a reload or a pasted save code keeps it.
+const UI_KEY = window.DailyGame ? DailyGame.storageKey('ui') : 'di:7:ui';
+let ui = {};
+try { ui = JSON.parse(localStorage.getItem(UI_KEY) || '{}') || {}; } catch (e) {}
+shelfEl.open = !!ui.bought;
+shelfEl.addEventListener('toggle', () => {
+  if (!shelfEl.open) hideTip(true);
+  if (!!ui.bought === shelfEl.open) return;
+  ui.bought = shelfEl.open;
+  try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (e) {}
+});
+const shortName = n => n.replace(/^(The|A|An) /, '');
+function boughtTip(it) {
+  let foot = 'Bought';
+  if (it.kind === 'lvl') foot += ` · all ${it.max} levels`;
+  if (it.kind === 'lens') { const other = E.RINGS[it.ring][it.side === 'a' ? 'b' : 'a'][0]; foot = `In lens ring ${RING_NUM[it.ring]} · chosen over the ${other}`; }
+  return { id: 'bought:' + it.id, name: it.name, desc: it.desc, joke: it.kind === 'lens' ? '' : BUY_LINES[it.id] || '', foot, inline: true };
+}
+let shelfSig = null;
+function renderShelf() {
+  const list = S.ended ? [] : E.bought(S);
+  const sig = list.map(i => i.id).join('|');
+  if (sig === shelfSig) return;
+  shelfSig = sig;
+  shelfEl.hidden = !list.length;
+  $('boughtN').textContent = list.length;
+  $('shelf').replaceChildren(...list.map(it => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'bought' + (it.kind === 'odd' ? ' odd' : '') + (it.kind === 'lens' ? ' lens' : '');
+    b.textContent = shortName(it.name); b.dataset.id = it.id;
+    b.setAttribute('aria-describedby', 'tip');
+    const show = () => { hideTip(true); b.classList.add('on'); showTip(b, boughtTip(it)); };
+    b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') show(); });
+    b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+    b.addEventListener('focus', () => { if (!b.dataset.touch) show(); });
+    b.addEventListener('blur', hideTip);
+    b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+    // One tap shows it; tapping it again puts it away.
+    b.addEventListener('click', () => { if (tipFor === 'bought:' + it.id && b.dataset.touch) hideTip(true); else show(); });
+    return b;
+  }));
+}
+
 function doBuy(id) {
   const out = [];
   if (!E.buy(S, id, out)) { sfx.deny(); return; }

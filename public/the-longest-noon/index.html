@@ -74,8 +74,9 @@
   .bar { margin-top: 6px; height: 14px; background: var(--p0); border: 2px solid var(--lead); position: relative; overflow: hidden; }
   .bar i { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(90deg, var(--p6) 0 18px, var(--p5) 18px 20px); transition: width .6s ease; }
 
-  aside { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 8px; }
-  @media (max-width: 760px) { aside { position: static; } }
+  /* Sticky, never taller than the window: with the Bought shelf open the column scrolls on its own. */
+  aside { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 24px); overflow-y: auto; padding: 3px; margin: -3px; scrollbar-width: thin; scrollbar-color: var(--p3) transparent; }
+  @media (max-width: 760px) { aside { position: static; max-height: none; overflow: visible; } }
   aside h2 { margin: 0; font: 400 24px/1.1 var(--display); color: var(--p7); display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
   #afford { font: italic 14px var(--fell); color: var(--p5); }
   .shopnote { margin: 0; font: italic 14px/1.35 var(--fell); color: var(--p4); }
@@ -98,6 +99,27 @@
   .up .tag { position: absolute; top: -9px; right: 8px; padding: 1px 7px; font: 12px/1.4 var(--fell); background: var(--p7); color: var(--p0); border: 2px solid var(--lead); border-radius: 2px; }
   .up.new { animation: pulse 1.6s ease-in-out 3; }
   @keyframes pulse { 50% { box-shadow: 0 0 0 3px var(--p6), 0 0 18px rgba(230,206,172,.35); } }
+
+  /* The Bought shelf: a leaded case at the foot of the column, small panes you can reread. */
+  #bought { background: var(--p1); border: 2px solid var(--lead); outline: 1px solid var(--p2); border-radius: 3px; }
+  #bought summary { cursor: pointer; padding: 6px 11px; font: 16px/1.3 var(--fell); color: var(--p6); list-style: none; display: flex; justify-content: space-between; gap: 8px; }
+  #bought summary::-webkit-details-marker { display: none; }
+  #bought summary::after { content: "\25B8"; color: var(--p4); }
+  #bought[open] summary::after { content: "\25BE"; }
+  #bought summary:focus-visible { outline: 2px solid var(--p7); outline-offset: 2px; }
+  .shelf { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 10px 8px; max-height: 132px; overflow-y: auto; }
+  .bought {
+    all: unset; box-sizing: border-box; cursor: help; padding: 3px 8px; max-width: 100%;
+    font: 13px/1.3 var(--fell); color: var(--p6); background: var(--p2);
+    border: 2px solid var(--lead); outline: 1px solid var(--p3); border-radius: 6px 6px 2px 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bought.silly::after { content: " ✦"; color: var(--p4); }
+  .bought:hover, .bought.on { background: var(--p3); color: var(--p7); outline-color: var(--p5); }
+  .bought:focus-visible { outline: 2px solid var(--p7); outline-offset: 2px; }
+  .shelfnote { margin: 0; padding: 8px 11px 10px; border-top: 2px solid var(--lead); font: 14px/1.35 var(--body); color: var(--p5); min-height: 4.2em; }
+  .shelfnote b { display: block; font: 400 16px/1.2 var(--fell); color: var(--p7); }
+  .shelfnote i { display: block; margin-top: 3px; font: italic 14px/1.35 var(--fell); color: var(--p6); }
 
   #ending { padding: 20px; background: var(--p1); border: 3px solid var(--lead); outline: 2px solid var(--p3); border-radius: 4px; display: flex; flex-direction: column; gap: 10px; }
   #ending h2 { margin: 0; font: 400 36px/1 var(--display); color: var(--p7); }
@@ -146,6 +168,11 @@
       <h2>The Camel's Shop <span id="afford"></span></h2>
       <p class="shopnote" id="shopnote">The camel who signed for you is open for business. It has been open for forty-one days.</p>
       <div id="shop"></div>
+      <details id="bought" hidden>
+        <summary><span>Bought · <span id="boughtN">0</span></span></summary>
+        <div class="shelf" id="shelf"></div>
+        <p class="shelfnote" id="shelfnote" aria-live="polite"></p>
+      </details>
     </aside>
   </div>
   <section id="ending" hidden>
@@ -635,7 +662,52 @@ function refreshShop() {
   let n = 0;
   for (const b of shop.children) { const can = E.canBuy(S, E.BY_ID[b.dataset.id]); b.classList.toggle('can', can); b.setAttribute('aria-disabled', String(!can)); n += can; }
   $('afford').textContent = n ? `${n} affordable` : '';
+  refreshShelf();
 }
+// ---------- The Bought shelf: everything that left the shop, to reread ----------
+const shelfEl = $('bought'), shelf = $('shelf'), shelfNote = $('shelfnote');
+let shelfKey = '', shelfPick = null;
+const trimName = n => n.replace(/^(Great Oak: |Hire an? |Shade for an? |Tame an? |An? |The )/, '');
+function shelfShow(u) {
+  if (!u) { shelfNote.textContent = 'Point at something you bought to reread it.'; return; }
+  const lvl = u.max > 1 ? ` (${u.max}/${u.max})` : '';
+  shelfNote.innerHTML = '<b></b><span></span><i></i>';
+  shelfNote.querySelector('b').textContent = u.name + lvl + (u.silly ? ' ✦' : '');
+  shelfNote.querySelector('span').textContent = curl(u.desc);
+  shelfNote.querySelector('i').textContent = curl(u.who);
+}
+function shelfMark(id) { for (const t of shelf.children) t.classList.toggle('on', t.dataset.id === id); }
+function refreshShelf() {
+  const got = E.bought(S);
+  const key = got.map(u => u.id).join(',');
+  if (key === shelfKey) return;
+  shelfKey = key;
+  shelfEl.hidden = got.length === 0;
+  $('boughtN').textContent = got.length;
+  shelf.replaceChildren(...got.map(u => {
+    const t = document.createElement('button');
+    t.type = 'button'; t.className = 'bought' + (u.silly ? ' silly' : ''); t.dataset.id = u.id;
+    t.textContent = trimName(u.name); t.setAttribute('aria-label', u.name);
+    const show = () => { shelfShow(u); shelfMark(u.id); };
+    t.addEventListener('pointerenter', show);
+    t.addEventListener('focus', show);
+    t.addEventListener('click', () => { shelfPick = u.id; show(); });
+    return t;
+  }));
+  const pick = got.find(u => u.id === shelfPick) || got[got.length - 1];
+  shelfShow(pick); shelfMark(pick && pick.id);
+}
+shelf.addEventListener('pointerleave', e => {
+  if (e.pointerType !== 'mouse') return;
+  const got = E.bought(S), u = got.find(x => x.id === shelfPick) || got[got.length - 1];
+  shelfShow(u); shelfMark(u && u.id);
+});
+// Its open state is a view setting, kept beside the save rather than in it.
+const UI_KEY = window.DailyGame ? DailyGame.storageKey('ui') : 'di:4:ui';
+let UI = {};
+try { UI = JSON.parse(localStorage.getItem(UI_KEY)) || {}; } catch (e) {}
+shelfEl.open = !!UI.shelf;
+shelfEl.addEventListener('toggle', () => { UI.shelf = shelfEl.open; try { localStorage.setItem(UI_KEY, JSON.stringify(UI)); } catch (e) {} });
 function purchase(id) {
   const u = E.BY_ID[id], before = S.phase;
   if (!E.buy(S, id)) return;

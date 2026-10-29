@@ -138,11 +138,32 @@
   .up.tile.new::before { content: ""; position: absolute; top: 4px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--p5); }
   .up.tile.peeked { box-shadow: inset 0 0 0 1px var(--p5); }
   /* Whatever you're pointing at, in full. */
-  #peek { padding: 8px 11px; min-height: 76px; display: flex; flex-direction: column; gap: 2px; }
-  #peek b { font: 400 15px/1.25 var(--type); color: var(--p5); }
-  #peek .cost, #peek .fx { font: 12.5px/1.3 var(--type); color: var(--p4); }
-  #peek .desc { font: 13px/1.35 var(--body); color: var(--p4); }
-  #peek .hint { font: italic 12.5px/1.3 var(--body); color: var(--p3); }
+  .peek { padding: 8px 11px; min-height: 76px; display: flex; flex-direction: column; gap: 2px; }
+  .peek b { font: 400 15px/1.25 var(--type); color: var(--p5); }
+  .peek .cost, .peek .fx { font: 12.5px/1.3 var(--type); color: var(--p4); }
+  .peek .desc { font: 13px/1.35 var(--body); color: var(--p4); }
+  .peek .joke { font: 13px/1.35 var(--type); color: var(--p5); opacity: .9; border-left: 2px solid var(--p3); padding-left: 8px; margin-top: 3px; }
+  .peek .hint { font: italic 12.5px/1.3 var(--body); color: var(--p3); }
+  /* The Bought shelf: everything you've bought off the board, to reread. Nothing on it is for sale. */
+  #bought { margin-top: 2px; }
+  #bought summary { cursor: pointer; list-style: none; padding: 4px 2px; font: 14px/1.3 var(--type); color: var(--p4); letter-spacing: .04em;
+                    border-top: 1px dashed rgba(105,128,158,.35); }
+  #bought summary::-webkit-details-marker { display: none; }
+  #bought summary::before { content: "▸"; display: inline-block; width: 1.1em; color: var(--p3); transition: transform .2s ease; }
+  #bought[open] summary::before { transform: rotate(90deg); }
+  #bought summary:hover { color: var(--p5); }
+  #bought summary:focus-visible { outline: 2px solid var(--p5); outline-offset: 2px; border-radius: 4px; }
+  #shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; margin: 4px 0 8px; }
+  .up.tile.bought { min-height: 48px; padding: 4px 2px 3px; cursor: help; background: rgba(63,44,95,.55);
+                    box-shadow: inset 0 0 0 1px rgba(105,128,158,.16), inset 0 0 12px rgba(42,23,59,.6); }
+  .up.tile.bought img, .up.tile.bought .glyph { width: 28px; height: 24px; opacity: .7; }
+  .up.tile.bought .glyph { font-size: 19px; line-height: 24px; }
+  .up.tile.bought small { max-width: 100%; padding: 0 3px; font-size: 10px; line-height: 1.1; color: var(--p4); text-align: center; white-space: normal;
+                          overflow-wrap: anywhere; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+  .up.tile.bought:hover, .up.tile.bought.peeked { background: var(--p2); }
+  .up.tile.bought:hover img, .up.tile.bought.peeked img, .up.tile.bought:hover .glyph, .up.tile.bought.peeked .glyph { opacity: 1; }
+  .up.tile.bought.peeked { box-shadow: inset 0 0 0 1px var(--p5); }
+  #boughtPeek { min-height: 0; margin-top: 4px; }
   /* Things you buy many of: one line each. */
   .up.row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 0 10px; padding: 6px 10px; align-items: baseline; }
   .up.row .name { font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -180,7 +201,7 @@
   #shareBtn:focus-visible, #againBtn:focus-visible { outline: 2px solid var(--p5); outline-offset: 3px; }
   #againBtn { background: transparent; color: var(--p5); box-shadow: inset 0 0 0 2px var(--p5); }
 
-  @media (prefers-reduced-motion: reduce) { .up.new, .goalbtn.new, .log.fresh { animation: none; } .bar i { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .up.new, .goalbtn.new, .log.fresh { animation: none; } .bar i, #bought summary::before { transition: none; } }
 </style>
 <script type="importmap">
 { "imports": {
@@ -237,10 +258,15 @@
       <p class="shopnote" id="shopnote" hidden></p>
       <div id="shop">
         <div id="tiles"></div>
-        <div id="peek" class="wash" hidden></div>
+        <div id="peek" class="wash peek" hidden></div>
         <div class="tabs" id="tabs" role="tablist" hidden></div>
         <div id="many" role="tabpanel"></div>
       </div>
+      <details id="bought" hidden>
+        <summary>Bought · <span id="boughtN">0</span></summary>
+        <div id="boughtPeek" class="wash peek" aria-live="polite"></div>
+        <div id="shelf"></div>
+      </details>
     </aside>
   </div>
   <section id="ending" class="wash" hidden>
@@ -1292,7 +1318,79 @@ function refreshShop() {
   $('afford').textContent = n ? `${n} affordable` : '';
   if (!S.ended) { $('shopnote').hidden = vis.length > 0; $('shopnote').textContent = 'Chalked on a crate lid. Fitch takes lemons. Later he takes other things.'; }
   renderPeek(vis);
+  refreshShelf();
 }
+// ---------- The Bought shelf: one-offs you've bought, to reread. Pointing or tapping shows; nothing buys. ----------
+const shelfBox = $('bought'), shelf = $('shelf'), shelfPeek = $('boughtPeek');
+let shelfKey = '', shelfId = null, shelfShown = '';
+// Open or closed is a view preference, kept beside the save (still under di:5:, so save codes carry it).
+const UI_KEY = window.DailyGame ? DailyGame.storageKey('ui') : 'di:5:ui';
+let UI = {};
+try { UI = JSON.parse(localStorage.getItem(UI_KEY)) || {}; } catch (e) {}
+shelfBox.open = !!UI.shelfOpen;
+shelfBox.addEventListener('toggle', () => {
+  if (!!UI.shelfOpen !== shelfBox.open) {
+    UI.shelfOpen = shelfBox.open;
+    try { localStorage.setItem(UI_KEY, JSON.stringify(UI)); } catch (e) {}
+  }
+  refreshShelf();
+});
+// What it did, for the ones whose effect isn't a multiplier.
+function boughtFx(u) {
+  if (u.unlock) return `unlocked ${u.unlock}`;
+  if (u.auto) return `the machine pulls itself every ${Math.round(1 / u.auto)} s`;
+  return effectText(u) || (u.silly ? 'no effect, just the story' : '');
+}
+const trimName = n => n.replace(/^(A|An|The) /, '').replace(/^\w/, c => c.toUpperCase());
+function boughtTile(id) {
+  const u = E.BY_ID[id], icon = iconOf(u), src = icon && iconSrc(icon), fx = boughtFx(u);
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'up tile bought' + (u.silly ? ' silly' : ''); b.dataset.id = id;
+  b.setAttribute('aria-label', `${u.name}, bought. ${fx ? fx + '. ' : ''}${u.desc}${u.log ? ' ' + u.log : ''}`);
+  b.innerHTML = (src ? `<img alt="" src="${src}">` : `<span class="glyph" aria-hidden="true">${u.silly ? '✶' : '◆'}</span>`) +
+    `<small>${trimName(u.name)}</small>`;
+  return b;
+}
+function refreshShelf() {
+  const ids = S.ended ? [] : E.boughtOneoffs(S);
+  shelfBox.hidden = !ids.length;
+  $('boughtN').textContent = ids.length;
+  const k = ids.join(',') + '|' + !!ART.cell;
+  if (k !== shelfKey) { shelfKey = k; shelf.replaceChildren(...ids.map(boughtTile)); shelfShown = ''; shelfSized = false; }
+  if (!shelfSized && shelfBox.open && ids.length) sizeShelfPeek(ids);
+  const id = shelfId && ids.includes(shelfId) ? shelfId : null;
+  if (id === shelfShown) return;
+  shelfShown = id;
+  for (const t of shelf.querySelectorAll('.peeked')) t.classList.remove('peeked');
+  shelfPeek.innerHTML = shelfPeekHtml(id);
+  if (id) shelf.querySelector(`.up[data-id="${id}"]`)?.classList.add('peeked');
+}
+function shelfPeekHtml(id) {
+  if (!id) return '<span class="hint">Point at anything on the shelf to reread it.</span>';
+  const u = E.BY_ID[id], fx = boughtFx(u);
+  return `<b>${u.name}${u.silly ? ' ✶' : ''}</b><span class="cost">Bought${fx ? ' · ' + fx : ''}</span><span class="desc">${u.desc}</span>` +
+    (u.log ? `<span class="joke">${u.log}</span>` : '');
+}
+// The details sit above the tiles, so they keep one height (the tallest of them) and the tiles
+// never jump out from under the pointer.
+let shelfSized = false;
+function sizeShelfPeek(ids) {
+  shelfSized = true;
+  shelfPeek.style.minHeight = '';
+  let h = 0;
+  for (const id of ids) { shelfPeek.innerHTML = shelfPeekHtml(id); h = Math.max(h, shelfPeek.offsetHeight); }
+  shelfPeek.style.minHeight = h + 'px';
+  shelfShown = '';
+}
+addEventListener('resize', () => { shelfSized = false; refreshShelf(); });
+const shelfShow = id => { shelfId = id; refreshShelf(); };
+shelf.addEventListener('pointerover', e => { const b = e.target.closest('.bought'); if (b && e.pointerType === 'mouse') shelfShow(b.dataset.id); });
+shelf.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !shelf.contains(document.activeElement)) shelfShow(null); });
+shelf.addEventListener('focusin', e => { const b = e.target.closest('.bought'); if (b) shelfShow(b.dataset.id); });
+shelf.addEventListener('focusout', e => { if (!shelf.contains(e.relatedTarget)) shelfShow(null); });
+// A tap (or Enter) shows it, and keeps it shown. There's nothing to buy here.
+shelf.addEventListener('click', e => { const b = e.target.closest('.bought'); if (b) shelfShow(b.dataset.id); });
+
 shop.addEventListener('pointerdown', e => { lastPointer = e.pointerType; }, true);
 shop.addEventListener('pointerover', e => { const b = e.target.closest('.up'); if (b && e.pointerType === 'mouse') { peekId = b.dataset.id; refreshShop(); } });
 shop.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !picked) { peekId = null; refreshShop(); } });
