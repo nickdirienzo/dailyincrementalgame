@@ -170,5 +170,38 @@
     "tone": "mild horror",
     "context": "none",
     "palette": "pollen8"
+  },
+  {
+    "n": 8,
+    "slug": "gilt-by-association",
+    "date": "2026-10-30",
+    "title": "Gilt by Association",
+    "tagline": "A bookworm nibbles the gold leaf off old book spines to out-grin his rival. The whole library is talking.",
+    "emoji": "😁📚",
+    "scale": "absurd (atoms of gold: trillions a bite, about 6 sextillion in the whole library)",
+    "minutes": "80–120",
+    "seed": 1835081946,
+    "interaction": "tap",
+    "arc": {
+      "drive": "rivalry",
+      "obstacle": "a tiny budget",
+      "turn": "everyone else joins in",
+      "initial": "I"
+    },
+    "length": "short (1–3 hours)",
+    "structure": [
+      "limited space to arrange (a grid, shelf or map)",
+      "distinct phases, each its own small economy"
+    ],
+    "twist": "a day/night or weather cycle",
+    "ending": "the game ends itself",
+    "look": "neon signs",
+    "music": {
+      "style": "music box lullaby",
+      "scale": "dorian"
+    },
+    "tone": "breathless gossip",
+    "context": "none",
+    "palette": "blessing"
   }
 ]

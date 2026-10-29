@@ -337,5 +337,82 @@
    "r5b"
   ],
   "shopTab": "comets"
+ },
+ "gilt-by-association": {
+  "phase": 2,
+  "beat": 1,
+  "revealed": true,
+  "t": 1900,
+  "clock": 30,
+  "night": 19,
+  "cousins": 24,
+  "gold": 4.1e+17,
+  "foil": 3200000000000000.0,
+  "gossip": 40,
+  "lv": {
+   "jaw": 5,
+   "silver": 26,
+   "shine": 2,
+   "whisper": 3,
+   "crumbs": 2,
+   "vol": 3,
+   "beetle": 14,
+   "glasses": 2,
+   "gloss": 1,
+   "margin": 1,
+   "varnish": 1
+  },
+  "bought": {
+   "foil": 6,
+   "fstar": 4,
+   "gold": 7,
+   "stud": 1
+  },
+  "odd": {
+   "lend": 1,
+   "mirror": 1,
+   "floss": 1
+  },
+  "spine": 3,
+  "letters": 40,
+  "shopTab": "gold",
+  "mouth": [
+   "gold",
+   "gold",
+   "gold",
+   "gold",
+   "gold",
+   "stud",
+   "gold",
+   "gold",
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "seen": [
+   "foil",
+   "jaw",
+   "silver",
+   "fstar",
+   "shine",
+   "whisper",
+   "crumbs",
+   "lend",
+   "mirror",
+   "gold",
+   "vol",
+   "glasses",
+   "stud",
+   "gloss",
+   "margin",
+   "beetle",
+   "varnish",
+   "floss"
+  ]
  }
 }
