@@ -5,7 +5,8 @@
 //
 // For each game it checks, with a fresh save, that the ending and upgrades start hidden, then plays
 // the opening by dragging and tapping on the canvas. It reloads with a finished save
-// (di:<n>:save = { ended: true }) and checks the ending shows and Share opens the share card.
+// (di:<n>:save = { ended: true }) and checks the ending shows, Share opens the share card, and Play
+// again there starts over and records a second run.
 // Every page is also loaded at 390px wide to check nothing scrolls sideways, and any console
 // error or uncaught exception fails the run. The game's busy mid-game save (tools/cards.json) checks the
 // upgrade column and the play area's buttons fit in the window, and a save code from the Save panel loads in a fresh browser.
@@ -258,6 +259,33 @@ async function checkGame(browser, base, game) {
       await shot(page, `${slug}-share-${label}.png`);
     } else check(`Share button visible at the ending (${label})`, false);
     check(`no console errors (ending, ${label})`, errors.length === 0, errors.join(' | '));
+    await context.close();
+  }
+
+  // Play again: two taps on the share card clear the save and reload into a fresh start, and the
+  // next finish becomes run 2 in the card's history. (Seeded once, not by an init script, so the
+  // reload doesn't bring the finished save back.)
+  {
+    const { page, context, errors } = await open(browser, url);
+    await page.evaluate(([n, date]) => {
+      localStorage.setItem(`di:${n}:save`, JSON.stringify({ ended: true }));
+      localStorage.setItem('di:done', JSON.stringify({ [n]: { at: date, lines: ['⏱ 9m', '🧪 test run'] } }));
+    }, [n, game.date]);
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForTimeout(1500);
+    await page.evaluate(() => DailyGame.share());
+    await page.waitForTimeout(400);
+    const again = page.locator('.di-again');
+    await again.click();
+    await Promise.all([page.waitForEvent('load', { timeout: 3000 }).catch(() => {}), again.click()]);
+    await page.waitForTimeout(1500);
+    check('Play again starts the game over', !(await page.locator('#ending').isVisible()));
+    await page.evaluate(() => DailyGame.finish({ lines: ['⏱ 1m2s', '🧪 replay'] }));
+    await page.waitForTimeout(400);
+    const runs = await page.evaluate(n => (JSON.parse(localStorage.getItem('di:done'))[n].runs || []).length, n);
+    check('a replay finish adds a second run', runs === 2 && await page.locator('.di-runs').isVisible(), `${runs} runs`);
+    await shot(page, `${slug}-runs.png`);
+    check('no console errors (play again)', errors.length === 0, errors.join(' | '));
     await context.close();
   }
 }

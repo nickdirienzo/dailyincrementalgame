@@ -65,6 +65,14 @@
 }
 .di-code:focus-visible { outline: 2px solid #191b33; outline-offset: 1px; }
 .di-streak:empty { display: none; }
+.di-runs h3 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: #62668a; font-weight: 600; }
+.di-runs ol { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; max-height: 168px; overflow-y: auto; }
+.di-runs li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 6px 10px; border-radius: 8px; background: #fff; border: 1px solid #e4e6f5; font-size: 13px; }
+.di-runs li.di-run-last { border-color: #d5d8ef; box-shadow: inset 3px 0 0 #ff5a36; }
+.di-run-n { font-weight: 700; }
+.di-run-at { color: #62668a; }
+.di-run-lines { flex-basis: 100%; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; word-break: break-word; }
+.di-run-best { margin-left: auto; padding: 1px 7px; border-radius: 99px; background: #ffe7df; color: #b8381b; font-size: 11px; font-weight: 700; }
 .di-close {
   all: unset; cursor: pointer; position: absolute; top: 10px; right: 14px;
   font-size: 22px; line-height: 1; color: #62668a;

@@ -11,6 +11,7 @@
 //   DailyGame.finish({ lines: ['⏱ 9m12s', '1,204 polished'] })
 //       Call once when the player reaches the ending. Records the completion,
 //       updates the streak, and opens the share card.
+//       Finishing again after "Play again" on the share card adds another run to the history.
 //   DailyGame.share()      Reopen the share card (e.g. from a "Share" button).
 //   DailyGame.day          This page's game number, or null.
 //   DailyGame.storageKey(name)  -> 'di:<day>:<name>', for the game's own saves. Keep every save under
@@ -44,8 +45,24 @@
     return list.filter(g => g.date <= today).sort((a, b) => a.n - b.n);
   }
 
-  // completions: { [n]: { at: 'YYYY-MM-DD', lines: [...] } }
+  // completions: { [n]: { at: 'YYYY-MM-DD', lines: [...], runs: [{ at, lines }, ...] } }
+  // at/lines are the first finish (the streak counts it). runs holds every finish, oldest first;
+  // completions from before replays have no runs and count as one.
   const completions = () => store.get('done', {});
+  const runsOf = c => (c ? c.runs || [{ at: c.at, lines: c.lines || [] }] : []);
+
+  // The run in progress, set by "Play again": 2 for the first replay, and so on.
+  const runKey = () => `di:${DAY}:run`;
+  const currentRun = () => { try { return Number(localStorage.getItem(runKey())) || 1; } catch (e) { return 1; } };
+
+  // Seconds in a '⏱ 1h4m12s' line, so the card can mark the fastest run.
+  function runSeconds(lines) {
+    const t = (lines || []).find(l => /^\s*⏱/.test(l));
+    const m = t && t.match(/(?:(\d+)\s*h)?\s*(?:(\d+)\s*m)?\s*(?:(\d+)\s*s)?\s*$/);
+    if (!m || !(m[1] || m[2] || m[3])) return null;
+    return (+m[1] || 0) * 3600 + (+m[2] || 0) * 60 + (+m[3] || 0);
+  }
+  const shortDate = at => { const [y, mo, d] = at.split('-').map(Number); return new Date(y, mo - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); };
 
   // Streak = consecutive released games, newest first, each finished on its own release date.
   // Today's game not being finished yet doesn't break the streak.
@@ -64,8 +81,8 @@
 
   // ---------- Share card ----------
   let cardEl = null;
-  function shareText(game, lines) {
-    const head = game ? `Incremendle: ${game.title}${game.emoji ? ' ' + game.emoji : ''}` : 'Incremendle';
+  function shareText(game, lines, run = 1) {
+    const head = (game ? `Incremendle: ${game.title}${game.emoji ? ' ' + game.emoji : ''}` : 'Incremendle') + (run > 1 ? ` (run ${run})` : '');
     const url = game ? `${SITE}/${game.slug}` : SITE;
     return [head, (lines || []).join(' · '), url].filter(Boolean).join('\n');
   }
@@ -73,8 +90,9 @@
   async function openCard() {
     const list = await manifest();
     const game = list.find(g => g.n === DAY) || null;
-    const done = completions()[DAY];
-    const text = shareText(game, done ? done.lines : []);
+    const runs = runsOf(completions()[DAY]);
+    const last = runs[runs.length - 1];
+    const text = shareText(game, last ? last.lines : [], runs.length);
     const s = streak(list);
 
     if (!cardEl) {
@@ -88,8 +106,11 @@
           <div class="di-row">
             <button type="button" class="di-btn di-copy">Copy result</button>
             <a class="di-btn di-ghost" href="/">More games</a>
+            <button type="button" class="di-btn di-ghost di-again">Play again</button>
           </div>
-          <p class="di-streak"></p>
+          <p class="di-streak di-again-msg" aria-live="polite"></p>
+          <div class="di-runs" hidden><h3>Your runs</h3><ol></ol></div>
+          <p class="di-streak di-streak-count"></p>
           <button type="button" class="di-close" aria-label="Close">×</button>
         </div>`;
       document.body.appendChild(cardEl);
@@ -109,10 +130,30 @@
         }
         setTimeout(() => { btn.textContent = 'Copy result'; }, 1800);
       });
+      cardEl.querySelector('.di-again').addEventListener('click', e => {
+        const btn = e.currentTarget;
+        if (!btn.dataset.armed) {
+          btn.dataset.armed = '1'; btn.textContent = 'Start over';
+          cardEl.querySelector('.di-again-msg').textContent = 'The game starts from zero. This run stays in your history. Tap again to start.';
+          return;
+        }
+        playAgain();
+      });
     }
+    const again = cardEl.querySelector('.di-again');
+    delete again.dataset.armed; again.textContent = 'Play again';
+    cardEl.querySelector('.di-again-msg').textContent = '';
+    cardEl.querySelector('.di-eyebrow').textContent = game && game.date !== localDate() ? 'You finished it' : 'You finished today\'s game';
     cardEl.querySelector('.di-title').textContent = game ? game.title : document.title;
     cardEl.querySelector('.di-share').textContent = text;
-    cardEl.querySelector('.di-streak').textContent = s > 0 ? `Streak: ${s} day${s === 1 ? '' : 's'}` : '';
+    cardEl.querySelector('.di-streak-count').textContent = s > 0 ? `Streak: ${s} day${s === 1 ? '' : 's'}` : '';
+    const history = cardEl.querySelector('.di-runs');
+    history.hidden = runs.length < 2;
+    const times = runs.map(r => runSeconds(r.lines));
+    const best = times.some(t => t != null) ? times.indexOf(Math.min(...times.filter(t => t != null))) : -1;
+    history.querySelector('ol').innerHTML = runs.map((r, i) => `<li${i === runs.length - 1 ? ' class="di-run-last"' : ''}>`
+      + `<span class="di-run-n">#${i + 1}</span><span class="di-run-at">${esc(shortDate(r.at))}</span>`
+      + (i === best ? '<span class="di-run-best">fastest</span>' : '') + `<span class="di-run-lines">${esc((r.lines || []).join(' · '))}</span></li>`).join('');
     cardEl.hidden = false;
     cardEl.querySelector('.di-copy').focus();
   }
@@ -121,11 +162,39 @@
   function finish({ lines = [] } = {}) {
     if (DAY == null) return;
     const done = completions();
+    const run = { at: localDate(), lines };
     if (!done[DAY]) {
-      done[DAY] = { at: localDate(), lines };
+      done[DAY] = { at: run.at, lines, runs: [run] };
       store.set('done', done);
+    } else {
+      // A replay's finish adds a run; finishing the same run twice doesn't.
+      const runs = runsOf(done[DAY]);
+      if (runs.length < currentRun()) { done[DAY].runs = [...runs, run]; store.set('done', done); }
     }
     openCard();
+  }
+
+  // Clears this game's save (every di:<n>:* key) and reloads into a fresh start. Finished runs live
+  // in di:done, so they stay.
+  function playAgain() {
+    const prefix = savePrefix();
+    try {
+      const old = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith(prefix)) old.push(k); }
+      old.forEach(k => localStorage.removeItem(k));
+      localStorage.setItem(runKey(), String(runsOf(completions()[DAY]).length + 1));
+    } catch (e) {}
+    freezeSave();
+    location.reload();
+  }
+
+  // The running game would save over a cleared or replaced save on its way out. Ignore its writes
+  // until the reload.
+  function freezeSave() {
+    const prefix = savePrefix();
+    const set = Storage.prototype.setItem, remove = Storage.prototype.removeItem;
+    Storage.prototype.setItem = function (k, v) { if (String(k).startsWith(prefix)) return; return set.call(this, k, v); };
+    Storage.prototype.removeItem = function (k) { if (String(k).startsWith(prefix)) return; return remove.call(this, k); };
   }
 
   // The site used to count anonymous plays. Clear what that left behind.
@@ -304,11 +373,14 @@
     for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith(prefix)) old.push(k); }
     old.forEach(k => localStorage.removeItem(k));
     for (const [k, v] of Object.entries(data.keys || {})) localStorage.setItem(prefix + k, v);
-    if (data.done) { const done = completions(); if (!done[DAY]) { done[DAY] = data.done; store.set('done', done); } }
-    // The running game would save over the new save on its way out. Ignore its writes until the reload.
-    const set = Storage.prototype.setItem, remove = Storage.prototype.removeItem;
-    Storage.prototype.setItem = function (k, v) { if (String(k).startsWith(prefix)) return; return set.call(this, k, v); };
-    Storage.prototype.removeItem = function (k) { if (String(k).startsWith(prefix)) return; return remove.call(this, k); };
+    if (data.done) {
+      const done = completions();
+      // Keep whichever device has the longer run history; the first finish stays the earliest.
+      if (!done[DAY]) done[DAY] = data.done;
+      else if (runsOf(data.done).length > runsOf(done[DAY]).length) done[DAY] = { ...data.done, ...(done[DAY].at < data.done.at ? { at: done[DAY].at, lines: done[DAY].lines } : {}) };
+      store.set('done', done);
+    }
+    freezeSave();
     location.reload();
   }
   let saveEl = null;
