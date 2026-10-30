@@ -173,35 +173,35 @@
   },
   {
     "n": 8,
-    "slug": "gilt-by-association",
+    "slug": "every-tooth-in-the-sea",
     "date": "2026-10-30",
-    "title": "Gilt by Association",
-    "tagline": "A bookworm nibbles the gold leaf off old book spines to out-grin his rival. The whole library is talking.",
-    "emoji": "😁📚",
-    "scale": "absurd (atoms of gold: trillions a bite, about 6 sextillion in the whole library)",
-    "minutes": "80–120",
+    "title": "Every Tooth in the Sea",
+    "tagline": "A bookworm takes a dare from a pirate radio DJ: a paper crown on every tooth in the sea. All 8.8 quadrillion.",
+    "emoji": "🐛👑",
+    "scale": "absurd",
+    "minutes": "80–140",
     "seed": 1835081946,
-    "interaction": "tap",
+    "interaction": "stop a moving marker at the right moment",
     "arc": {
-      "drive": "rivalry",
-      "obstacle": "a tiny budget",
+      "drive": "a dare",
+      "obstacle": "a misunderstanding",
       "turn": "everyone else joins in",
-      "initial": "I"
+      "initial": "L"
     },
     "length": "short (1–3 hours)",
     "structure": [
-      "limited space to arrange (a grid, shelf or map)",
-      "distinct phases, each its own small economy"
+      "a production chain on a small belt grid you lay out",
+      "the number goes down: an incremental in reverse"
     ],
-    "twist": "a day/night or weather cycle",
-    "ending": "the game ends itself",
-    "look": "neon signs",
+    "twist": "demand or a picky critic to please",
+    "ending": "a send-off parade",
+    "look": "ballpoint notebook doodle",
     "music": {
-      "style": "music box lullaby",
-      "scale": "dorian"
+      "style": "sea shanty",
+      "scale": "blues"
     },
-    "tone": "breathless gossip",
+    "tone": "pirate radio",
     "context": "none",
-    "palette": "blessing"
+    "palette": "nanner-pancakes"
   }
 ]

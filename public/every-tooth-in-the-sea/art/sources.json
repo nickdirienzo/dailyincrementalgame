@@ -1,0 +1,65 @@
+{
+  "doodle-icons--book.svg": {
+    "icon": "doodle-icons:book",
+    "set": "Oreo Doodle Icons",
+    "setUrl": "https://github.com/oreo-design/doodle-icons",
+    "author": "Nicole Tang",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/oreo-design/doodle-icons/blob/main/LICENSE",
+    "source": "https://icon-sets.iconify.design/doodle-icons/book/"
+  },
+  "doodle-icons--star.svg": {
+    "icon": "doodle-icons:star",
+    "set": "Oreo Doodle Icons",
+    "setUrl": "https://github.com/oreo-design/doodle-icons",
+    "author": "Nicole Tang",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/oreo-design/doodle-icons/blob/main/LICENSE",
+    "source": "https://icon-sets.iconify.design/doodle-icons/star/"
+  },
+  "fluent-emoji-high-contrast--octopus.svg": {
+    "icon": "fluent-emoji-high-contrast:octopus",
+    "set": "Fluent Emoji High Contrast",
+    "setUrl": "https://github.com/microsoft/fluentui-emoji",
+    "author": "Microsoft Corporation",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE",
+    "source": "https://icon-sets.iconify.design/fluent-emoji-high-contrast/octopus/"
+  },
+  "fluent-emoji-high-contrast--spouting-whale.svg": {
+    "icon": "fluent-emoji-high-contrast:spouting-whale",
+    "set": "Fluent Emoji High Contrast",
+    "setUrl": "https://github.com/microsoft/fluentui-emoji",
+    "author": "Microsoft Corporation",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE",
+    "source": "https://icon-sets.iconify.design/fluent-emoji-high-contrast/spouting-whale/"
+  },
+  "fluent-emoji-high-contrast--spiral-shell.svg": {
+    "icon": "fluent-emoji-high-contrast:spiral-shell",
+    "set": "Fluent Emoji High Contrast",
+    "setUrl": "https://github.com/microsoft/fluentui-emoji",
+    "author": "Microsoft Corporation",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE",
+    "source": "https://icon-sets.iconify.design/fluent-emoji-high-contrast/spiral-shell/"
+  },
+  "fluent-emoji-high-contrast--tropical-fish.svg": {
+    "icon": "fluent-emoji-high-contrast:tropical-fish",
+    "set": "Fluent Emoji High Contrast",
+    "setUrl": "https://github.com/microsoft/fluentui-emoji",
+    "author": "Microsoft Corporation",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE",
+    "source": "https://icon-sets.iconify.design/fluent-emoji-high-contrast/tropical-fish/"
+  },
+  "fluent-emoji-high-contrast--crab.svg": {
+    "icon": "fluent-emoji-high-contrast:crab",
+    "set": "Fluent Emoji High Contrast",
+    "setUrl": "https://github.com/microsoft/fluentui-emoji",
+    "author": "Microsoft Corporation",
+    "license": "MIT",
+    "licenseUrl": "https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE",
+    "source": "https://icon-sets.iconify.design/fluent-emoji-high-contrast/crab/"
+  }
+}

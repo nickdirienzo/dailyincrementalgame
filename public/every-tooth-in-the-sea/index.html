@@ -1,0 +1,1261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Every Tooth in the Sea · Incremendle</title>
+<meta name="description" content="A bookworm takes a dare from a pirate radio DJ: put a paper crown on every tooth in the sea. All 8.8 quadrillion. Incremendle.">
+<meta property="og:site_name" content="Incremendle">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Every Tooth in the Sea">
+<meta property="og:description" content="A bookworm takes a dare from a pirate radio DJ: a paper crown on every tooth in the sea. All 8.8 quadrillion.">
+<meta property="og:url" content="https://incremendle.com/every-tooth-in-the-sea/">
+<meta property="og:image" content="https://incremendle.com/every-tooth-in-the-sea/og.png?v=681ad57e">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Every Tooth in the Sea: A bookworm takes a dare from a pirate radio DJ: a paper crown on every tooth in the sea. All 8.8 quadrillion.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/shared/fonts/kalam/font.css">
+<link rel="stylesheet" href="/shared/fonts/reenie-beanie/font.css">
+<style>
+  /* NANNER PANCAKES (Lospec), the parts this notebook uses:
+     paper #fcecd1 #dbc9b4 #ebc8a7 · rules #a0ddd3 #6fb0b7 · margin #d8725e
+     inks: blue #4a5786 · red #a94b54 · green #488885 · black #2d1e2f · highlighter #f7cf91 · gold #f09f71 */
+  :root {
+    --paper: #fcecd1; --paper2: #dbc9b4; --tan: #ebc8a7; --rule: #a0ddd3; --rule2: #6fb0b7; --margin: #d8725e;
+    --blue: #4a5786; --red: #a94b54; --green: #488885; --black: #2d1e2f; --hi: #f7cf91; --gold: #f09f71; --navy: #3e3b66;
+    --ink: var(--navy); --bg: var(--paper);
+    --hand: 'Kalam', 'Comic Sans MS', system-ui, sans-serif; --scrawl: 'Reenie Beanie', 'Kalam', cursive;
+    color-scheme: light;
+  }
+  html, body { background: var(--bg); color: var(--ink); }
+  /* Keep this: any display rule (flex, grid) would otherwise override the hidden attribute. */
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; font: 15px/1.45 var(--hand);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: max(14px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+    /* Ruled notebook paper, with the red margin line. */
+    background-image:
+      linear-gradient(90deg, transparent 0 calc(max(16px, 3vw) + 18px), #d8725e88 calc(max(16px, 3vw) + 18px) calc(max(16px, 3vw) + 19.5px), transparent calc(max(16px, 3vw) + 19.5px)),
+      repeating-linear-gradient(180deg, transparent 0 25px, #a0ddd3aa 25px 26.2px);
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; }
+  header h1 { font: 400 clamp(38px, 7vw, 58px)/0.95 var(--scrawl); margin: 2px 0 0; color: var(--blue); letter-spacing: .5px; }
+  header p { margin: 0 0 8px; font-size: 14px; color: var(--navy); }
+  .game { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .game { grid-template-columns: 1fr; } }
+  /* Hand-drawn boxes: the old wobbly-border trick, in ballpoint. */
+  .box { border: 1.6px solid var(--blue); border-radius: 255px 14px 225px 14px / 14px 225px 14px 255px; background: #fcecd1ee; }
+  /* The odometer: every digit of the teeth left, in its own square of graph paper. */
+  .odo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 12px 6px; }
+  .odo .t { font: 400 22px/1 var(--scrawl); color: var(--red); }
+  .digits { display: flex; font: 700 clamp(15px, 2.2vw, 22px)/1 var(--hand); color: var(--blue); }
+  .digits span { display: inline-block; width: 1.02em; padding: 3px 0 1px; text-align: center; border: 1px solid #a0ddd3; margin-left: -1px; background: #fffaf0; }
+  .digits span.sep { width: .4em; border: 0; background: none; padding: 0; }
+  .digits span.roll { animation: roll .12s steps(2) infinite; color: var(--red); }
+  @keyframes roll { 50% { transform: translateY(-2px); filter: blur(.6px); } }
+  .stats { display: flex; flex-wrap: wrap; gap: 2px 16px; margin: 6px 4px 0; font-size: 14px; }
+  .stats b { color: var(--blue); }
+  .coin { display: inline-block; width: .78em; height: .78em; border: 1.6px solid currentColor; border-radius: 50%; margin-right: 3px; vertical-align: -1px; box-shadow: inset 0 0 0 1.5px #f7cf91; }
+  .trend { display: inline-flex; align-items: center; gap: 5px; }
+  .trend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--black); }
+  .meter { margin: 6px 4px 0; }
+  .meter .label { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+  .bar { position: relative; height: 11px; border: 1.5px solid var(--blue); border-radius: 8px 3px 7px 3px; overflow: hidden; background: #fffaf0; }
+  .bar i { position: absolute; inset: 0 auto 0 0; width: 0; transition: width .4s;
+           background: repeating-linear-gradient(-55deg, var(--blue) 0 1.4px, transparent 1.4px 4.5px); }
+  .stagebox { margin-top: 8px; padding: 4px; width: fit-content; max-width: 100%; box-sizing: border-box; }
+  canvas#stage { display: block; width: min(100%, calc(44vh * 640 / 360)); margin: 0 auto; height: auto; aspect-ratio: 640 / 360; touch-action: none; cursor: pointer; border-radius: 10px; }
+  canvas#stage:focus-visible { outline: 2px dashed var(--red); outline-offset: 3px; }
+  @media (max-width: 760px) { canvas#stage { width: 100%; } }
+  /* The deck: the grid on the left, the toolbox on the right. */
+  #deckbox { margin-top: 8px; padding: 8px 10px; display: grid; grid-template-columns: minmax(0, 440px) minmax(150px, 1fr); gap: 10px; align-items: start; }
+  @media (max-width: 560px) { #deckbox { grid-template-columns: 1fr; } }
+  canvas#deck { display: block; width: 100%; height: auto; aspect-ratio: 440 / 264; touch-action: none; cursor: crosshair; }
+  .tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+  .tools .hint { grid-column: 1 / -1; font-size: 12px; line-height: 1.3; margin: 0 0 2px; }
+  .tool { display: flex; align-items: center; gap: 5px; min-width: 0; font: 13px/1.15 var(--hand); color: var(--navy); background: #fffaf0; cursor: pointer; text-align: left;
+          border: 1.4px solid var(--blue); border-radius: 12px 4px 10px 4px / 4px 10px 4px 12px; padding: 3px 6px 3px 3px; }
+  .tool canvas { flex: none; width: 28px; height: 28px; }
+  .tool span { min-width: 0; display: flex; flex-direction: column; }
+  .tool b { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tool em { font-style: normal; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tool[aria-pressed="true"] { background: var(--hi); border-color: var(--red); box-shadow: 0 0 0 1.5px var(--red); }
+  .tool.poor em { color: var(--red); }
+  .log { margin: 8px 4px 0; min-height: 3em; font-size: 15px; }
+  .log.fresh { animation: fresh 1s ease-out; }
+  @keyframes fresh { from { color: var(--red); } }
+  /* The column stays in view and scrolls on its own, so nothing on it is ever below the fold. */
+  aside { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain;
+          padding: 8px 4px 4px; margin-top: -8px; scrollbar-width: thin; scrollbar-color: var(--blue) transparent; }
+  @media (max-width: 760px) { aside { position: static; max-height: none; overflow: visible; } }
+  aside h2 { font: 400 30px/1 var(--scrawl); margin: 2px 0 8px; color: var(--blue); }
+  #afford { font: 14px var(--hand); color: var(--red); }
+  .actions { margin: 0 0 12px; }
+  .actions:not(:has(> :not([hidden]))) { display: none; }
+  #inks { padding: 8px 10px; }
+  #inks .t { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; }
+  #inks .t b { font: 400 22px/1 var(--scrawl); color: var(--blue); }
+  .clicks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 4px; }
+  .ink { position: relative; font: 700 13px var(--hand); color: #fffaf0; border: 1.6px solid var(--black); border-radius: 9px 4px 9px 4px; padding: 7px 0 5px; cursor: pointer; }
+  .ink[aria-pressed="true"] { transform: translateY(2px); box-shadow: inset 0 3px 0 #0005; outline: 2px solid var(--hi); outline-offset: 1px; }
+  .ink.hot::after { content: "★"; position: absolute; top: -10px; right: -5px; font-size: 16px; color: var(--red); text-shadow: 0 0 2px #fcecd1; }
+  .ink:focus-visible { outline: 2px dashed var(--red); outline-offset: 2px; }
+  #shop { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  @media (max-width: 760px) and (min-width: 520px) { #shop { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  /* Two to a row, name over price. What it does is in the tooltip. */
+  .up {
+    position: relative; display: flex; flex-direction: column; min-width: 0; text-align: left; font: 14px/1.25 var(--hand); color: var(--navy);
+    background: #fffaf0; border: 1.4px solid #4a578699; border-radius: 14px 4px 12px 4px / 4px 12px 4px 14px; padding: 4px 9px 5px; cursor: pointer;
+  }
+  .up b { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .up em { font-style: normal; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #3e3b66bb; }
+  /* Affordable: run the highlighter over it. */
+  .up.can { border-color: var(--blue); background: linear-gradient(176deg, transparent 8%, #f7cf91 12% 84%, transparent 90%); }
+  .up.can em { color: var(--red); }
+  .up[aria-disabled="true"] { cursor: default; }
+  .up[aria-disabled="true"]:not(.can) { opacity: .7; }
+  .up.odd { border-style: dashed; }
+  .up.key { border: 2px double var(--red); }
+  .up .tag { position: absolute; top: -9px; right: 6px; font: 700 12px var(--hand); color: var(--red); padding: 0 5px; border: 1.4px solid var(--red); border-radius: 50%; background: var(--paper); transform: rotate(6deg); }
+  .up.new { animation: pulse 1.6s ease-in-out 4; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 3px #f7cf91; } }
+  .up:focus-visible, .tool:focus-visible, .bought:focus-visible { outline: 2px dashed var(--red); outline-offset: 2px; }
+  #tip {
+    position: fixed; z-index: 50; width: 236px; padding: 9px 12px 10px; pointer-events: none; font: 14px/1.35 var(--hand); color: var(--navy);
+    background: #f7cf91; transform: rotate(-.6deg); box-shadow: 2px 4px 0 #3e3b6633; border-radius: 2px 2px 14px 2px;
+  }
+  #tip b { display: block; font: 400 24px/1 var(--scrawl); color: var(--red); margin-bottom: 3px; }
+  #tip small { display: block; margin-top: 5px; font-size: 12px; color: var(--blue); }
+  #tip i { display: block; margin-top: 6px; font-style: normal; font-size: 13px; border-top: 1.4px dashed #a94b5488; padding-top: 5px; }
+  #tip.inline { position: static; width: auto; margin-top: 10px; transform: none; }
+  /* The Bought shelf: everything that left the shop, doodled in the margin to reread. */
+  #bought { margin: 14px 0 2px; }
+  #bought summary { display: flex; align-items: center; gap: 6px; font: 400 24px/1 var(--scrawl); color: var(--blue); cursor: pointer; list-style: none; padding: 3px 6px; }
+  #bought summary::-webkit-details-marker { display: none; }
+  #bought summary::before { content: "\25B8"; font-size: 14px; color: var(--red); transition: transform .2s; }
+  #bought[open] summary::before { transform: rotate(90deg); }
+  #bought summary:focus-visible { outline: 2px dashed var(--red); outline-offset: 2px; }
+  .shelf { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .bought { max-width: 100%; font: 13px/1.2 var(--hand); color: var(--navy); background: none; border: 1.3px solid #4a578688; border-radius: 10px 3px 9px 3px; padding: 3px 8px;
+            cursor: help; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: line-through; text-decoration-color: #a94b5499; }
+  .bought.odd { border-style: dashed; }
+  .bought.key { border-color: var(--red); }
+  .bought:hover, .bought.on { background: #f7cf91; }
+  #ending { margin: 24px auto 10px; max-width: 660px; text-align: center; padding: 20px 22px; }
+  #ending h2 { font: 400 54px/1 var(--scrawl); margin: 0 0 8px; color: var(--blue); }
+  #ending p { margin: 8px 0; }
+  #ending .note { display: inline-block; margin: 8px 0 12px; padding: 10px 16px; background: #f7cf91; transform: rotate(-1.2deg); font-size: 14px; box-shadow: 2px 3px 0 #3e3b6633; }
+  #ending .note b { font: 400 26px/1 var(--scrawl); color: var(--red); }
+  #shareBtn, #againBtn { font: 700 17px var(--hand); color: #fffaf0; background: var(--blue); border: 1.6px solid var(--navy); border-radius: 14px 4px 12px 4px; padding: 8px 18px; cursor: pointer; margin: 4px; }
+  #againBtn { background: none; color: var(--blue); }
+  @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh, .digits span.roll { animation: none; } .bar i, #bought summary::before { transition: none; } }
+</style>
+<!-- Libraries from /shared/lib/libs.json, by version. List only what this game imports: the credits tool reads these.
+     Strudel's soundfonts import @strudel/core and @strudel/webaudio, which are both inside the @strudel/web bundle. -->
+<script type="importmap">
+{ "imports": {
+  "@strudel/web": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/core": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/webaudio": "/shared/lib/@strudel/web@1.3.0/index.mjs"
+} }
+</script>
+<!-- Shared site runtime: top bar, credits, share card, streaks. data-day is this game's "n" from games.json (an internal id, never shown). -->
+<script src="/shared/daily.js" data-day="8" data-credits data-why></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Every Tooth in the Sea</h1>
+    <p>Stop the pen on the open grin. Every tooth gets a paper crown. All of them.</p>
+  </header>
+  <div class="game">
+    <main>
+      <div class="odo box">
+        <span class="t">teeth left in the sea</span>
+        <span class="digits" id="digits" aria-live="off"></span>
+      </div>
+      <div class="stats">
+        <span>👑 crowned <b id="crowned">0</b></span>
+        <span><i class="coin"></i>doubloons <b id="doub">0</b></span>
+        <span>a stop: <b id="perStop">1</b> tooth</span>
+        <span id="rateBox" hidden>on their own: <b id="rate">0</b>/s</span>
+        <span class="trend" id="trendBox" hidden>Lou's colour: <i id="trendDot"></i><b id="trendName"></b></span>
+      </div>
+      <div class="meter">
+        <div class="label"><span id="meterLabel">The dare</span><span id="meterVal"></span></div>
+        <div class="bar"><i id="meterFill"></i></div>
+      </div>
+      <div class="stagebox box"><canvas id="stage" width="640" height="360" tabindex="0" aria-label="A ballpoint doodle in a lined notebook: a fish grinning on the sea floor, a ballpoint pen sweeping across its teeth with a bookworm riding on top, and an anglerfish DJ in the corner whose lure is an ON AIR sign. Tap or press space to stop the pen."></canvas></div>
+      <div id="deckbox" class="box" hidden>
+        <canvas id="deck" width="440" height="264" aria-label="The deck of the Lagan: a grid of squares with shelves, chewers, presses, pens and portholes joined by belts."></canvas>
+        <div class="tools" id="tools"><p class="hint" id="toolHint">Pick a tile, tap a square to put it down. Tap a tile on the deck to turn it.</p></div>
+      </div>
+      <div class="log" id="log" aria-live="polite"></div>
+    </main>
+    <aside id="side">
+      <div class="actions">
+        <div id="inks" class="box" hidden>
+          <div class="t"><b>the four-colour pen</b><span id="inkNote"></span></div>
+          <div class="clicks" id="clicks"></div>
+        </div>
+      </div>
+      <h2>Upgrades <span id="afford"></span></h2>
+      <div id="shop"></div>
+      <details id="bought" hidden><summary>Bought · <span id="boughtN">0</span></summary><div class="shelf" id="shelf"></div></details>
+      <div id="tip" role="tooltip" hidden></div>
+    </aside>
+  </div>
+  <section id="ending" class="box" hidden>
+    <h2>Every tooth in the sea.</h2>
+    <p id="endText"></p>
+    <div class="note">📻 RADIO LAGAN · REQUEST HOUR<br><b>for Dr. Worm, from the whole sea</b><br>“a shanty, and thith time I mean it”</div>
+    <p id="endStats"></p>
+    <button id="shareBtn" type="button">Share result</button>
+  </section>
+</div>
+<script type="module">
+import { createAudio, scale } from '/shared/kit/audio.mjs';
+import { createMusic } from '/shared/kit/music.mjs';
+import { createSoundtrack } from './music.mjs';
+import * as Sprites from '/shared/kit/sprites.mjs';
+import * as FX from '/shared/kit/fx.mjs';
+import * as E from './economy.mjs';
+
+const $ = id => document.getElementById(id);
+const DEBUG = location.search.includes('debug');
+const KEY = window.DailyGame ? DailyGame.storageKey('save') : 'di:8:save';
+let S = E.newState();
+try { const raw = localStorage.getItem(KEY); if (raw) S = E.load(JSON.parse(raw)); } catch (e) {}
+const save = () => { S.lastSeen = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const C = { paper: '#fcecd1', paper2: '#dbc9b4', tan: '#ebc8a7', rule: '#a0ddd3', rule2: '#6fb0b7', margin: '#d8725e', blue: '#4a5786', red: '#a94b54',
+  green: '#488885', black: '#2d1e2f', hi: '#f7cf91', gold: '#f09f71', navy: '#3e3b66', pink: '#c57f79', mint: '#aad795', sea: '#577f9d', plum: '#7c3d64', cream: '#fffaf0' };
+const INK = [C.blue, C.red, C.green, C.black];
+const fmt = E.fmt, fmtS = E.fmtShort;
+
+// ---------- Sound ----------
+// Everything on C blues (C Eb F F# G Bb), the shanty's scale. The F# is the blue note: misses only.
+const A = createAudio({ sfxTrim: 1, musicTrim: 6 });
+const N = scale('blues', 60);
+let combo = 0, comboT = 0, portT = 0;
+const SAFE = [0, 1, 2, 4, 5, 6, 7, 8, 10, 11, 12]; // degrees without the blue note
+const sfx = {
+  crown() {
+    combo = comboT > 0 ? Math.min(combo + 1, 7) : 0; comboT = 2.2;
+    A.tone({ type: 'pluck', freq: N(SAFE[3 + combo]), dur: 0.12, vol: 0.2 });
+    A.tone({ type: 'bell', freq: N(SAFE[3 + combo] + 6), dur: 0.05, vol: 0.05, at: A.now + 0.04 });
+  },
+  bull() {
+    combo = comboT > 0 ? Math.min(combo + 1, 7) : 0; comboT = 2.2;
+    [0, 2, 4].forEach((d, i) => A.tone({ type: 'pluck', freq: N(6 + d + (combo > 3 ? 2 : 0)), dur: 0.14, vol: 0.16, at: A.now + i * 0.05 }));
+    A.tone({ type: 'bell', freq: N(12), dur: 0.3, vol: 0.08, at: A.now + 0.15 });
+  },
+  miss() {
+    combo = 0;
+    A.noiseHit('snare', { vol: 0.05, dur: 0.06 });
+    A.tone({ type: 'triangle', freq: N(3), dur: 0.16, vol: 0.12, glide: 0.94 });
+  },
+  place() { A.tone({ type: 'keys', freq: N(4), dur: 0.1, vol: 0.13 }); A.noiseHit('shaker', { vol: 0.03 }); },
+  turn() { A.tone({ type: 'triangle', freq: N(10), dur: 0.04, vol: 0.08 }); },
+  pickup() { A.tone({ type: 'keys', freq: N(2), dur: 0.08, vol: 0.12 }); A.tone({ type: 'keys', freq: N(0), dur: 0.1, vol: 0.1, at: A.now + 0.06 }); },
+  port(k = 0) { A.tone({ type: 'pluck', freq: N(7 + (k % 4)), dur: 0.05, vol: 0.06, cutoff: 2400 }); },
+  waste() { A.tone({ type: 'sine', freq: N(-6), dur: 0.08, vol: 0.08, glide: 0.8 }); },
+  buy() { [0, 2, 4].forEach((d, i) => A.tone({ type: 'keys', freq: N(d + 6), dur: 0.16, vol: 0.14, at: A.now + i * 0.07 })); },
+  key() {
+    [0, 2, 4, 6].forEach((d, i) => A.tone({ type: 'keys', freq: N(d + 4), dur: 0.2, vol: 0.13, at: A.now + i * 0.09 }));
+    A.tone({ type: 'bell', freq: N(12), dur: 0.5, vol: 0.08, at: A.now + 0.38 });
+  },
+  unlock() { A.tone({ type: 'bell', freq: N(10), dur: 0.25, vol: 0.08 }); A.tone({ type: 'bell', freq: N(12), dur: 0.3, vol: 0.07, at: A.now + 0.12 }); },
+  deny() { A.tone({ type: 'triangle', freq: N(1), dur: 0.08, vol: 0.12 }); A.tone({ type: 'triangle', freq: N(-1), dur: 0.12, vol: 0.11, at: A.now + 0.09 }); },
+  click() { A.noiseHit('hat', { vol: 0.08 }); A.tone({ type: 'triangle', freq: N(7), dur: 0.03, vol: 0.08 }); },
+  jingle() {
+    A.noiseHit('shaker', { vol: 0.05, dur: 0.12 });
+    [4, 6, 7, 10].forEach((d, i) => A.tone({ type: 'bell', freq: N(d), dur: 0.2, vol: 0.08, at: A.now + 0.05 + i * 0.1 }));
+  },
+  swim() { A.noiseHit('whoosh', { vol: 0.025, dur: 0.3 }); },
+  last() { A.tone({ type: 'pad', freq: N(-6), dur: 1.6, vol: 0.08, attack: 0.4 }); A.tone({ type: 'bell', freq: N(4), dur: 0.8, vol: 0.07, at: A.now + 0.7 }); A.tone({ type: 'bell', freq: N(3), dur: 0.9, vol: 0.06, at: A.now + 1.1 }); },
+  finale() {
+    for (let i = 0; i < 12; i++) A.tone({ type: 'pluck', freq: N(SAFE[i % SAFE.length] + (i >= SAFE.length ? 6 : 0)), dur: 0.2, vol: 0.12, at: A.now + i * 0.07 });
+    [0, 2, 4].forEach(d => A.tone({ type: 'pad', freq: N(d), dur: 2.4, vol: 0.06, attack: 0.5, at: A.now + 0.8 }));
+    A.tone({ type: 'bell', freq: N(12), dur: 1.2, vol: 0.1, at: A.now + 1.0 });
+    A.tone({ type: 'bell', freq: N(16), dur: 1.4, vol: 0.07, at: A.now + 1.3 });
+  },
+};
+// Per-effect levels, measured with npm run mix so every effect peaks near -10 dBFS.
+// Rapid ones (turn, port, swim) sit a few dB lower on purpose: they fire many times a second.
+const LEVEL = { crown: 2.35, bull: 2.15, miss: 2.75, place: 1.8, turn: 4.5, pickup: 1.4, port: 4.5, waste: 4.5, unlock: 4.4, deny: 3, click: 4.4, jingle: 4, swim: 30, last: 2.7, finale: 2.1 };
+for (const k of Object.keys(sfx)) {
+  const fn = sfx[k];
+  sfx[k] = (...a) => {
+    const tone = A.tone, hit = A.noiseHit, m = LEVEL[k] || 1;
+    A.tone = o => tone({ ...o, vol: (o.vol ?? 0.3) * m });
+    A.noiseHit = (kind, o = {}) => hit(kind, { ...o, vol: (o.vol ?? 0.25) * m });
+    try { fn(...a); } finally { A.tone = tone; A.noiseHit = hit; }
+  };
+}
+if (DEBUG) window.__game = { A, sfx, long: ['finale', 'last'], S: () => S, E };
+
+// The game owns playback; music.mjs arranges the composed shanty per phase.
+const PHASE_KEYS = { 1: 'hand', 2: 'deck', 3: 'clubs', 4: 'lou', 5: 'parade' };
+let music = null, soundtrack = null;
+function song() {
+  soundtrack ||= createSoundtrack(music.strudel);
+  return soundtrack(PHASE_KEYS[E.phase(S)]);
+}
+createMusic(A, { song }).then(m => { music = m; music.update(); if (DEBUG) Object.assign(window.__game, { music: m, song }); });
+
+// ---------- Ballpoint ----------
+// Every line is a ballpoint line: thin, a little wobbly, gone over twice. The wobble is seeded so a
+// drawing holds still, and re-seeded a few times a second so the doodles "boil" like a flipbook.
+let boil = 0;
+function rng(seed) { let s = (seed * 2654435761) >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+function pen(x, pts, { color = C.blue, w = 1.5, seed = 1, wob = 1.1, close = false, passes = 2, alpha = 1 } = {}) {
+  const r = rng(seed * 31 + boil * 7);
+  x.save(); x.strokeStyle = color; x.lineCap = 'round'; x.lineJoin = 'round'; x.globalAlpha = alpha;
+  for (let p = 0; p < passes; p++) {
+    x.lineWidth = p ? w * 0.7 : w; x.globalAlpha = alpha * (p ? 0.55 : 0.95);
+    x.beginPath();
+    pts.forEach(([px, py], i) => { const jx = (r() - 0.5) * wob * 2, jy = (r() - 0.5) * wob * 2; i ? x.lineTo(px + jx, py + jy) : x.moveTo(px + jx, py + jy); });
+    if (close) x.closePath();
+    x.stroke();
+  }
+  x.restore();
+}
+// Points around an ellipse, for pen().
+const oval = (cx, cy, rx, ry, n = 22, a0 = 0, a1 = Math.PI * 2) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]; });
+// Ballpoint hatching inside a path: diagonal strokes, clipped.
+function hatch(x, path, { color = C.blue, gap = 5, angle = -0.9, w = 0.9, alpha = 0.7, seed = 3, box = [0, 0, 640, 360] } = {}) {
+  const r = rng(seed + boil * 13);
+  x.save(); x.beginPath(); path(x); x.clip();
+  x.strokeStyle = color; x.lineWidth = w; x.globalAlpha = alpha; x.lineCap = 'round';
+  const [bx, by, bw, bh] = box, d = Math.hypot(bw, bh), ca = Math.cos(angle), sa = Math.sin(angle), mx = bx + bw / 2, my = by + bh / 2;
+  x.beginPath();
+  for (let o = -d / 2; o < d / 2; o += gap) {
+    const j = (r() - 0.5) * 1.6;
+    x.moveTo(mx + ca * -d / 2 - sa * (o + j), my + sa * -d / 2 + ca * (o + j));
+    x.lineTo(mx + ca * d / 2 - sa * (o + j), my + sa * d / 2 + ca * (o + j));
+  }
+  x.stroke(); x.restore();
+}
+const pathOf = pts => x => { pts.forEach(([px, py], i) => i ? x.lineTo(px, py) : x.moveTo(px, py)); x.closePath(); };
+function inkText(x, text, px, py, { size = 18, color = C.blue, font = 'scrawl', align = 'left', rot = 0, alpha = 1 } = {}) {
+  x.save(); x.translate(px, py); x.rotate(rot); x.globalAlpha = alpha;
+  x.font = font === 'scrawl' ? `${size}px 'Reenie Beanie', cursive` : `${font === 'bold' ? 700 : 400} ${size}px Kalam, sans-serif`;
+  x.fillStyle = color; x.textAlign = align; x.textBaseline = 'middle'; x.fillText(text, 0, 0); x.restore();
+}
+// A paper crown: three points, a band. Inked crowns are coloured in.
+function drawCrown(x, cx, cy, s, ink = -1, seed = 1) {
+  const pts = [[-1, 0.55], [-1, -0.25], [-0.55, 0.12], [0, -0.65], [0.55, 0.12], [1, -0.25], [1, 0.55]].map(([a, b]) => [cx + a * s, cy + b * s]);
+  x.save(); x.beginPath(); pathOf(pts)(x); x.fillStyle = ink < 0 ? C.hi : INK[ink]; x.globalAlpha = ink < 0 ? 1 : 0.88; x.fill(); x.restore();
+  if (ink < 0) pen(x, [[cx - s * 0.9, cy + s * 0.32], [cx + s * 0.9, cy + s * 0.32]], { color: C.gold, w: 1, wob: 0.2, seed: seed + 1, passes: 1 });
+  pen(x, pts, { color: ink === 3 ? C.navy : C.blue, w: 1.1, wob: 0.35, seed, close: true, passes: 1 });
+}
+
+// ---------- Stage ----------
+const cv = $('stage'), g = cv.getContext('2d');
+const W = 640, H = 360;
+function fit(c, w, h) {
+  const dpr = Math.min(2, devicePixelRatio || 1), r = c.getBoundingClientRect();
+  const pw = Math.round((r.width || w) * dpr), ph = Math.round(pw * h / w);
+  if (c.width !== pw) { c.width = pw; c.height = ph; }
+  return pw / w;
+}
+// Paper for the stage: ruled lines, a margin, and a little grain, drawn once.
+const paperTex = (() => {
+  const c = Sprites.canvas(W, H), x = c.getContext('2d');
+  x.fillStyle = C.paper; x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#a0ddd399'; x.lineWidth = 1;
+  for (let y = 30; y < H; y += 26) { x.beginPath(); x.moveTo(0, y + 0.5); x.lineTo(W, y + 0.5); x.stroke(); }
+  x.strokeStyle = '#d8725e88'; x.beginPath(); x.moveTo(34.5, 0); x.lineTo(34.5, H); x.stroke();
+  FX.grain(x, W, H, { amount: 0.05, tint: '#3e3b66' });
+  return c;
+})();
+
+// Fish, by how many teeth one stop crowns: the further you get, the bigger the grin you're aiming at.
+const SPECIES = [
+  { at: 0, name: 'a goby', teeth: 14, body: C.mint, fin: 'round', ink: C.green },
+  { at: 30, name: 'a wrasse', teeth: 40, body: C.gold, fin: 'round', ink: C.red, stripes: true },
+  { at: 400, name: 'a parrotfish', teeth: 1000, body: C.pink, fin: 'round', ink: C.plum, beak: true },
+  { at: 5e3, name: 'a moray', teeth: 4e3, body: C.green, fin: 'long', ink: C.green, spots: true },
+  { at: 6e4, name: 'a shark', teeth: 3e4, body: C.sea, fin: 'shark', ink: C.navy, sharp: true },
+  { at: 1e6, name: 'a whale shark', teeth: 3e5, body: C.blue, fin: 'shark', ink: C.navy, spots: true },
+  { at: 2e7, name: 'a shoal of sardines', teeth: 2e7, body: C.rule2, fin: 'round', ink: C.blue, shoal: 7 },
+  { at: 5e8, name: 'a shoal of sharks', teeth: 5e8, body: C.sea, fin: 'shark', ink: C.navy, sharp: true, shoal: 5 },
+  { at: 1e10, name: 'a whole reef', teeth: 1e10, body: C.gold, fin: 'round', ink: C.red, stripes: true, shoal: 11 },
+  { at: 3e11, name: 'the bay', teeth: 3e11, body: C.pink, fin: 'round', ink: C.plum, shoal: 16 },
+  { at: 1e13, name: 'a sea', teeth: 1e13, body: C.rule2, fin: 'long', ink: C.blue, shoal: 22 },
+  { at: 3e14, name: 'an ocean', teeth: 3e14, body: C.sea, fin: 'shark', ink: C.navy, sharp: true, shoal: 30 },
+];
+const speciesFor = n => SPECIES.reduce((a, s) => (n >= s.at ? s : a), SPECIES[0]);
+
+// The mouth: teeth along a line from MX0 to MX1 at MY. The pen sweeps along it.
+const MX0 = 120, MX1 = 430, MY = 228, NT = 13;
+function toothX(i) { return MX0 + (MX1 - MX0) * (i + 0.5) / NT; }
+
+function drawFishBody(x, sp, cx, cy, s, seed, { open = 1, eye = 0 } = {}) {
+  // Head-on, so the grin faces you: a wide face, fins out to the sides, two eyes on top.
+  const fin = (d) => [[cx + d * 186 * s, cy - 10 * s], [cx + d * 250 * s, cy - 60 * s], [cx + d * 262 * s, cy + 40 * s], [cx + d * 186 * s, cy + 40 * s]];
+  for (const d of [-1, 1]) {
+    const f = fin(d);
+    x.save(); x.beginPath(); pathOf(f)(x); x.fillStyle = sp.body; x.globalAlpha = 0.25; x.fill(); x.restore();
+    pen(x, f, { color: sp.ink, w: 1.5, seed: seed + 3 + d, close: true });
+    for (let k = 1; k < 3; k++) pen(x, [[cx + d * 190 * s, cy + (k * 14 - 6) * s], [cx + d * (215 + k * 12) * s, cy + (k * 26 - 50) * s]], { color: sp.ink, w: 1, seed: seed + 5 + k * d, passes: 1 });
+  }
+  if (sp.fin === 'shark') pen(x, [[cx - 50 * s, cy - 118 * s], [cx + 6 * s, cy - 176 * s], [cx + 46 * s, cy - 116 * s]], { color: sp.ink, w: 1.7, seed: seed + 5 });
+  else if (sp.fin === 'long') pen(x, Array.from({ length: 9 }, (_, i) => [cx - 120 * s + i * 30 * s, cy - 118 * s - Math.abs(Math.sin(i * 0.9)) * 26 * s - (i > 1 && i < 7 ? 12 * s : 0)]), { color: sp.ink, w: 1.6, seed: seed + 5 });
+  else pen(x, oval(cx, cy - 116 * s, 64 * s, 40 * s, 12, Math.PI, Math.PI * 2), { color: sp.ink, w: 1.6, seed: seed + 5 });
+  const face = oval(cx, cy, 196 * s, 128 * s, 30);
+  x.save(); x.beginPath(); pathOf(face)(x); x.fillStyle = sp.body; x.globalAlpha = 0.33; x.fill(); x.restore();
+  hatch(x, pathOf(face), { color: sp.ink, gap: 6, alpha: 0.32, seed, box: [cx - 200 * s, cy - 130 * s, 400 * s, 260 * s] });
+  if (sp.stripes) for (const k of [-1, 1]) pen(x, [[cx + k * 128 * s, cy - 96 * s], [cx + k * 148 * s, cy], [cx + k * 126 * s, cy + 98 * s]], { color: sp.ink, w: 3, seed: seed + k, alpha: 0.6 });
+  if (sp.spots) for (let k = 0; k < 10; k++) pen(x, oval(cx - 150 * s + (k * 67 % 300) * s, cy - 90 * s + (k * 41 % 60) * s + (k % 2 ? 0 : 140 * s), 7 * s, 6 * s, 8), { color: sp.ink, w: 1.3, seed: seed + k * 3, close: true, passes: 1 });
+  if (sp.beak) pen(x, [[cx - 40 * s, cy + 16 * s], [cx, cy + 6 * s], [cx + 40 * s, cy + 16 * s]], { color: sp.ink, w: 1.4, seed: seed + 11, passes: 1 });
+  pen(x, face, { color: sp.ink, w: 1.9, seed: seed + 1, close: true });
+  // Gill lines and a little fishy blush.
+  for (const d of [-1, 1]) pen(x, oval(cx + d * 150 * s, cy + 10 * s, 26 * s, 60 * s, 8, d < 0 ? -0.9 : Math.PI - 0.9, d < 0 ? 0.9 : Math.PI + 0.9), { color: sp.ink, w: 1.2, seed: seed + 7 + d, passes: 1 });
+  // Eyes, looking at the pen.
+  for (const d of [-1, 1]) {
+    const ex = cx + d * 78 * s, ey = cy - 56 * s;
+    x.save(); x.beginPath(); x.arc(ex, ey, 25 * s, 0, 7); x.fillStyle = C.cream; x.fill(); x.restore();
+    pen(x, oval(ex, ey, 25 * s, 25 * s, 14), { color: sp.ink, w: 1.6, seed: seed + 8 + d, close: true });
+    x.save(); x.beginPath(); x.arc(ex + eye * 9 * s, ey + 6 * s, 10 * s, 0, 7); x.fillStyle = C.black; x.fill();
+    x.beginPath(); x.arc(ex + eye * 9 * s + 3 * s, ey + 2 * s, 2.6 * s, 0, 7); x.fillStyle = C.cream; x.fill(); x.restore();
+    if (open < 0.5) pen(x, [[ex - d * 26 * s, ey - 36 * s], [ex + d * 22 * s, ey - 24 * s]], { color: sp.ink, w: 2, seed: seed + 9 + d });
+  }
+}
+
+// The grin: lips closed everywhere but the open window; the open part shows the teeth.
+function drawGrin(x, sp, seed, { zone, open, crowned, ink, bull, wobbleTooth = -1, t = 0 }) {
+  const [z0, z1] = zone, a = MX0 + (MX1 - MX0) * z0, b = MX0 + (MX1 - MX0) * z1;
+  const depth = 46 * open;
+  // Closed lips: one long smiling line.
+  const lip = (u) => MY + Math.sin(u * Math.PI) * 14;
+  const line = Array.from({ length: 30 }, (_, i) => { const u = i / 29; return [MX0 + (MX1 - MX0) * u, lip(u)]; });
+  pen(x, line, { color: sp.ink, w: 2, seed: seed + 20 });
+  if (open > 0.05) {
+    const top = [], bot = [];
+    for (let i = 0; i <= 16; i++) { const px = a + (b - a) * i / 16, u = (px - MX0) / (MX1 - MX0), k = Math.sin(i / 16 * Math.PI); top.push([px, lip(u) - depth * 0.45 * k]); bot.push([px, lip(u) + depth * k]); }
+    const hole = [...top, ...bot.reverse()];
+    x.save(); x.beginPath(); pathOf(hole)(x); x.fillStyle = '#5d4550'; x.globalAlpha = 0.85; x.fill(); x.restore();
+    hatch(x, pathOf(hole), { color: C.black, gap: 3.5, alpha: 0.5, seed: seed + 21 });
+    pen(x, hole, { color: sp.ink, w: 1.7, seed: seed + 22, close: true });
+    // Teeth inside the window.
+    for (let i = 0; i < NT; i++) {
+      const tx = toothX(i); if (tx < a + 4 || tx > b - 4) continue;
+      const u = (tx - MX0) / (MX1 - MX0), ty = lip(u) - depth * 0.45 * Math.sin((tx - a) / (b - a) * Math.PI);
+      const tw = (MX1 - MX0) / NT * 0.42, th = (sp.sharp ? 16 : 12) * Math.min(1, open * 1.4);
+      const wob = i === wobbleTooth ? Math.sin(t * 9) * 0.25 : 0;
+      x.save(); x.translate(tx, ty); x.rotate(wob);
+      const tooth = sp.sharp ? [[-tw, 0], [0, th], [tw, 0]] : [[-tw, 0], [-tw, th * 0.8], [0, th], [tw, th * 0.8], [tw, 0]];
+      x.beginPath(); pathOf(tooth)(x); x.fillStyle = C.cream; x.fill();
+      pen(x, tooth, { color: C.navy, w: 1, wob: 0.3, seed: seed + 30 + i, close: true, passes: 1 });
+      if (crowned && crowned[i] !== undefined) drawCrown(x, 0, -9, tw * 1.25, crowned[i], seed + 50 + i);
+      x.restore();
+    }
+    // The front tooth, the bullseye: a dotted ring in red.
+    if (bull != null && !crowned) {
+      const bx = MX0 + (MX1 - MX0) * bull;
+      x.save(); x.setLineDash([2, 3]); x.strokeStyle = C.red; x.lineWidth = 1.5; x.beginPath(); x.arc(bx, lip((bx - MX0) / (MX1 - MX0)) + 6, 15, 0, 7); x.stroke(); x.restore();
+    }
+  }
+  // Brackets in red ink around the open part: the window to stop in.
+  if (open > 0.5 && !crowned) for (const [px, d] of [[a, 1], [b, -1]]) pen(x, [[px + d * 6, MY - 26], [px, MY - 26], [px, MY + 36], [px + d * 6, MY + 36]], { color: C.red, w: 1.4, seed: seed + 40 + d });
+}
+
+// Dewey: a green bookworm in round glasses, riding the pen. A white coat, if he's bought one.
+function drawDewey(x, cx, cy, s, t, mood = 0) {
+  const seg = 6;
+  for (let i = seg - 1; i >= 0; i--) {
+    const px = cx - i * 9 * s, py = cy + Math.sin(t * 5 + i * 0.9) * 2.5 * s + (i ? 2 : 0);
+    x.save(); x.beginPath(); x.arc(px, py, (i ? 8 : 10) * s, 0, 7); x.fillStyle = S.odd.coat && i > 0 && i < 4 ? C.cream : C.mint; x.fill(); x.restore();
+    pen(x, oval(px, py, (i ? 8 : 10) * s, (i ? 8 : 10) * s, 10), { color: C.green, w: 1.2, seed: 70 + i, close: true, passes: 1 });
+  }
+  const hx = cx, hy = cy + Math.sin(t * 5) * 2.5 * s;
+  pen(x, oval(hx + 3 * s, hy - 2 * s, 4 * s, 4 * s, 8), { color: C.navy, w: 1.2, seed: 80, close: true, passes: 1 });
+  pen(x, oval(hx - 6 * s, hy - 2 * s, 4 * s, 4 * s, 8), { color: C.navy, w: 1.2, seed: 81, close: true, passes: 1 });
+  pen(x, [[hx - 2 * s, hy - 2 * s], [hx - 1 * s, hy - 2 * s]], { color: C.navy, w: 1, seed: 82, passes: 1 });
+  pen(x, mood > 0 ? oval(hx - 1 * s, hy + 3 * s, 4 * s, 3 * s, 8, 0, Math.PI) : [[hx - 4 * s, hy + 5 * s], [hx + 2 * s, hy + 5 * s]], { color: C.navy, w: 1.2, seed: 83, passes: 1 });
+  if (S.odd.coat) pen(x, [[cx - 12 * s, cy - 6 * s], [cx - 20 * s, cy + 8 * s]], { color: C.red, w: 1.2, seed: 84, passes: 1 }); // a stethoscope, sort of
+}
+
+// The pen itself: a plain blue biro, or the captain's four-colour pen once he has it.
+function drawPen(x, px, tipY, t) {
+  const len = 120, w = S.pen4 ? 13 : 8, top = tipY - len;
+  const barrel = [[px - w / 2, top], [px + w / 2, top], [px + w / 2, tipY - 22], [px + 2, tipY - 5], [px, tipY], [px - 2, tipY - 5], [px - w / 2, tipY - 22]];
+  x.save(); x.beginPath(); pathOf(barrel)(x); x.fillStyle = C.cream; x.fill(); x.restore();
+  if (S.pen4) INK.forEach((c, i) => { x.save(); x.fillStyle = c; x.globalAlpha = i === S.ink ? 1 : 0.45; x.fillRect(px - w / 2 + 1 + i * (w - 2) / 4, top - (i === S.ink ? 10 : 5), (w - 2) / 4 - 0.5, i === S.ink ? 12 : 7); x.restore(); });
+  else { x.save(); x.fillStyle = C.blue; x.fillRect(px - 3, top - 6, 6, 8); x.restore(); }
+  pen(x, barrel, { color: C.navy, w: 1.3, wob: 0.4, seed: 90, close: true });
+  x.save(); x.beginPath(); x.arc(px, tipY - 1, 1.8, 0, 7); x.fillStyle = S.pen4 ? INK[S.ink] : C.blue; x.fill(); x.restore();
+  drawDewey(x, px + 16, top - (S.pen4 ? 14 : 10), 0.85, t, fishState.mood);
+}
+
+// Lou: an anglerfish, black ink, an underbite of needle teeth with one wobbly one, and her lure is
+// the ON AIR sign. It lights when she's talking.
+function drawLou(x, cx, cy, s, t, { onAir = false, big = false } = {}) {
+  const body = oval(cx, cy, 58 * s, 46 * s, 24);
+  x.save(); x.beginPath(); pathOf(body)(x); x.fillStyle = '#5d4550'; x.globalAlpha = 0.35; x.fill(); x.restore();
+  hatch(x, pathOf(body), { color: C.black, gap: 3.6, alpha: 0.55, seed: 101, angle: 0.8 });
+  pen(x, body, { color: C.black, w: 1.8, seed: 102, close: true });
+  // Underbite and teeth.
+  const jaw = [[cx - 46 * s, cy + 6 * s], [cx - 10 * s, cy + 30 * s], [cx + 40 * s, cy + 14 * s]];
+  pen(x, jaw, { color: C.black, w: 1.6, seed: 103 });
+  for (let i = 0; i < 7; i++) {
+    const tx = cx - 40 * s + i * 12 * s, ty = cy + (8 + Math.sin(i / 6 * Math.PI) * 18) * s;
+    if (i === 3 && S.ended) continue; // gone up to the surface, crown and all: a gap-toothed grin now
+    const wob = i === 3 ? Math.sin(t * 7) * 0.35 : 0;
+    x.save(); x.translate(tx, ty); x.rotate(wob + (i === 3 ? 0.25 : 0));
+    const tt = [[-3 * s, 0], [0, -11 * s], [3 * s, 0]];
+    x.beginPath(); pathOf(tt)(x); x.fillStyle = C.cream; x.fill();
+    pen(x, tt, { color: C.black, w: 1, wob: 0.25, seed: 104 + i, close: true, passes: 1 });
+    x.restore();
+  }
+  // Eye, small and sleepy.
+  pen(x, oval(cx + 18 * s, cy - 16 * s, 7 * s, 5 * s, 10, Math.PI, Math.PI * 2), { color: C.black, w: 1.6, seed: 111 });
+  // The lure: a stalk, and the ON AIR sign.
+  const lx = cx - 4 * s + Math.sin(t * 1.3) * 4 * s, ly = cy - 92 * s;
+  pen(x, [[cx + 4 * s, cy - 44 * s], [cx + 14 * s, cy - 76 * s], [lx + 10 * s, ly + 8 * s]], { color: C.black, w: 1.5, seed: 112 });
+  if (onAir) { x.save(); x.globalAlpha = 0.35; x.fillStyle = C.margin; x.beginPath(); x.ellipse(lx, ly, 40 * s, 20 * s, 0, 0, 7); x.fill(); x.restore(); }
+  const sign = [[lx - 26 * s, ly - 10 * s], [lx + 26 * s, ly - 10 * s], [lx + 26 * s, ly + 10 * s], [lx - 26 * s, ly + 10 * s]];
+  x.save(); x.beginPath(); pathOf(sign)(x); x.fillStyle = onAir ? C.margin : C.paper2; x.fill(); x.restore();
+  pen(x, sign, { color: C.black, w: 1.4, wob: 0.5, seed: 113, close: true });
+  inkText(x, 'ON AIR', lx, ly + 1, { size: 11 * s, color: onAir ? C.cream : C.navy, font: 'bold', align: 'center' });
+  if (big && !S.ended) {
+    // The target: her wobbly tooth, ringed in red.
+    x.save(); x.setLineDash([3, 3]); x.strokeStyle = C.red; x.lineWidth = 1.8; x.beginPath(); x.arc(cx - 4 * s, cy + 20 * s, 9 * s, 0, 7); x.stroke(); x.restore();
+  }
+}
+
+// ---------- Grin state ----------
+// One grin at a time: it opens, the pen sweeps, you stop it. Then the fish swims off and the next comes.
+const fishState = { zone: [0.35, 0.6], bull: 0.47, open: 0, phase: 'in', t: 0, crowned: null, shut: 0, mood: 0, x: 0, seed: 1, sp: SPECIES[0] };
+let sweepT = 0, penP = 0;
+function newGrin() {
+  const st = E.stats(S), w = S.final ? 0.26 : st.zone;
+  // Lou's wobbly tooth sits a little left of the middle of the sweep (see drawLou: cx - 4s).
+  const z0 = S.final ? 0.473 - w / 2 : 0.05 + Math.random() * (0.9 - w);
+  fishState.zone = [z0, z0 + w];
+  fishState.bull = S.final ? z0 + w / 2 : z0 + w * (0.3 + Math.random() * 0.4);
+  fishState.crowned = null; fishState.phase = 'in'; fishState.t = 0; fishState.shut = 0;
+  fishState.seed = 1 + (Math.random() * 1000 | 0);
+  fishState.sp = speciesFor(perStop());
+}
+function perStop() { return E.stats(S).hand * E.inkMult(S, S.pen4 ? S.ink : -1); }
+function canStop() { return !S.ended && fishState.phase === 'open' && fishState.shut <= 0; }
+
+function stopPen() {
+  if (!canStop()) { if (fishState.shut > 0 && !S.ended) sfx.deny(); return; }
+  const [z0, z1] = fishState.zone, p = penP;
+  const inZone = p >= z0 && p <= z1;
+  const bull = inZone && Math.abs(p - fishState.bull) <= (z1 - z0) * 0.13;
+  const q = !inZone ? 'miss' : bull ? 'bull' : 'hit';
+  const out = [];
+  const got = E.stop(S, q, out);
+  if (q === 'miss') {
+    sfx.miss(); fishState.shut = 0.9; fishState.mood = -1;
+    pop(MX0 + (MX1 - MX0) * p, MY - 40, MISS_SAYS[S.misses % MISS_SAYS.length], C.red);
+    if (S.misses === 1) say('Missed the grin and caught a lip. The fish snaps shut: it thinks you\'re the dentist. Wait for it to open, and stop the pen between the red brackets.');
+    return;
+  }
+  if (S.final) { handle(out); return; }
+  (q === 'bull' ? sfx.bull : sfx.crown)();
+  fishState.mood = 1;
+  const crowned = {}, ink = S.pen4 ? S.ink : -1;
+  for (let i = 0; i < NT; i++) { const u = (i + 0.5) / NT; if (u >= z0 && u <= z1) crowned[i] = ink; }
+  fishState.crowned = crowned; fishState.phase = 'done'; fishState.t = 0;
+  pop(MX0 + (MX1 - MX0) * p, MY - 46, `+${fmt(got)} ${got === 1 ? 'tooth' : 'teeth'}${q === 'bull' ? ' · front tooth!' : ''}`, q === 'bull' ? C.red : C.blue);
+  rateAcc += got;
+  if (S.hits === 1) say('A crown on a tooth! One down. Eight point eight quadrillion to go. The counter barely noticed.');
+  if (out.length) handle(out);
+  save();
+}
+cv.addEventListener('pointerdown', e => { e.preventDefault(); stopPen(); });
+cv.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!e.repeat) stopPen(); } });
+
+const MISS_SAYS = ['DR. WORM?!', 'no thank you', 'mmf!', 'not today, doctor', 'is it going to hurt?', 'mmMMmf', 'I flossed! I flossed!'];
+const fx = [];
+const pop = (x, y, text, color) => { if (fx.length > 14) fx.shift(); fx.push({ x, y, t: 0, life: 1.4, text, color }); };
+
+// ---------- Log ----------
+let logT = 0, onAirT = 0;
+function say(msg, lou = false) {
+  const el = $('log'); el.textContent = (lou ? '📻 ' : '') + msg; el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); logT = 0;
+  if (lou) onAirT = 6;
+}
+const lou = msg => say(`Lou: ${msg}`, true);
+// Lou reads the last digits like a football score.
+const lastDigits = () => String(E.left(S)).slice(-4);
+const AMBIENT = [
+  () => `“Thith ith Radio Lagan, eleven fathoms down, broadcasting from the crow’s nest of the good ship Lagan. Teeth left in the sea: eight quadrillion, eight hundred trillion... and the last four digits are ${lastDigits()}. Thomeone ith trying.”`,
+  () => '“To the worm in the library: you know there are sharks, yeah? Sharks have thousands. They grow new ones.”',
+  () => '“Radio’s a visual medium, my lovelies. And the sea’s smiles are DULL.”',
+  () => `“Score update from the reef: the last digits now read ${lastDigits()}. Hold the front page.”`,
+  () => '“Thorry about the lisp. Wobbly tooth. Don’t write in.”',
+  () => '“Requests? I don’t play requests. I play the thea.”',
+  () => '“If you’ve just been crowned, grin at the porthole. Grin of the Week ith judged on thparkle.”',
+  () => '“A listener asks: is the worm a dentist? Thweetheart, he is a WORM.”',
+];
+const DECK_AMBIENT = [
+  () => `“The library’s getting lighter. ${fmt(S.pages)} pages chewed tho far. Somebody tell the captain. Actually, don’t. He’s a thkeleton.”`,
+  () => '“Paper crowns coming out the portholes like confetti. The cod are calling it a weather event.”',
+  () => '“Reminder: blank crowns are for funerals. Ink them, darlings.”',
+  () => '“The chewers are cousins. All of them. The worm has a very large family and they are all hungry.”',
+];
+const CLUB_AMBIENT = [
+  () => '“Crowned fish crowning fish! I’ve lost control of the thea. I love it.”',
+  () => '“A shark just crowned a smaller shark and then didn’t eat it. Lovely scenes.”',
+  () => `“The last digits are going too fast to read. I’m going to read the FIRST digits now: ${String(E.left(S)).slice(0, 3)}...”`,
+  () => '“This one’s for the clubs. Pass it on.”',
+];
+const COLOUR_CALL = [
+  c => `“The colour of the hour is ${c}. Anything else is thimply not worth a tooth.”`,
+  c => `“New colour, my lovelies: ${c}. I’ve decided. I’m a DJ, I can do that.”`,
+  c => `“${c[0].toUpperCase() + c.slice(1)}. Everyone wants ${c} now. Don’t ask me why. I said it, that’s why.”`,
+];
+
+// ---------- Shop ----------
+const shop = $('shop');
+const newUntil = {};
+let shopSig = '';
+const coin = '<i class="coin"></i>';
+function shopItems() { return E.items(S).sort((a, b) => (b.kind === 'key') - (a.kind === 'key') || a.cost - b.cost); }
+function renderShop() {
+  const items = shopItems();
+  for (const it of items) if (!S.seen.includes(it.id)) { S.seen.push(it.id); if (S.t > 2) sfx.unlock(); newUntil[it.id] = performance.now() + 9000; }
+  const sig = items.map(i => i.id + ':' + i.cost).join('|') + (S.ended ? '#end' : '');
+  if (sig !== shopSig) {
+    shopSig = sig;
+    shop.innerHTML = '';
+    if (!S.ended) for (const it of items) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'up' + (it.kind === 'odd' ? ' odd' : '') + (it.kind === 'key' ? ' key' : '');
+      b.dataset.id = it.id; b.dataset.cost = it.cost;
+      b.innerHTML = '<b></b><em></em>';
+      b.querySelector('b').textContent = it.name;
+      b.querySelector('em').innerHTML = coin + fmtS(it.cost) + (it.kind === 'lvl' && it.max > 1 ? ` · ${it.l}` : '');
+      b.setAttribute('aria-describedby', 'tip');
+      b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showTip(b, upTip(it)); });
+      b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+      b.addEventListener('focus', () => { if (!b.dataset.touch) showTip(b, upTip(it)); });
+      b.addEventListener('blur', hideTip);
+      b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+      // On touch the first tap shows what it does; the second buys.
+      b.addEventListener('click', () => {
+        if (b.dataset.touch && tipFor !== it.id) { showTip(b, upTip(it)); return; }
+        if (b.getAttribute('aria-disabled') !== 'true') doBuy(it.id); else sfx.deny();
+      });
+      shop.append(b);
+    }
+  }
+  const now = performance.now();
+  let n = 0;
+  for (const b of shop.querySelectorAll('button.up')) {
+    const can = S.doub >= Number(b.dataset.cost) && !S.ended;
+    if (can) n++;
+    b.setAttribute('aria-disabled', String(!can)); b.classList.toggle('can', can);
+    const isNew = (newUntil[b.dataset.id] || 0) > now;
+    b.classList.toggle('new', isNew);
+    let tag = b.querySelector('.tag');
+    if (isNew && !tag) { tag = document.createElement('i'); tag.className = 'tag'; tag.textContent = 'new'; tag.style.fontStyle = 'normal'; b.append(tag); }
+    if (!isNew && tag) tag.remove();
+  }
+  $('afford').textContent = n ? `· ${n} affordable` : '';
+  document.querySelector('aside h2').hidden = S.ended || !items.length;
+  renderShelf();
+}
+let tipFor = null;
+function upTip(it) {
+  let foot = `${fmt(it.cost)} doubloons`;
+  if (it.kind === 'lvl' && it.max > 1) foot += ` · level ${it.l} of ${it.max}`;
+  if (it.kind === 'key') foot += ' · opens something new';
+  return { id: it.id, name: it.name, desc: it.desc, foot };
+}
+function showTip(b, it) {
+  const tip = $('tip'); tipFor = it.id;
+  tip.innerHTML = '<b></b><span></span><i></i><small></small>';
+  tip.querySelector('b').textContent = it.name;
+  tip.querySelector('span').textContent = it.desc;
+  tip.querySelector('i').textContent = it.joke || '';
+  tip.querySelector('i').hidden = !it.joke;
+  tip.querySelector('small').textContent = it.foot || '';
+  tip.querySelector('small').hidden = !it.foot;
+  const inline = !!it.inline && innerWidth <= 760;
+  tip.classList.toggle('inline', inline);
+  if (!it.inline) for (const o of document.querySelectorAll('.bought.on')) o.classList.remove('on');
+  if (inline) { if (tip.previousElementSibling !== $('shelf')) $('shelf').after(tip); } else if (tip.parentElement !== $('side')) { $('side').append(tip); tipMoved = performance.now(); }
+  tip.hidden = false;
+  if (inline) { tip.style.left = tip.style.top = ''; tip.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' }); return; }
+  const r = b.getBoundingClientRect(), t = tip.getBoundingClientRect();
+  const inSide = !!b.closest('#side');
+  if (inSide && r.left > t.width + 24 && innerWidth > 760) {
+    const col = $('side').getBoundingClientRect();
+    tip.style.left = `${col.left - t.width - 12}px`;
+    tip.style.top = `${Math.max(8, Math.min(innerHeight - t.height - 8, r.top + r.height / 2 - t.height / 2))}px`;
+  } else {
+    tip.style.left = `${Math.max(8, Math.min(innerWidth - t.width - 8, r.left))}px`;
+    tip.style.top = `${r.top - t.height - 8 > 8 ? r.top - t.height - 8 : r.bottom + 8}px`;
+  }
+}
+function hideTip(force) {
+  const tip = $('tip');
+  if (tip.classList.contains('inline') && force !== true) return;
+  tip.hidden = true; tip.classList.remove('inline'); tipFor = null;
+  for (const b of document.querySelectorAll('.bought.on')) b.classList.remove('on');
+}
+let tipMoved = 0;
+addEventListener('scroll', () => { if (performance.now() - tipMoved > 400) hideTip(); }, true);
+addEventListener('resize', () => { if (innerWidth > 760) hideTip(true); });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.up, .tipped, .bought, .tool')) hideTip(); });
+
+const BUY_LINES = {
+  stencil: 'Dewey cuts a better stencil out of a page of Moby-Dick. Two crowns where there was one. He\'s sorry, Herman.',
+  grin: 'Dewey learns a joke. It\'s about a clam. The fish laugh with their whole mouths now.',
+  tips: 'Gold leaf round the edges. The fish feel fancy and tip like it.',
+  steady: 'Dewey cuts down on the plankton coffee. The pen slows down.',
+  front: 'The front tooth gets the royal treatment: a crown on it crowns the whole row, out of respect.',
+  nib: 'A finer nib. Smaller, neater crowns. More of them to a grin.',
+  volumes: 'Encyclopedias on the shelves. Very thick. Very chewy. Dewey says he\'s only reading them.',
+  belts: 'Lard on the belts, from the galley. Everything runs faster and smells of breakfast.',
+  glue: 'Fish glue in the pulp. Nobody asks where it comes from. The crowns stay on.',
+  pass: 'Lou: “Crowned? Pass it on.” They do.',
+  shoals: 'Whole shoals on a rota now, crowning each other in shifts. Very organised. Very sparkly.',
+  plate: 'DR. WORM, says the plate. Dewey didn\'t order that. The fish trust it completely.',
+  floss: 'Floss bunting across the library. Lou says on air that it\'s “a choice”.',
+  deck: 'The books come off the main deck and the belts go down. A shelf, a chewer, a press, a porthole. Crowns go out to the reef on their own now.',
+  pen4: 'The captain\'s four-colour pen, from his desk. It clicks. Lou hears the click on air and starts calling colours.',
+  coat: 'A white coat. The fish were going to think he was a dentist anyway.',
+  galley: 'Dewey eats through the galley wall. Very gently. It was mostly a bookcase anyway.',
+  mail: 'Lou reads a letter on air: “Dear Dr. Worm, my crown fell off at the disco. Please advise.” The sea is warming to him.',
+  cabin: 'The captain\'s cabin. The captain is still in it, a skeleton in a hat. Dewey puts a crown on him too. Not a tooth, technically, but he had a lot of them.',
+  request: 'Dewey phones the request line. Lou: “Winnerth only, Doctor.” She hangs up. She\'s smiling, though.',
+  grinweek: 'Lou airs a crowned grin for Grin of the Week. The whole sea sees it. The crowned fish stop being scared of the worm and start crowning their friends. Everyone wants in.',
+  dentures: 'A whip-round for Lou\'s tooth. She says she\'s fine. She ith lithping.',
+  float: 'Someone on the reef is building a float. Out of crowns. Nobody will say what it\'s for.',
+};
+
+// ---------- The Bought shelf ----------
+const shelfEl = $('bought');
+const UI_KEY = window.DailyGame ? DailyGame.storageKey('ui') : 'di:8:ui';
+let ui = {};
+try { ui = JSON.parse(localStorage.getItem(UI_KEY) || '{}') || {}; } catch (e) {}
+shelfEl.open = !!ui.bought;
+shelfEl.addEventListener('toggle', () => {
+  if (!shelfEl.open) hideTip(true);
+  if (!!ui.bought === shelfEl.open) return;
+  ui.bought = shelfEl.open;
+  try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (e) {}
+});
+const shortName = n => n.replace(/^(The|A|An) /, '');
+function boughtTip(it) {
+  return { id: 'bought:' + it.id, name: it.name, desc: it.desc, joke: BUY_LINES[it.id] || '', foot: it.kind === 'lvl' ? `Bought · all ${it.max} levels` : 'Bought', inline: true };
+}
+let shelfSig = null;
+function renderShelf() {
+  const list = S.ended ? [] : E.bought(S);
+  const sig = list.map(i => i.id).join('|');
+  if (sig === shelfSig) return;
+  shelfSig = sig;
+  shelfEl.hidden = !list.length;
+  $('boughtN').textContent = list.length;
+  $('shelf').replaceChildren(...list.map(it => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'bought' + (it.kind === 'odd' ? ' odd' : '') + (it.kind === 'key' ? ' key' : '');
+    b.textContent = shortName(it.name); b.dataset.id = it.id;
+    b.setAttribute('aria-describedby', 'tip');
+    const show = () => { hideTip(true); b.classList.add('on'); showTip(b, boughtTip(it)); };
+    b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') show(); });
+    b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+    b.addEventListener('focus', () => { if (!b.dataset.touch) show(); });
+    b.addEventListener('blur', hideTip);
+    b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+    b.addEventListener('click', () => { if (tipFor === 'bought:' + it.id && b.dataset.touch) hideTip(true); else show(); });
+    return b;
+  }));
+}
+
+function doBuy(id) {
+  const out = [];
+  if (!E.buy(S, id, out)) { sfx.deny(); return; }
+  delete newUntil[id];
+  hideTip();
+  const ev = out[0];
+  (ev.kind === 'key' ? sfx.key : sfx.buy)();
+  say(BUY_LINES[id] || `Bought: ${ev.name}.`, ['pass', 'request', 'pen4', 'mail', 'floss'].includes(id));
+  if (id === 'deck') { layoutDeck(); buildTools(); }
+  if (id === 'pen4') { buildTools(); renderInks(); }
+  if (id === 'galley' || id === 'cabin') layoutDeck();
+  if (['deck', 'grinweek'].includes(id) && music) music.update();
+  save(); renderShop(); hud();
+}
+
+// ---------- The four-colour pen ----------
+function renderInks() {
+  $('inks').hidden = !S.pen4 || S.ended;
+  if ($('inks').hidden) return;
+  const box = $('clicks');
+  if (!box.children.length) {
+    E.INKS.forEach((ink, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'ink tipped'; b.style.background = INK[i]; b.textContent = ink.name; b.dataset.i = i;
+      b.setAttribute('aria-describedby', 'tip');
+      b.addEventListener('click', () => { if (S.ink !== i) { S.ink = i; sfx.click(); renderInks(); hud(); save(); } });
+      box.append(b);
+    });
+  }
+  for (const b of box.children) {
+    const i = Number(b.dataset.i);
+    b.setAttribute('aria-pressed', String(S.ink === i));
+    b.classList.toggle('hot', S.trend === i);
+    b.setAttribute('aria-label', `${E.INKS[i].name}${S.trend === i ? ", Lou's colour" : ''}`);
+  }
+  $('inkNote').textContent = S.ink === S.trend ? 'in fashion ×3' : `Lou wants ${E.INKS[S.trend].name}`;
+  $('inkNote').style.color = S.ink === S.trend ? C.green : C.red;
+}
+const ACTION_TIPS = {
+  clicks: () => ({ id: 'inks', name: 'The four-colour pen', desc: 'Click it to a colour. Every crown after that, by hand and off the deck, is inked in it. Lou calls a new colour on air every few minutes; crowns in her colour (the starred one) count triple, everything else counts once.', foot: `Lou's colour now: ${E.INKS[S.trend].name}` }),
+};
+const explained = new Set();
+for (const [id, tipOf] of Object.entries(ACTION_TIPS)) {
+  const el = $(id);
+  el.addEventListener('pointerover', e => { if (e.pointerType === 'mouse' && e.target.closest('.ink')) showTip(e.target.closest('.ink'), tipOf()); });
+  el.addEventListener('pointerout', e => { if (e.pointerType === 'mouse') hideTip(); });
+  el.addEventListener('focusin', e => { if (!e.target.dataset.touch) showTip(e.target, tipOf()); });
+  el.addEventListener('focusout', hideTip);
+  el.addEventListener('pointerdown', e => { const b = e.target.closest('.ink'); if (b) b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+  el.addEventListener('click', e => {
+    const b = e.target.closest('.ink');
+    if (b && b.dataset.touch && !explained.has(id)) { explained.add(id); showTip(b, tipOf()); e.stopImmediatePropagation(); }
+  }, { capture: true });
+}
+
+// ---------- The deck ----------
+const dk = $('deck'), dg = dk.getContext('2d');
+const DW = 440, DH = 264;
+let tool = null, hover = -1, cs = 44, ox = 0, oy = 0;
+const anims = new Map(); // target cell -> { from, it, t0, gone }
+let tickStart = 0;
+function layoutDeck() {
+  $('deckbox').hidden = !S.deck || S.ended;
+  if (!S.grid) return;
+  const { w, h } = S.grid;
+  cs = Math.floor(Math.min(DW / w, DH / h, 62));
+  ox = Math.floor((DW - cs * w) / 2); oy = Math.floor((DH - cs * h) / 2);
+}
+const toolIcons = {};
+function buildTools() {
+  const box = $('tools');
+  for (const b of box.querySelectorAll('.tool')) b.remove();
+  if (!S.deck || S.ended) return;
+  for (const k of [...E.TOOL_ORDER, 'pick']) {
+    if (k !== 'pick' && !E.toolOpen(S, k)) continue;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'tool'; b.dataset.k = k;
+    const ic = Sprites.canvas(56, 56); drawTile(ic.getContext('2d'), k === 'pick' ? 'pick' : k, 28, 28, 48, 0, 5);
+    const label = document.createElement('span');
+    label.innerHTML = `<b>${k === 'pick' ? 'Pick up' : E.TOOLS[k].name}</b><em></em>`;
+    b.append(ic, label);
+    b.setAttribute('aria-pressed', String(tool === k));
+    b.setAttribute('aria-describedby', 'tip');
+    const tipOf = () => k === 'pick'
+      ? { id: 'tool:pick', name: 'Pick up', desc: 'Tap a tile on the deck to pick it up. You get back what the last one cost.' }
+      : { id: 'tool:' + k, name: E.TOOLS[k].name, desc: E.TOOLS[k].desc, foot: `${fmt(E.toolCost(S, k))} doubloons · ${E.count(S, k)} on the deck` };
+    b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showTip(b, tipOf()); });
+    b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+    b.addEventListener('focus', () => showTip(b, tipOf()));
+    b.addEventListener('blur', hideTip);
+    b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+    b.addEventListener('click', () => {
+      tool = tool === k ? null : k; sfx.turn();
+      if (b.dataset.touch) showTip(b, tipOf());
+      for (const o of box.querySelectorAll('.tool')) o.setAttribute('aria-pressed', String(o.dataset.k === tool));
+      toolHud();
+    });
+    box.append(b);
+  }
+  toolHud();
+}
+function toolHud() {
+  for (const b of $('tools').querySelectorAll('.tool')) {
+    const k = b.dataset.k, em = b.querySelector('em');
+    if (k === 'pick') { em.textContent = 'refunds'; continue; }
+    const c = E.toolCost(S, k);
+    em.innerHTML = coin + fmtS(c);
+    b.classList.toggle('poor', S.doub < c);
+  }
+  $('toolHint').textContent = tool === 'pick' ? 'Tap a tile to pick it up.' : tool ? `Tap an empty square to put down a ${E.TOOLS[tool].name.toLowerCase()}. New tiles point the way you last turned one.` : 'Pick a tile, then tap a square to put it down. Tap a tile on the deck to turn it.';
+}
+let lastDir = 0;
+function cellAt(e) {
+  const r = dk.getBoundingClientRect(), px = (e.clientX - r.left) * DW / r.width, py = (e.clientY - r.top) * DH / r.height;
+  const cx = Math.floor((px - ox) / cs), cy = Math.floor((py - oy) / cs);
+  if (!S.grid || cx < 0 || cy < 0 || cx >= S.grid.w || cy >= S.grid.h) return -1;
+  return cy * S.grid.w + cx;
+}
+dk.addEventListener('pointermove', e => { hover = cellAt(e); });
+dk.addEventListener('pointerleave', () => { hover = -1; });
+dk.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  const i = cellAt(e); if (i < 0 || S.ended) return;
+  const c = S.grid.c[i];
+  if (tool === 'pick') { if (c) { E.remove(S, i); sfx.pickup(); } else sfx.deny(); }
+  else if (c) { E.rotate(S, i); lastDir = c.d; sfx.turn(); }
+  else if (tool) {
+    if (E.place(S, i, tool, lastDir)) { sfx.place(); if (!S.placed) { S.placed = 1; say('Down it goes. Things move the way their arrow points: shelf, chewer, press, then out of a porthole. A page that reaches a porthole unchewed is just a page. The reef is confused by it.'); } }
+    else { sfx.deny(); }
+  } else say('Pick a tile from the box first, then tap the square.');
+  toolHud(); save();
+});
+
+function cellXY(i) { const w = S.grid.w; return [ox + (i % w) * cs + cs / 2, oy + Math.floor(i / w) * cs + cs / 2]; }
+function arrow(x, cx, cy, d, r, color, seed) {
+  const [dx, dy] = E.DIRS[d], px = cx + dx * r, py = cy + dy * r;
+  pen(x, [[px - dx * 7 - dy * 5, py - dy * 7 + dx * 5], [px, py], [px - dx * 7 + dy * 5, py - dy * 7 - dx * 5]], { color, w: 1.5, wob: 0.3, seed, passes: 1 });
+}
+// One tile, drawn in ballpoint at (cx, cy), size s.
+function drawTile(x, k, cx, cy, s, d = 0, seed = 1) {
+  const h = s / 2 - 3;
+  const sq = [[cx - h, cy - h], [cx + h, cy - h], [cx + h, cy + h], [cx - h, cy + h]];
+  if (k === 'belt') {
+    hatch(x, pathOf(sq), { color: C.rule2, gap: 4, alpha: 0.35, seed, angle: d % 2 ? 0 : 1.57, box: [cx - h, cy - h, s, s] });
+    for (const o of [-0.5, 0.15]) arrow(x, cx + E.DIRS[d][0] * o * h, cy + E.DIRS[d][1] * o * h, d, h * 0.4, C.blue, seed + o * 10);
+    pen(x, sq, { color: C.rule2, w: 1, wob: 0.4, seed, close: true, passes: 1 });
+    return;
+  }
+  if (k === 'pick') {
+    pen(x, [[cx - h * 0.6, cy + h * 0.5], [cx + h * 0.2, cy - h * 0.6], [cx + h * 0.6, cy - h * 0.2], [cx - h * 0.2, cy + h * 0.8], [cx - h * 0.6, cy + h * 0.5]], { color: C.red, w: 1.6, seed });
+    pen(x, [[cx - h * 0.1, cy - h * 0.1], [cx + h * 0.3, cy + h * 0.3]], { color: C.red, w: 1.2, seed: seed + 1, passes: 1 });
+    return;
+  }
+  x.save(); x.beginPath(); pathOf(sq)(x); x.fillStyle = C.cream; x.fill(); x.restore();
+  if (k === 'shelf') {
+    const cols = [C.red, C.blue, C.green, C.gold, C.plum, C.sea];
+    for (let i = 0; i < 6; i++) {
+      const bx = cx - h + 3 + i * (h * 2 - 6) / 6, bw = (h * 2 - 6) / 6 - 1.5, top = cy - h * (0.55 + (i * 37 % 5) / 14);
+      x.save(); x.fillStyle = cols[i]; x.globalAlpha = 0.55; x.fillRect(bx, top, bw, cy + h * 0.75 - top); x.restore();
+      pen(x, [[bx, cy + h * 0.75], [bx, top], [bx + bw, top], [bx + bw, cy + h * 0.75]], { color: C.navy, w: 0.9, wob: 0.25, seed: seed + i, passes: 1 });
+    }
+    pen(x, [[cx - h, cy + h * 0.75], [cx + h, cy + h * 0.75]], { color: C.navy, w: 1.4, seed: seed + 9, passes: 1 });
+  } else if (k === 'chew') {
+    x.save(); x.beginPath(); x.arc(cx, cy, h * 0.7, 0, 7); x.fillStyle = C.mint; x.fill(); x.restore();
+    pen(x, oval(cx, cy, h * 0.7, h * 0.7, 14), { color: C.green, w: 1.4, seed, close: true });
+    const [dx, dy] = E.DIRS[d];
+    pen(x, oval(cx - dy * h * 0.25 - dx * h * 0.1, cy + dx * h * 0.25 - dy * h * 0.1, 2.5, 2.5, 6), { color: C.navy, w: 1.2, seed: seed + 1, close: true, passes: 1 });
+    pen(x, oval(cx + dy * h * 0.25 - dx * h * 0.1, cy - dx * h * 0.25 - dy * h * 0.1, 2.5, 2.5, 6), { color: C.navy, w: 1.2, seed: seed + 2, close: true, passes: 1 });
+    pen(x, [[cx + dx * h * 0.35 - dy * h * 0.25, cy + dy * h * 0.35 + dx * h * 0.25], [cx + dx * h * 0.5, cy + dy * h * 0.5], [cx + dx * h * 0.35 + dy * h * 0.25, cy + dy * h * 0.35 - dx * h * 0.25]], { color: C.navy, w: 1.2, seed: seed + 3, passes: 1 });
+  } else if (k === 'press') {
+    const p = [[cx - h * 0.7, cy - h * 0.1], [cx + h * 0.7, cy - h * 0.1], [cx + h * 0.7, cy + h * 0.6], [cx - h * 0.7, cy + h * 0.6]];
+    hatch(x, pathOf(p), { color: C.navy, gap: 3.5, alpha: 0.4, seed, box: [cx - h, cy - h, s, s] });
+    pen(x, p, { color: C.navy, w: 1.4, seed, close: true });
+    pen(x, [[cx, cy - h * 0.1], [cx, cy - h * 0.7]], { color: C.navy, w: 1.6, seed: seed + 1, passes: 1 });
+    pen(x, [[cx - h * 0.5, cy - h * 0.7], [cx + h * 0.5, cy - h * 0.7]], { color: C.navy, w: 1.6, seed: seed + 2, passes: 1 });
+  } else if (k === 'pen') {
+    pen(x, [[cx - h * 0.6, cy + h * 0.6], [cx + h * 0.5, cy - h * 0.5], [cx + h * 0.7, cy - h * 0.3], [cx - h * 0.4, cy + h * 0.8], [cx - h * 0.7, cy + h * 0.75], [cx - h * 0.6, cy + h * 0.6]], { color: C.navy, w: 1.4, seed });
+    x.save(); x.beginPath(); x.arc(cx - h * 0.62, cy + h * 0.7, 3.2, 0, 7); x.fillStyle = INK[S.ink]; x.fill(); x.restore();
+    INK.forEach((c, i) => { x.save(); x.fillStyle = c; x.fillRect(cx + h * 0.3 + i * 2.5, cy - h * 0.75 + i * -0.5, 2, 5); x.restore(); });
+  } else if (k === 'port') {
+    x.save(); x.beginPath(); x.arc(cx, cy, h * 0.82, 0, 7); x.fillStyle = C.rule; x.globalAlpha = 0.7; x.fill(); x.restore();
+    pen(x, Array.from({ length: 9 }, (_, i) => [cx - h * 0.6 + i * h * 0.15, cy + Math.sin(i * 1.4 + boil) * 2.5]), { color: C.blue, w: 1, seed: seed + 1, passes: 1 });
+    pen(x, oval(cx, cy, h * 0.82, h * 0.82, 18), { color: C.navy, w: 2, seed, close: true });
+    for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; x.save(); x.beginPath(); x.arc(cx + Math.cos(a) * h * 0.95, cy + Math.sin(a) * h * 0.95, 1.4, 0, 7); x.fillStyle = C.navy; x.fill(); x.restore(); }
+    return;
+  }
+  pen(x, sq, { color: C.blue, w: 1.2, wob: 0.5, seed: seed + 20, close: true, passes: 1 });
+  arrow(x, cx, cy, d, h - 1, C.red, seed + 30);
+}
+function drawItem(x, it, cx, cy, s, seed) {
+  if (it === E.PAGE) {
+    const p = [[cx - s * 0.32, cy - s * 0.4], [cx + s * 0.32, cy - s * 0.4], [cx + s * 0.32, cy + s * 0.4], [cx - s * 0.32, cy + s * 0.4]];
+    x.save(); x.beginPath(); pathOf(p)(x); x.fillStyle = '#fffaf0'; x.fill(); x.restore();
+    pen(x, p, { color: C.navy, w: 1, wob: 0.3, seed, close: true, passes: 1 });
+    for (let k = -1; k <= 1; k++) pen(x, [[cx - s * 0.2, cy + k * s * 0.18], [cx + s * 0.2, cy + k * s * 0.18]], { color: C.rule2, w: 0.8, wob: 0.2, seed: seed + k, passes: 1 });
+  } else if (it === E.PULP) {
+    const b = oval(cx, cy, s * 0.36, s * 0.28, 10);
+    x.save(); x.beginPath(); pathOf(b)(x); x.fillStyle = C.paper2; x.fill(); x.restore();
+    pen(x, b, { color: C.navy, w: 1, wob: 1, seed, close: true, passes: 1 });
+  } else drawCrown(x, cx, cy, s * 0.4, it >= E.INKED ? it - E.INKED : -1, seed);
+}
+function drawDeck(now) {
+  const k = fit(dk, DW, DH);
+  dg.setTransform(k, 0, 0, k, 0, 0);
+  dg.fillStyle = C.paper; dg.fillRect(0, 0, DW, DH);
+  if (!S.grid) return;
+  const { w, h, c } = S.grid;
+  // Graph paper.
+  dg.strokeStyle = '#a0ddd3'; dg.lineWidth = 1;
+  for (let i = 0; i <= w; i++) { dg.beginPath(); dg.moveTo(ox + i * cs + 0.5, oy); dg.lineTo(ox + i * cs + 0.5, oy + h * cs); dg.stroke(); }
+  for (let j = 0; j <= h; j++) { dg.beginPath(); dg.moveTo(ox, oy + j * cs + 0.5); dg.lineTo(ox + w * cs, oy + j * cs + 0.5); dg.stroke(); }
+  for (let i = 0; i < c.length; i++) if (c[i]) { const [cx, cy] = cellXY(i); drawTile(dg, c[i].k, cx, cy, cs, c[i].d, i * 5 + 1); }
+  // Items, sliding between squares over a tick.
+  const tt = E.stats(S).tickT, f = Math.min(1, (now - tickStart) / 1000 / (tt * 0.8));
+  for (const [to, a] of anims) if (a.gone) {
+    const [x0, y0] = cellXY(a.from), [x1, y1] = cellXY(to);
+    if (f < 1) drawItem(dg, a.it, x0 + (x1 - x0) * f, y0 + (y1 - y0) * f, cs * (1 - f * 0.6), to);
+  }
+  for (let i = 0; i < c.length; i++) {
+    const t = c[i]; if (!t || !t.it) continue;
+    const a = anims.get(i);
+    let [x, y] = cellXY(i);
+    if (a && !a.gone && f < 1) { const [x0, y0] = cellXY(a.from); x = x0 + (x - x0) * f; y = y0 + (y - y0) * f; }
+    drawItem(dg, t.it, x, y, cs * 0.62, i);
+  }
+  // Where the next tile would go.
+  if (hover >= 0 && tool && tool !== 'pick' && !c[hover]) {
+    const [cx, cy] = cellXY(hover);
+    dg.save(); dg.globalAlpha = 0.4; drawTile(dg, tool, cx, cy, cs, lastDir, 7); dg.restore();
+  }
+  if (hover >= 0 && tool === 'pick' && c[hover]) { const [cx, cy] = cellXY(hover); pen(dg, oval(cx, cy, cs * 0.46, cs * 0.46, 16), { color: C.red, w: 1.6, seed: 9, close: true }); }
+}
+
+// ---------- Events from the rules ----------
+function handle(out) {
+  let mv = false;
+  for (const ev of out) {
+    if (ev.type === 'mv') { if (!mv) { anims.clear(); mv = true; tickStart = performance.now(); } anims.set(ev.b, { from: ev.a, it: ev.it, gone: ev.gone }); }
+    else if (ev.type === 'port') { if (portT <= 0) { sfx.port(ev.i); portT = 0.16; } }
+    else if (ev.type === 'waste') { if (portT <= 0) { sfx.waste(); portT = 0.3; } if (!S.toldWaste) { S.toldWaste = 1; lou('“Somebody just posted an unchewed page through a porthole. A cod ith reading it. It’s a page of a dictionary. He’s on “cod”. He’s thrilled.”'); } }
+    else if (ev.type === 'trend') { sfx.jingle(); lou(COLOUR_CALL[S.trendN % COLOUR_CALL.length](E.INKS[ev.ink].name)); renderInks(); }
+    else if (ev.type === 'final') {
+      sfx.last(); fishState.phase = 'out'; fishState.t = 0;
+      lou('“...one. ONE tooth left in the thea. And — oh. Oh no. It’s mine, isn’t it. The wobbly one. Fine. FINE. Come on then, Doctor. Gently.”');
+      if (music) music.update(); hud();
+    } else if (ev.type === 'end') end(false);
+  }
+}
+
+// ---------- HUD ----------
+const digitsEl = $('digits');
+let rateAcc = 0, rateT = 0, rate = 0, lastCrowned = S.crowned;
+function renderDigits() {
+  const s = String(E.left(S)).padStart(16, '0');
+  // Per digit: if it changes many times a second, it rolls.
+  const out = [];
+  const lead = s.search(/[1-9]/), first = lead < 0 ? 15 : lead;
+  for (let i = 0; i < 16; i++) {
+    if (i && (16 - i) % 3 === 0) out.push('<span class="sep">,</span>');
+    const place = 15 - i, rolling = !reduced && rate / Math.pow(10, place) > 6;
+    out.push(`<span${rolling ? ' class="roll"' : ''} style="${i < first ? 'color:#a0ddd3' : ''}">${s[i]}</span>`);
+  }
+  digitsEl.innerHTML = out.join('');
+  digitsEl.setAttribute('aria-label', `${E.left(S).toLocaleString('en-US')} teeth left`);
+}
+const bar = $('meterFill');
+function hud() {
+  renderDigits();
+  $('crowned').textContent = fmt(S.crowned);
+  $('doub').textContent = fmt(S.doub);
+  const ps = perStop();
+  $('perStop').textContent = fmt(ps);
+  $('perStop').nextSibling.textContent = ps === 1 ? ' tooth' : ' teeth';
+  const auto = (S.deck ? S.deckRate : 0) + (S.clubs ? S.clubRate : 0);
+  $('rateBox').hidden = !S.deck || S.ended || S.final; $('rate').textContent = fmt(auto);
+  $('trendBox').hidden = !S.pen4 || S.ended;
+  if (S.pen4) { $('trendDot').style.background = INK[S.trend]; $('trendName').textContent = E.INKS[S.trend].name; }
+  const digits = S.crowned >= 1 ? Math.floor(Math.log10(S.crowned)) + 1 : 0;
+  bar.style.width = `${Math.min(100, (S.ended ? 1 : Math.log10(S.crowned + 1) / Math.log10(E.TOTAL)) * 100)}%`;
+  $('meterLabel').textContent = S.ended ? 'The dare: won.' : S.final ? 'The dare: one tooth to go.' : 'The dare: crowned so far, in digits';
+  $('meterVal').textContent = S.ended ? '16 of 16' : `${digits} of 16`;
+  toolHud();
+}
+
+// ---------- Drawing ----------
+function drawStage(now, dt) {
+  const k = fit(cv, W, H);
+  g.setTransform(k, 0, 0, k, 0, 0);
+  g.drawImage(paperTex, 0, 0);
+  // The sea, suggested: wavy lines at the top, a sandy line at the bottom, bubbles.
+  for (let r = 0; r < 2; r++) pen(g, Array.from({ length: 34 }, (_, i) => [i * 20, 18 + r * 9 + Math.sin(i * 0.8 + T * 0.8 + r) * 3]), { color: C.rule2, w: 1.1, seed: 200 + r, passes: 1 });
+  pen(g, Array.from({ length: 34 }, (_, i) => [i * 20, 340 + Math.sin(i * 1.7) * 4]), { color: C.gold, w: 1.4, seed: 210, passes: 1 });
+  for (let i = 0; i < 6; i++) { const by = 330 - ((T * 18 + i * 61) % 300), bx = 60 + i * 97 + Math.sin(T + i) * 6; pen(g, oval(bx, by, 4 + i % 3, 4 + i % 3, 8), { color: C.rule2, w: 1, seed: 220 + i, close: true, passes: 1 }); }
+  if (S.ended) { drawParade(now); return; }
+  const onAir = onAirT > 0;
+  if (S.final) {
+    // Lou, front and centre, for the last tooth.
+    const slide = fishState.phase === 'in' ? 1 - Math.min(1, fishState.t / 1) : 0;
+    g.save(); g.translate(slide * 400, 0);
+    drawLou(g, 275, 212, 2.1, T, { onAir: true, big: true });
+    g.restore();
+    if (fishState.phase === 'open' || fishState.phase === 'in') {
+      // The pen sweeps along her teeth this time; the wobbly one is the target.
+      const [z0, z1] = fishState.zone;
+      for (const [px, d] of [[MX0 + (MX1 - MX0) * z0, 1], [MX0 + (MX1 - MX0) * z1, -1]]) pen(g, [[px + d * 6, 238], [px, 238], [px, 290], [px + d * 6, 290]], { color: C.red, w: 1.4, seed: 300 + d });
+      inkText(g, 'gently.', MX0 + (MX1 - MX0) * (z0 + z1) / 2, 306, { size: 22, color: C.red, align: 'center' });
+    }
+    drawPen(g, MX0 + (MX1 - MX0) * penP, 212 + 2.1 * 18, T);
+    inkText(g, 'the last tooth in the sea', 48, 336, { size: 22, color: C.navy });
+  } else {
+    // The fish swims in, grins, gets its crowns, and swims off.
+    const fs = fishState, sp = fs.sp;
+    let dx = 0;
+    if (fs.phase === 'in') dx = (1 - easeOut(Math.min(1, fs.t / 0.25))) * 520;
+    if (fs.phase === 'out') dx = -easeIn(Math.min(1, fs.t / 0.25)) * 620;
+    g.save(); g.translate(dx, 0);
+    if (sp.shoal) for (let i = 0; i < Math.min(sp.shoal, 14); i++) {
+      const sx = 120 + (i * 151 % 400), sy = 70 + (i * 89 % 210), ss = 0.16 + (i % 3) * 0.03;
+      g.save(); g.globalAlpha = 0.55; drawFishBody(g, sp, sx, sy, ss, 400 + i, { eye: 0.5 }); g.restore();
+    }
+    const open = fs.phase === 'open' ? (fs.shut > 0 ? 0 : Math.min(1, fs.t / 0.2)) : fs.phase === 'done' ? 1 : 0;
+    const ex = (penP - 0.5) * 2;
+    drawFishBody(g, sp, 275, 186, 1, fs.seed, { open, eye: ex });
+    drawGrin(g, sp, fs.seed, { zone: fs.zone, open: fs.shut > 0 ? 0 : open, crowned: fs.crowned, ink: S.pen4 ? S.ink : -1, bull: fs.bull, t: T });
+    if (fs.shut > 0) inkText(g, 'mmf!', 300, MY + 30, { size: 24, color: C.red, align: 'center', rot: -0.1 });
+    g.restore();
+    if (fs.phase === 'open' || fs.phase === 'done') drawPen(g, MX0 + (MX1 - MX0) * penP, MY - 2, T);
+    // Caption: who's grinning, and how many teeth a stop will crown.
+    inkText(g, `grinning now: ${sp.name}`, 48, 322, { size: 22, color: C.navy });
+    inkText(g, `${fmt(perStop())} ${perStop() === 1 ? 'tooth' : 'teeth'} a stop${S.pen4 ? (S.ink === S.trend ? ' · in Lou\'s colour, ×3' : '') : ''}`, 48, 342, { size: 18, color: C.blue });
+    drawLou(g, 560, 110, 0.9, T, { onAir });
+    if (art.book) g.drawImage(art.book, 556, 270, 60, 60); // the library, where Dewey lives
+  }
+  for (const f of fx) {
+    const a = 1 - f.t / f.life;
+    inkText(g, f.text, f.x, f.y - f.t * 26, { size: 15, color: f.color, font: 'bold', align: 'center', alpha: Math.max(0, a) });
+  }
+}
+const easeOut = t => 1 - (1 - t) * (1 - t), easeIn = t => t * t;
+
+// The send-off parade: everyone crowned, in a line, swimming the tooth to the surface on a float.
+function drawParade(now) {
+  const n = SPECIES.length;
+  for (let i = 0; i < n; i++) {
+    const sp = SPECIES[i], u = ((T * 22 + i * 120) % (n * 120)) - 120;
+    const px = u, py = 250 + Math.sin(T * 1.5 + i) * 10 - (i % 2) * 40;
+    if (px < -80 || px > 720) continue;
+    drawFishBody(g, sp, px, py, 0.22, 500 + i, { eye: 1 });
+    drawCrown(g, px - 22, py - 30, 10, i % 4, 600 + i);
+  }
+  // Everyone else who came: crabs, an octopus, a whale, little fish, shells, all crowned.
+  const guests = [['whale', 96, 120], ['octopus', 64, 200], ['tropical', 52, 280], ['crab', 56, 300], ['shell', 36, 316], ['tropical', 44, 236]];
+  guests.forEach(([k, s, y], i) => {
+    const img = art[k]; if (!img) return;
+    const px = ((T * (16 + i * 3) + i * 170) % 900) - 130, py = y + Math.sin(T * 1.2 + i) * 6;
+    g.drawImage(img, px, py, s, s);
+    drawCrown(g, px + s * 0.5, py + 2, Math.max(5, s * 0.12), (i + 1) % 4, 650 + i);
+  });
+  // Two crabs carry the float.
+  if (art.crab) for (const dx of [-46, 44]) g.drawImage(art.crab, 296 + dx, 186 + Math.sin(T * 3 + dx) * 2, 48, 48);
+  // The float: a raft of paper crowns, the tooth on top in its crown, rising.
+  const fy = 150 + Math.sin(T * 0.9) * 8;
+  for (let i = 0; i < 9; i++) drawCrown(g, 260 + i * 15, fy + 34 + (i % 2) * 3, 9, i % 4, 700 + i);
+  const tooth = [[-14, 0], [-14, 22], [-5, 30], [0, 20], [5, 30], [14, 22], [14, 0]].map(([a, b]) => [320 + a, fy + b - 4]);
+  g.save(); g.beginPath(); pathOf(tooth)(g); g.fillStyle = C.cream; g.fill(); g.restore();
+  pen(g, tooth, { color: C.navy, w: 1.6, seed: 720, close: true });
+  drawCrown(g, 320, fy - 14, 15, S.ink ?? 1, 721);
+  drawDewey(g, 262, fy + 14, 1, T, 1);
+  drawLou(g, 520, 110, 1, T, { onAir: true });
+  for (let i = 0; i < 14; i++) { const cx = (i * 47 + T * 30) % 640, cy = (i * 83 + T * 40) % 300; if (i % 3 === 0 && art.star) g.drawImage(art.star, cx, cy, 16, 16); else drawCrown(g, cx, cy, 4, i % 4, 800 + i); }
+  inkText(g, 'the send-off', 48, 330, { size: 28, color: C.red });
+}
+
+// ---------- Sprites ----------
+const art = {};
+async function makeSprites() {
+  // Source shapes from the doodle sets, hatched and inked so they belong in this notebook.
+  const inked = async (url, color, size) => {
+    const svg = Sprites.recolor(await Sprites.loadSvg(url), color);
+    const c = await Sprites.svgToCanvas(svg, size), x = c.getContext('2d');
+    x.globalCompositeOperation = 'source-atop'; hatch(x, xx => xx.rect(0, 0, size, size), { color: C.cream, gap: 3, alpha: 0.4, seed: 5, box: [0, 0, size, size] });
+    return c;
+  };
+  const ART = {
+    book: ['./art/doodle-icons--book.svg', C.blue, 72], star: ['./art/doodle-icons--star.svg', C.red, 28],
+    crab: ['./art/fluent-emoji-high-contrast--crab.svg', C.red, 56], octopus: ['./art/fluent-emoji-high-contrast--octopus.svg', C.plum, 64],
+    whale: ['./art/fluent-emoji-high-contrast--spouting-whale.svg', C.blue, 96], shell: ['./art/fluent-emoji-high-contrast--spiral-shell.svg', C.gold, 36],
+    tropical: ['./art/fluent-emoji-high-contrast--tropical-fish.svg', C.green, 52],
+  };
+  for (const [name, [url, color, size]] of Object.entries(ART)) {
+    try { art[name] = Sprites.register(name, await inked(url, color, size)); } catch (e) {}
+  }
+  for (const k of [...E.TOOL_ORDER, 'pick']) { const c = Sprites.canvas(64, 64); drawTile(c.getContext('2d'), k, 32, 32, 56, 0, 3); Sprites.register('tile: ' + k, c); }
+  for (const it of [E.PAGE, E.PULP, E.CROWN, E.INKED, E.INKED + 1, E.INKED + 2, E.INKED + 3]) { const c = Sprites.canvas(48, 48); drawItem(c.getContext('2d'), it, 24, 24, 40, 4); Sprites.register('item ' + it, c); }
+  { const c = Sprites.canvas(120, 80); drawDewey(c.getContext('2d'), 80, 40, 2, 0, 1); Sprites.register('Dewey', c); }
+  { const c = Sprites.canvas(220, 220); drawLou(c.getContext('2d'), 110, 130, 1.4, 0, { onAir: true }); Sprites.register('Lou', c); }
+  for (const sp of SPECIES.slice(0, 6)) { const c = Sprites.canvas(170, 110); drawFishBody(c.getContext('2d'), sp, 75, 60, 0.3, 9, { eye: 0 }); Sprites.register(sp.name, c); }
+}
+
+// ---------- Loop ----------
+let T = 0, last = performance.now(), saveT = 0, ambT = 0, hudT = 0, boilT = 0, lastPhase = E.phase(S);
+function frame(now) {
+  const dt = Math.min(0.25, (now - last) / 1000); last = now; T += dt;
+  if (!S.ended) {
+    const out = []; out.anim = S.deck && !document.hidden;
+    E.step(S, dt, out); if (out.length) handle(out);
+    if (comboT > 0) comboT -= dt;
+    portT -= dt;
+    // The pen: back and forth across the grin.
+    sweepT += dt / E.stats(S).sweep / (S.final ? 1.4 : 1);
+    const ph = sweepT % 2; penP = ph < 1 ? ph : 2 - ph;
+    const fs = fishState; fs.t += dt;
+    if (fs.shut > 0 && (fs.shut -= dt) <= 0) fs.mood = 0;
+    if (fs.phase === 'in' && fs.t > (S.final ? 1 : 0.25)) { fs.phase = 'open'; fs.t = 0; }
+    if (fs.phase === 'done' && fs.t > 0.38) { fs.phase = 'out'; fs.t = 0; sfx.swim(); }
+    if (fs.phase === 'out' && fs.t > 0.25) newGrin();
+  }
+  for (const f of fx) f.t += dt;
+  for (let k = fx.length - 1; k >= 0; k--) if (fx[k].t > fx[k].life) fx.splice(k, 1);
+  if (onAirT > 0) onAirT -= dt;
+  // How fast the teeth are going, for the odometer's rolling digits.
+  rateT += dt;
+  if (rateT > 0.5) { const d = S.crowned - lastCrowned; lastCrowned = S.crowned; rate += (d / rateT - rate) * 0.5; rateT = 0; }
+  if (!reduced && (boilT += dt) > 0.28) { boilT = 0; boil = (boil + 1) % 3; }
+  if (E.phase(S) !== lastPhase) { lastPhase = E.phase(S); if (music) music.update(); }
+  logT += dt; ambT += dt;
+  if (logT > 26 && ambT > 26 && !S.ended && !S.final) {
+    ambT = 0;
+    const pool = S.clubs && Math.random() < 0.5 ? CLUB_AMBIENT : S.deck && Math.random() < 0.45 ? DECK_AMBIENT : AMBIENT;
+    lou(pool[Math.floor(Math.random() * pool.length)]());
+  }
+  hudT += dt; if (hudT > 0.2) { hudT = 0; hud(); renderShop(); }
+  saveT += dt; if (saveT > 4) { saveT = 0; save(); }
+  drawStage(now, dt);
+  if (S.deck && !S.ended) drawDeck(now);
+  requestAnimationFrame(frame);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+addEventListener('pagehide', save);
+
+function end(resumed) {
+  S.ended = true; save();
+  $('ending').hidden = false; $('deckbox').hidden = true; $('inks').hidden = true;
+  hideTip(true);
+  const h = Math.floor(S.t / 3600), m = Math.floor(S.t / 60) % 60;
+  const time = h ? `${h}h${String(m).padStart(2, '0')}m` : `${m}m`;
+  $('endText').textContent = 'The crown goes on Lou\'s wobbly tooth, and it\'s just heavy enough. Out it comes, with a little pop, and up it floats, wearing its crown. The whole sea turns out to see it off: gobies, morays, sharks with crowns on, a reef of them, a parade a quadrillion fish long, swimming the last tooth in the sea up to the surface on a float made of paper crowns. Lou doesn\'t lisp anymore. She puts on a shanty for Dr. Worm, as requested.';
+  $('endStats').textContent = S.t > 1 ? `${time} · ${fmt(E.TOTAL)} teeth · ${fmt(S.bulls)} front teeth dead on · ${fmt(S.pages)} pages chewed` : '';
+  hud(); renderShop();
+  if (music) music.update();
+  if (!resumed) {
+    sfx.finale();
+    lou('“Thith— this is Radio Lagan. No lisp. Every tooth in the sea is wearing a crown, and the last one’s going up to the surface on a float. This one goes out to the worm. He asked for a shanty.”');
+    if (window.DailyGame) DailyGame.finish({ lines: [`👑 all 8.8 quadrillion teeth crowned`, `⏱ ${time} · 🎯 ${fmt(S.bulls)} front teeth`, '🦷 one wobbly tooth, sent off'] });
+  }
+  setTimeout(() => $('ending').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' }), resumed ? 0 : 1800);
+}
+$('shareBtn').addEventListener('click', () => window.DailyGame && DailyGame.share());
+
+// ---------- Start ----------
+await document.fonts.ready.catch(() => {});
+await makeSprites();
+if (Sprites.sheetRequested()) Sprites.showSheet();
+layoutDeck(); buildTools(); renderInks();
+newGrin();
+if (S.ended) { end(true); say('Every tooth in the sea is wearing a crown. Somewhere up top, a tooth on a float is still bobbing.'); }
+else {
+  const away = S.lastSeen ? (Date.now() - S.lastSeen) / 1000 : 0;
+  const got = S.t > 1 ? E.offline(S, away) : null;
+  if (got && got.teeth >= 1) {
+    const hrs = got.secs / 3600, t = hrs >= 1 ? `${hrs.toFixed(1)} hours` : `${Math.round(got.secs / 60)} minutes`;
+    lou(`“Welcome back, Doctor. You were off air ${t}${away > E.OFFLINE_CAP ? ' (I only kept count for the first three)' : ''}. The deck kept chewing${S.clubs ? ' and the clubs kept passing' : ''}, slowly: ${fmt(got.teeth)} more teeth crowned, ${fmt(got.doub)} doubloons in tips.”`);
+  } else if (S.final) lou('“Still here. Still wobbly. Gently, Doctor.”');
+  else if (S.t > 1) say('Dewey wriggles back out of the encyclopedia. The fish are still grinning, more or less.');
+  else lou('“...and I’ll say it again, my lovelies: NOBODY can put a crown on every tooth in the thea. Not one of you. That’s a dare.” Down in the library, a bookworm puts down his book. Tap to stop the pen on the grin.');
+}
+if (DEBUG) Object.assign(window.__game, { fishState, stopPen, pen: () => penP });
+hud(); renderShop();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

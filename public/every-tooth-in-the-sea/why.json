@@ -1,0 +1,88 @@
+{
+  "intro": "Every day the dice roll a premise and a dozen constraints, and the game has to honor all of them. Today's roll was seed 1835081946. Here is each roll and what came of it.",
+  "rolls": [
+    {
+      "roll": "Premise",
+      "value": "a bookworm (literally) · decorating · teeth",
+      "became": "Why would a bookworm decorate teeth? Because bookworms chew paper, chewed paper is pulp, and pulp presses into paper crowns. Dentists put crowns on teeth. Dewey just puts the paper kind on, inked in ballpoint."
+    },
+    {
+      "roll": "Interaction",
+      "value": "stop a moving marker at the right moment",
+      "became": "The marker is Dewey's ballpoint pen, sweeping back and forth across a grin. Stop it between the red brackets and a crown goes on. Stop it dead on the front tooth and the whole row gets one."
+    },
+    {
+      "roll": "Drive",
+      "value": "a dare",
+      "became": "Loose-Tooth Lou, the DJ on Radio Lagan, says on air that nobody can put a crown on every tooth in the sea. Down in the library, a bookworm puts down his book."
+    },
+    {
+      "roll": "Obstacle",
+      "value": "a misunderstanding",
+      "became": "The sea heard “a worm is coming for your teeth” and assumed he's a dentist. Miss the grin and the fish snap shut (“DR. WORM?!”). They still tip the dentist, though, which is where the doubloons come from."
+    },
+    {
+      "roll": "Name initial",
+      "value": "L",
+      "became": "Loose-Tooth Lou, and Radio Lagan, broadcasting from the crow's nest of the sunken galleon Lagan, eleven fathoms down. Her lure is the ON AIR sign."
+    },
+    {
+      "roll": "Length",
+      "value": "short (1–3 hours)",
+      "became": "About an hour and a half, over a sitting or two. The deck and the clubs keep going slowly while you're away."
+    },
+    {
+      "roll": "Structure",
+      "value": "a production chain on a small belt grid you lay out",
+      "became": "The deck: shelf, chewer, press, pen, porthole, joined by belts, laid out by you on a grid that grows into the galley and then the captain's cabin. The chewers are Dewey's cousins. He has a lot of cousins."
+    },
+    {
+      "roll": "Structure",
+      "value": "the number goes down: an incremental in reverse",
+      "became": "The big number is teeth LEFT in the sea: 8,800,000,000,000,000 at the start. For a long time only the last digits move. Lou reads them out like a football score."
+    },
+    {
+      "roll": "Twist",
+      "value": "demand or a picky critic to please",
+      "became": "Lou is the critic. Every couple of minutes she declares an ink colour in, the reef copies her, and crowns in her colour count triple. You click the four-colour pen to keep up."
+    },
+    {
+      "roll": "Scale",
+      "value": "absurd",
+      "became": "Quadrillions. A goby has about fourteen teeth; a shark grows thousands; the sea has 8.8 quadrillion, by Lou's count. Nobody has checked."
+    },
+    {
+      "roll": "Look",
+      "value": "ballpoint notebook doodle",
+      "became": "Everything is drawn in biro on lined paper, gone over twice, hatched for shading, and it wobbles a little as if someone is still drawing it. The highlighter means you can afford it."
+    },
+    {
+      "roll": "Palette",
+      "value": "Nanner Pancakes",
+      "became": "Notebook cream, ruled-line teal, a red margin, and four inks for the four-colour pen: blue, red, green and black."
+    },
+    {
+      "roll": "Music",
+      "value": "sea shanty · blues",
+      "became": "A shanty in C blues for a sunken galleon: squeezebox, stomps and claps, with the crew joining in as the sea does. Every crown blip is on the same scale; the blue note is saved for misses."
+    },
+    {
+      "roll": "Tone",
+      "value": "pirate radio",
+      "became": "The log is Lou on air: station idents, score updates, colour calls and a lisp she would like you not to mention."
+    },
+    {
+      "roll": "Turn",
+      "value": "everyone else joins in",
+      "spoiler": true,
+      "became": "Once Grin of the Week puts a crowned grin on the radio, the crowned fish stop being scared of the worm and start crowning each other. That's what finally makes the number fall: the clubs grow with every tooth already crowned."
+    },
+    {
+      "roll": "Ending",
+      "value": "a send-off parade",
+      "spoiler": true,
+      "became": "The last tooth in the sea is Lou's wobbly one. The crown is just heavy enough to pull it free, and the whole sea throws it a send-off, swimming it up to the surface on a float made of paper crowns. Lou plays Dewey's request: a shanty."
+    }
+  ],
+  "outro": "None of these were chosen; all of them were rolled. The fun is finding the one story where they all make sense."
+}
