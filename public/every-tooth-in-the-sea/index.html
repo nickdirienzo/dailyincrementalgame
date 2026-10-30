@@ -192,7 +192,7 @@
       <div class="stagebox box"><canvas id="stage" width="640" height="360" tabindex="0" aria-label="A ballpoint doodle in a lined notebook: a fish grinning on the sea floor, a ballpoint pen sweeping across its teeth with a bookworm riding on top, and an anglerfish DJ in the corner whose lure is an ON AIR sign. Tap or press space to stop the pen."></canvas></div>
       <div id="deckbox" class="box" hidden>
         <canvas id="deck" width="440" height="264" aria-label="The deck of the Lagan: a grid of squares with shelves, chewers, presses, pens and portholes joined by belts."></canvas>
-        <div class="tools" id="tools"><p class="hint" id="toolHint">Pick a tile, tap a square to put it down. Tap a tile on the deck to turn it.</p></div>
+        <div class="tools" id="tools"><p class="hint" id="toolHint">Pick a tile here, then tap an empty square to put it down. To turn a tile, tap it where it sits on the grid: each tap turns it a quarter clockwise.</p></div>
       </div>
       <div class="log" id="log" aria-live="polite"></div>
     </main>
@@ -861,8 +861,8 @@ function buildTools() {
     b.setAttribute('aria-pressed', String(tool === k));
     b.setAttribute('aria-describedby', 'tip');
     const tipOf = () => k === 'pick'
-      ? { id: 'tool:pick', name: 'Pick up', desc: 'Tap a tile on the deck to pick it up. You get back what the last one cost.' }
-      : { id: 'tool:' + k, name: E.TOOLS[k].name, desc: E.TOOLS[k].desc, foot: `${fmt(E.toolCost(S, k))} doubloons · ${E.count(S, k)} on the deck` };
+      ? { id: 'tool:pick', name: 'Pick up', desc: 'Tap a tile on the grid to pick it up. You get back what the last one cost.' }
+      : { id: 'tool:' + k, name: E.TOOLS[k].name, desc: E.TOOLS[k].desc, foot: `${fmt(E.toolCost(S, k))} doubloons · ${E.count(S, k)} on the deck${k === 'port' ? '' : ' · tap one on the grid to turn it'}` };
     b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showTip(b, tipOf()); });
     b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
     b.addEventListener('focus', () => showTip(b, tipOf()));
@@ -886,7 +886,7 @@ function toolHud() {
     em.innerHTML = coin + fmtS(c);
     b.classList.toggle('poor', S.doub < c);
   }
-  $('toolHint').textContent = tool === 'pick' ? 'Tap a tile to pick it up.' : tool ? `Tap an empty square to put down a ${E.TOOLS[tool].name.toLowerCase()}. New tiles point the way you last turned one.` : 'Pick a tile, then tap a square to put it down. Tap a tile on the deck to turn it.';
+  $('toolHint').textContent = tool === 'pick' ? 'Tap a tile on the grid to pick it up.' : tool ? `Tap an empty square to put down a ${E.TOOLS[tool].name.toLowerCase()}. Tap a tile already on the grid to turn it a quarter clockwise; new ones point the way you last turned one.` : 'Pick a tile here, then tap an empty square to put it down. To turn a tile, tap it where it sits on the grid: each tap turns it a quarter clockwise.';
 }
 let lastDir = 0;
 function cellAt(e) {
@@ -895,7 +895,7 @@ function cellAt(e) {
   if (!S.grid || cx < 0 || cy < 0 || cx >= S.grid.w || cy >= S.grid.h) return -1;
   return cy * S.grid.w + cx;
 }
-dk.addEventListener('pointermove', e => { hover = cellAt(e); });
+dk.addEventListener('pointermove', e => { hover = cellAt(e); dk.style.cursor = hover >= 0 && S.grid.c[hover] ? 'pointer' : ''; });
 dk.addEventListener('pointerleave', () => { hover = -1; });
 dk.addEventListener('pointerdown', e => {
   e.preventDefault();
@@ -904,7 +904,7 @@ dk.addEventListener('pointerdown', e => {
   if (tool === 'pick') { if (c) { E.remove(S, i); sfx.pickup(); } else sfx.deny(); }
   else if (c) { E.rotate(S, i); lastDir = c.d; sfx.turn(); }
   else if (tool) {
-    if (E.place(S, i, tool, lastDir)) { sfx.place(); if (!S.placed) { S.placed = 1; say('Down it goes. Things move the way their arrow points: shelf, chewer, press, then out of a porthole. A page that reaches a porthole unchewed is just a page. The reef is confused by it.'); } }
+    if (E.place(S, i, tool, lastDir)) { sfx.place(); if (!S.placed) { S.placed = 1; say('Down it goes. Things move the way their arrow points: shelf, chewer, press, then out of a porthole. Tap a tile on the grid to turn its arrow. A page that reaches a porthole unchewed is just a page. The reef is confused by it.'); } }
     else { sfx.deny(); }
   } else say('Pick a tile from the box first, then tap the square.');
   toolHud(); save();
@@ -1006,6 +1006,13 @@ function drawDeck(now) {
   if (hover >= 0 && tool && tool !== 'pick' && !c[hover]) {
     const [cx, cy] = cellXY(hover);
     dg.save(); dg.globalAlpha = 0.4; drawTile(dg, tool, cx, cy, cs, lastDir, 7); dg.restore();
+  }
+  // A placed tile under the mouse shows it turns when tapped.
+  if (hover >= 0 && tool !== 'pick' && c[hover] && c[hover].k !== 'port') {
+    const [cx, cy] = cellXY(hover), r = cs * 0.44;
+    pen(dg, oval(cx, cy, r, r, 14, -Math.PI * 0.4, Math.PI * 1.1), { color: C.red, w: 1.4, seed: 11, passes: 1 });
+    const a = Math.PI * 1.1, ex = cx + Math.cos(a) * r, ey = cy + Math.sin(a) * r;
+    pen(dg, [[ex - 5, ey + 3], [ex, ey], [ex + 2, ey + 6]], { color: C.red, w: 1.4, seed: 12, passes: 1 });
   }
   if (hover >= 0 && tool === 'pick' && c[hover]) { const [cx, cy] = cellXY(hover); pen(dg, oval(cx, cy, cs * 0.46, cs * 0.46, 16), { color: C.red, w: 1.6, seed: 9, close: true }); }
 }
