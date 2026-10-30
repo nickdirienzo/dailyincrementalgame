@@ -528,6 +528,7 @@
   "clubC": 0,
   "wasted": 0,
   "seen": [
+<<<<<<< HEAD
    "blue",
    "red",
    "green",
@@ -557,5 +558,158 @@
    "float"
   ],
   "shopTab": "up"
+=======
+   "foil",
+   "jaw",
+   "silver",
+   "fstar",
+   "shine",
+   "whisper",
+   "crumbs",
+   "lend",
+   "mirror",
+   "gold",
+   "vol",
+   "glasses",
+   "stud",
+   "gloss",
+   "margin",
+   "beetle",
+   "varnish",
+   "floss"
+  ]
+ },
+ "which-way-the-wind-bakes": {
+  "t": 980,
+  "phase": 2,
+  "made": 3120,
+  "cakes": 214,
+  "feathers": 96,
+  "breezes": 14,
+  "jobs": {
+   "mill": 3,
+   "hive": 3,
+   "hens": 2,
+   "churn": 3,
+   "guard": 3
+  },
+  "ing": {
+   "flour": 12,
+   "honey": 31,
+   "eggs": 2,
+   "cream": 8
+  },
+  "lv": {
+   "windmill": 3,
+   "beehive": 3,
+   "henhouse": 2,
+   "dairy": 2,
+   "sun": 1,
+   "clover": 1,
+   "deep": 2,
+   "tins": 1,
+   "gale": 3,
+   "scare": 1,
+   "tail": 1,
+   "bed": 1
+  },
+  "odd": {
+   "oil": 1,
+   "bib": 1,
+   "rope": 1,
+   "scrap1": 1
+  },
+  "seen": [
+   "deep",
+   "oil",
+   "windmill",
+   "beehive",
+   "henhouse",
+   "dairy",
+   "bib",
+   "tins",
+   "sun",
+   "clover",
+   "hay",
+   "pond",
+   "rope",
+   "gale",
+   "scrap1",
+   "scare",
+   "tail",
+   "bed",
+   "sign",
+   "spikes",
+   "fork",
+   "scrap2"
+  ],
+  "shopTab": "cakes",
+  "rune": "E",
+  "next": "W",
+  "bag": [
+   "N",
+   "S"
+  ],
+  "casts": 640,
+  "whirl": 2,
+  "point": {
+   "N": 5,
+   "E": 3,
+   "S": 2,
+   "W": 4
+  },
+  "wave": 14,
+  "waveT": 30,
+  "waveDir": "N",
+  "shooed": 180,
+  "stolen": 12,
+  "landed": 6,
+  "pigeons": [
+   {
+    "dir": "N",
+    "p": 0.35,
+    "hp": 20,
+    "max": 34,
+    "lane": -1.2
+   },
+   {
+    "dir": "N",
+    "p": 0.25,
+    "hp": 34,
+    "max": 34,
+    "lane": 0.4
+   },
+   {
+    "dir": "N",
+    "p": 0.18,
+    "hp": 34,
+    "max": 34,
+    "lane": 1.6
+   },
+   {
+    "dir": "N",
+    "p": 0.1,
+    "hp": 34,
+    "max": 34,
+    "lane": -0.3
+   },
+   {
+    "dir": "N",
+    "p": 0.04,
+    "hp": 34,
+    "max": 34,
+    "lane": 0.9
+   }
+  ],
+  "spawn": [],
+  "hint": {
+   "cast": 1,
+   "first": 1,
+   "shoo": 1,
+   "steal": 1,
+   "assign": 1,
+   "where": 1
+  }
+>>>>>>> 977da35 (Nightly 2026-10-30: leftover changes for which-way-the-wind-bakes)
  }
 }

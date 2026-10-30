@@ -202,6 +202,43 @@
     },
     "tone": "pirate radio",
     "context": "none",
+<<<<<<< HEAD
     "palette": "nanner-pancakes"
+=======
+    "palette": "blessing"
+  },
+  {
+    "n": 9,
+    "slug": "which-way-the-wind-bakes",
+    "date": "2026-10-31",
+    "title": "Which Way the Wind Bakes",
+    "tagline": "A tin weathercock who can't decide which way to point calls up all four winds to bake cupcakes. The pigeons think they're invited.",
+    "emoji": "🐓🧁",
+    "scale": "thousands (cupcakes on a four-digit placard: the game ends at 9,999)",
+    "minutes": "25–40",
+    "seed": 1561779937,
+    "interaction": "trace a rune to cast it",
+    "arc": {
+      "drive": "hunger",
+      "obstacle": "a misunderstanding",
+      "turn": "it turns out someone asked for it",
+      "initial": "O"
+    },
+    "length": "mini (10–60 min)",
+    "structure": [
+      "workers you assign between jobs",
+      "auto-battle waves of enemies"
+    ],
+    "twist": "buildings boost each other (synergies)",
+    "ending": "the number hits its cap and the world crunches",
+    "look": "isometric diorama",
+    "music": {
+      "style": "jazzy walking bass",
+      "scale": "whole tone"
+    },
+    "tone": "museum audio guide",
+    "context": "none",
+    "palette": "nyx8"
+>>>>>>> 977da35 (Nightly 2026-10-30: leftover changes for which-way-the-wind-bakes)
   }
 ]

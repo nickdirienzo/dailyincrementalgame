@@ -1,0 +1,65 @@
+{
+ "icon-park-solid--pigeon.svg": {
+  "icon": "icon-park-solid:pigeon",
+  "set": "IconPark Solid",
+  "setUrl": "https://github.com/bytedance/IconPark",
+  "author": "ByteDance",
+  "license": "Apache-2.0",
+  "licenseUrl": "https://github.com/bytedance/IconPark/blob/master/LICENSE",
+  "source": "https://icon-sets.iconify.design/icon-park-solid/pigeon/"
+ },
+ "mdi--cupcake.svg": {
+  "icon": "mdi:cupcake",
+  "set": "Material Design Icons",
+  "setUrl": "https://github.com/Templarian/MaterialDesign",
+  "author": "Pictogrammers",
+  "license": "Apache-2.0",
+  "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+  "source": "https://icon-sets.iconify.design/mdi/cupcake/"
+ },
+ "mdi--cow.svg": {
+  "icon": "mdi:cow",
+  "set": "Material Design Icons",
+  "setUrl": "https://github.com/Templarian/MaterialDesign",
+  "author": "Pictogrammers",
+  "license": "Apache-2.0",
+  "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+  "source": "https://icon-sets.iconify.design/mdi/cow/"
+ },
+ "mdi--bee.svg": {
+  "icon": "mdi:bee",
+  "set": "Material Design Icons",
+  "setUrl": "https://github.com/Templarian/MaterialDesign",
+  "author": "Pictogrammers",
+  "license": "Apache-2.0",
+  "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+  "source": "https://icon-sets.iconify.design/mdi/bee/"
+ },
+ "mdi--clover.svg": {
+  "icon": "mdi:clover",
+  "set": "Material Design Icons",
+  "setUrl": "https://github.com/Templarian/MaterialDesign",
+  "author": "Pictogrammers",
+  "license": "Apache-2.0",
+  "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+  "source": "https://icon-sets.iconify.design/mdi/clover/"
+ },
+ "game-icons--chicken.svg": {
+  "icon": "game-icons:chicken",
+  "set": "Game Icons",
+  "setUrl": "https://github.com/game-icons/icons",
+  "author": "Delapouite",
+  "license": "CC-BY-3.0",
+  "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+  "source": "https://game-icons.net/1x1/delapouite/chicken.html"
+ },
+ "game-icons--envelope.svg": {
+  "icon": "game-icons:envelope",
+  "set": "Game Icons",
+  "setUrl": "https://github.com/game-icons/icons",
+  "author": "Lorc",
+  "license": "CC-BY-3.0",
+  "licenseUrl": "https://github.com/game-icons/icons/blob/master/license.txt",
+  "source": "https://game-icons.net/1x1/lorc/envelope.html"
+ }
+}
