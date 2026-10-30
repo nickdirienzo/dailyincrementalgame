@@ -151,6 +151,8 @@ export const SCALES = {
   dorian: [0, 2, 3, 5, 7, 9, 10], lydian: [0, 2, 4, 6, 7, 9, 11], mixolydian: [0, 2, 4, 5, 7, 9, 10],
   blues: [0, 3, 5, 6, 7, 10], 'in-sen': [0, 1, 5, 7, 10], 'harmonic minor': [0, 2, 3, 5, 7, 8, 11],
   major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10],
+  phrygian: [0, 1, 3, 5, 7, 8, 10], 'whole tone': [0, 2, 4, 6, 8, 10], hirajoshi: [0, 2, 3, 7, 8],
+  'major blues': [0, 2, 3, 4, 7, 9],
 };
 
 export const midiToHz = m => 440 * Math.pow(2, (m - 69) / 12);

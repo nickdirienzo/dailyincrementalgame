@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Roll the theme for the next game.
 
-    python3 tools/roll.py            fresh random seed
-    python3 tools/roll.py 12345      replay a seed
+    python3 tools/roll.py                  fresh random seed
+    python3 tools/roll.py 12345            replay a seed against every game so far
+    python3 tools/roll.py 12345 --day 9    replay it as day 9 rolled it (only games before 9)
 
 The lists are fixed so a seed always gives the same roll and the picking is actually random, not
-whatever an LLM finds most natural. Edit the lists freely, but only append to them: inserting or
-removing entries changes what older seeds roll.
+whatever an LLM finds most natural. Each part avoids what the last two weeks of games in
+public/games.json used (see fresh()), so a roll depends on its seed and on the games before it.
+Edit the lists freely, but only append to them: inserting or removing entries changes what older
+seeds roll. Days 1-8 were rolled before history mattered; their rolls are recorded in games.json.
 """
 import json
 import random
@@ -55,6 +58,10 @@ OBJECTS = [
 INTERACTIONS = [
     "rub", "tap", "hold-to-charge", "drag-and-drop", "swipe/flick", "catch falling things",
     "aim and release", "draw a path", "rhythm taps",
+    # Appended so a week of games doesn't share a core action.
+    "scratch to reveal", "sort into bins", "trace a rune to cast it", "turn a crank or dial",
+    "stack and balance", "pour and fill", "merge two alike into one", "steer something",
+    "type words", "stop a moving marker at the right moment",
 ]
 
 SCALES = ["tens", "hundreds", "thousands", "millions", "billions", "absurd"]
@@ -78,6 +85,10 @@ TURNS = [
     "it works far too well", "it was the wrong goal all along", "they win and leave town",
     "everyone else joins in", "it all collapses beautifully", "a quiet, smaller win",
     "the obstacle switches sides", "a huge pointless spectacle",
+    # Appended.
+    "the helper was the hero", "they lose and don't mind", "the small thing was the point",
+    "it turns out someone asked for it", "it gets undone, and that's fine", "the roles reverse",
+    "they give it all away",
 ]
 
 INITIALS = "ABCDEFGHIJKLMNOPRSTVW"
@@ -95,40 +106,72 @@ STRUCTURES = [
     "stacked currencies (A makes B, B makes C)", "tech tree with exclusive choices",
     "limited space to arrange (a grid, shelf or map)", "the core action goes obsolete; you manage automation",
     "a mid-game rule change that reshapes everything", "distinct phases, each its own small economy",
+    # Appended: more ways real incrementals are built, so a week of games doesn't share a skeleton.
+    "a map you explore and reveal", "a recipe book: combine things to discover new ones",
+    "orders with deadlines (fill contracts for rewards)", "workers you assign between jobs",
+    "a market whose prices move", "craft: trade many of A for one B", "a collection to complete",
+    "a production chain on a small belt grid you lay out",
+    "a forced reset on a timer (a season, a lifespan); runs grow longer as you learn",
+    "challenges: replay under a handicap for a reward", "a second, parallel game that opens midway",
+    "sacrifice part of your progress to multiply the rest",
+    "the number goes down: an incremental in reverse", "one long build that eats everything you make",
+    "producers that make producers (tier 2 makes tier 1)",
+    "automation you program (an action queue with priorities)", "auto-battle waves of enemies",
 ]
 
 TWISTS = [
     "decay: things break or spoil", "random events", "gambling or loot drops", "combos and streaks",
     "hard tradeoffs", "timed rushes", "a helper with opinions", "a day/night or weather cycle",
     "nothing extra, keep it pure",
+    # Appended.
+    "upkeep that grows with size", "demand or a picky critic to please", "a rival who copies you",
+    "a hidden mechanic to discover", "you pay with something you need (time, light, health)",
+    "chain reactions", "a wandering visitor to catch", "a choice you can't take back changes the world",
+    "slow things that ripen in real minutes", "the core action gets a new verb",
+    "storage caps you must build past", "achievements that grant multipliers",
+    "milestones: every 25 owned doubles it", "buildings boost each other (synergies)",
 ]
 
 ENDINGS = [
     "hit a target", "build one final thing", "choose between two endings", "a story reveal",
     "an ending you have to be talked out of", "the game ends itself", "a final showdown",
     "a send-off parade",
+    # Appended.
+    "an ending reached by holding back", "hand it all over to someone else",
+    "a secret ending behind the obvious one", "one last purchase that costs everything",
+    "outpace a rival's ticking meter", "an epilogue that keeps playing itself as the credits roll",
+    "the number hits its cap and the world crunches",
 ]
 
 LOOKS = [
     "pixel art", "paper cutout", "blueprint", "watercolor", "terminal / ASCII", "risograph print",
     "felt and yarn", "soft clay", "stained glass", "1-bit classic Mac", "chalkboard", "vaporwave",
     "woodcut", "neon signs",
+    # Appended.
+    "embroidery", "comic book", "tarot cards", "isometric diorama", "ballpoint notebook doodle",
+    "art deco poster",
 ]
 
 MUSIC_STYLES = [
     "lo-fi hip hop", "8-bit chiptune", "ambient pads", "music box lullaby", "bossa nova", "synthwave",
     "jazzy walking bass", "marimba minimalism", "sea shanty", "baroque harpsichord", "dub", "kalimba folk",
+    # Appended.
+    "surf rock", "gamelan", "polka", "steel drum calypso",
 ]
 
 MUSIC_SCALES = [
     "major pentatonic", "minor pentatonic", "dorian", "lydian", "mixolydian", "blues", "in-sen",
     "harmonic minor",
+    # Appended; every name here must be in SCALES in public/shared/kit/audio.mjs.
+    "major", "minor", "phrygian", "whole tone", "hirajoshi", "major blues",
 ]
 
 TONES = [
     "cozy", "deadpan bureaucratic", "nature documentary", "sports commentary", "noir", "mild horror",
     "epic fantasy", "corporate memo", "breathless gossip", "self-help guru", "mission control",
     "cooking show",
+    # Appended.
+    "pirate radio", "museum audio guide", "fairy tale narrator", "late-night infomercial",
 ]
 
 # An optional nod to the release date. Mostly "none": a month of Halloween games would be a lot.
@@ -147,63 +190,102 @@ PALETTES = [p["slug"] for p in json.loads(
     (Path(__file__).resolve().parent.parent / "public" / "shared" / "palettes.json").read_text())]
 
 
-def roll(seed):
+# How many past games each part tries not to repeat. Pools smaller than that keep the `SPARE`
+# least recently used values in play on top of what's needed, so the pick is never forced.
+WINDOW = 14
+SPARE = 2
+
+
+def used(game, key, part=None):
+    """What a games.json entry used for one part of the roll, as a list."""
+    v = game.get(key)
+    if part:
+        v = v.get(part) if isinstance(v, dict) else None
+    if key == "scale" and isinstance(v, str):
+        v = v.split()[0]  # entries may annotate the scale: "absurd (atoms of gold...)"
+    if v is None:
+        return []
+    return v if isinstance(v, list) else [v]
+
+
+def fresh(pool, history, key, part=None, need=1):
+    """The pool minus anything the last WINDOW games used, topped back up with the least
+    recently used values when that leaves fewer than need + SPARE. Keeps the pool's order so a
+    seed picks the same way given the same history."""
+    last = {}  # value -> games ago it was last used (1 = the previous game)
+    for ago, game in enumerate(reversed(history[-WINDOW:]), 1):
+        for v in used(game, key, part):
+            last.setdefault(v, ago)
+    keep = {v for v in pool if v not in last}
+    for v in sorted((v for v in pool if v in last), key=lambda v: -last[v]):
+        if len(keep) >= need + SPARE:
+            break
+        keep.add(v)
+    return [v for v in pool if v in keep]
+
+
+def roll(seed, history=()):
+    history = list(history)
     rng = random.Random(seed)
+    pick = lambda pool, key, part=None: rng.choice(fresh(pool, history, key, part))
     r = {
         "seed": seed,
         "subject": rng.choice(SUBJECTS),
         "verb": rng.choice(VERBS),
         "object": rng.choice(OBJECTS),
-        "interaction": rng.choice(INTERACTIONS),
-        "scale": rng.choice(SCALES),
-        # Drawn last so seeds rolled before arcs existed keep their other fields.
+        "interaction": pick(INTERACTIONS, "interaction"),
+        "scale": pick(SCALES, "scale"),
         "arc": {
-            "drive": rng.choice(DRIVES),
-            "obstacle": rng.choice(OBSTACLES),
-            "turn": rng.choice(TURNS),
-            "initial": rng.choice(INITIALS),
+            "drive": pick(DRIVES, "arc", "drive"),
+            "obstacle": pick(OBSTACLES, "arc", "obstacle"),
+            "turn": pick(TURNS, "arc", "turn"),
+            "initial": pick(list(INITIALS), "arc", "initial"),
         },
-        # Also drawn after everything older, for the same reason.
-        "length": rng.choice(LENGTHS),
+        "length": pick(LENGTHS, "length"),
     }
     lo, hi = STRUCTURE_COUNTS[r["length"].split()[0]]
+    n = rng.randint(lo, hi)
     r.update({
-        "structure": rng.sample(STRUCTURES, rng.randint(lo, hi)),
-        "twist": rng.choice(TWISTS),
-        "ending": rng.choice(ENDINGS),
-        "look": rng.choice(LOOKS),
-        "music": {"style": rng.choice(MUSIC_STYLES), "scale": rng.choice(MUSIC_SCALES)},
-        "tone": rng.choice(TONES),
+        "structure": rng.sample(fresh(STRUCTURES, history, "structure", need=n), n),
+        "twist": pick(TWISTS, "twist"),
+        "ending": pick(ENDINGS, "ending"),
+        "look": pick(LOOKS, "look"),
+        "music": {"style": pick(MUSIC_STYLES, "music", "style"),
+                  "scale": pick(MUSIC_SCALES, "music", "scale")},
+        "tone": pick(TONES, "tone"),
     })
     r["context"] = rng.choice(CONTEXTS)
     if r["context"] == "calendar":
-        r["context"] = {"kind": "calendar", "nod": rng.choice(CALENDAR_KINDS)}
+        r["context"] = {"kind": "calendar", "nod": pick(CALENDAR_KINDS, "context", "nod")}
     # Colors in public/shared/palettes.json under this slug.
-    r["palette"] = rng.choice(PALETTES)
+    r["palette"] = pick(PALETTES, "palette")
     return r
 
 
 def main():
-    seed = int(sys.argv[1]) if len(sys.argv) > 1 else secrets.randbits(32)
-    r = roll(seed)
-    print(json.dumps(r, ensure_ascii=False, indent=2))
-    # Flag repeats of recent games so the pitch can lean away from them. The roll itself never changes.
+    args = sys.argv[1:]
+    day = None
+    if "--day" in args:
+        i = args.index("--day")
+        day = int(args[i + 1])
+        del args[i:i + 2]
+    seed = int(args[0]) if args else secrets.randbits(32)
     games = json.loads((Path(__file__).resolve().parent.parent / "public" / "games.json").read_text())
-    recent = games[-3:]
+    if day is not None:
+        games = [g for g in games if g["n"] < day]
+    r = roll(seed, games)
+    print(json.dumps(r, ensure_ascii=False, indent=2))
+    # Flag what still repeats the last week (a pool too small to avoid it) so the pitch can lean
+    # away from it. The roll itself never changes.
+    recent = games[-7:]
     for key, value in r.items():
-        if key in ("seed", "subject", "verb", "object") or value == "none":
+        if key in ("seed", "subject", "verb", "object", "length", "scale") or value == "none":
             continue
         parts = value.items() if isinstance(value, dict) else [(None, value)]
         for part, v in parts:
-            if key == "arc" and part == "initial":
+            if part in ("initial", "kind"):
                 continue
-            def same(g):
-                old = g.get(key)
-                if part:
-                    old = old.get(part) if isinstance(old, dict) else None
-                if isinstance(v, list):
-                    return bool(set(v) & set(old if isinstance(old, list) else [old]))
-                return old == v
+            same = lambda g: bool(set(v if isinstance(v, list) else [v]) & set(used(g, key, part)))
             clash = [g["n"] for g in recent if same(g)]
             if clash:
                 name = f"{key} {part}" if part else key

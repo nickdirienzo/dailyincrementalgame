@@ -125,7 +125,7 @@ doesn't become the only kind of satisfaction.
    rolled, `seed` and every field from `tools/roll.py` except subject, verb and object
    (`interaction`, `arc`, `length`, `structure`, `twist`, `ending`, `look`, `music`, `tone`,
    `context`, `palette`; for a calendar nod, add a `"topic"` saying what it was), so
-   the next roll can flag repeats. `minutes` comes from the rolled length.
+   the next roll can avoid them. `minutes` comes from the rolled length.
 7. Run `npm run credits -- <slug>` to write the game's credits.
    Then write `public/<slug>/why.json` and add `data-why` to the `daily.js` tag: the top bar's
    "What??" panel explains each roll and what the game made of it, in the game's own names and
