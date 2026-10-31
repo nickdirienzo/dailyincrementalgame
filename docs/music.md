@@ -16,7 +16,7 @@ tooling only; the site retains its static, local Strudel runtime.
 
 ## Sharing music history between Macs
 
-The private Cloudflare R2 bucket in `music-storage.json` stores complete snapshots
+The private Cloudflare R2 bucket in `music-storage.json` stores snapshots
 of `.slopwave/sessions/`, `work/`, and `preferences/`, including audio, exact revision
 artifacts and feedback. The public game repository contains only the tooling and
 bucket/account identifiers. Credentials, `config.json`, the installed toolchain,
@@ -45,20 +45,25 @@ IDs and whether local files changed. Git still handles game code separately.
 `npm run music:verify` downloads the latest snapshot and verifies a complete
 restore into a temporary empty workspace, without changing your music files.
 
-Uploads create uniquely named archives and JSON manifests under `slopwave/snapshots/`
-and publish `slopwave/latest.json` only after uploading the archive. Earlier
-snapshots remain in R2. Downloads verify the archive and every file's SHA-256.
-Pull preserves local-only changes and makes a local backup before replacing clean
-files; conflicting edits or changes to immutable revisions/events stop the restore.
+R2 stores each file once, as `slopwave/blobs/<sha256>`, and each snapshot is a JSON
+manifest of paths and hashes under `slopwave/snapshots/`. A push uploads only files whose
+contents R2 doesn't already have (one `wrangler r2 bulk put`), then the manifest, and
+publishes `slopwave/latest.json` last. A pull downloads only the files that changed and
+verifies every file's SHA-256. Because no single upload is the whole history, Wrangler's
+300 MiB per-object limit only applies to individual files. Earlier snapshots and their
+blobs remain in R2; older zip snapshots (schema 1) can still be pulled. A Mac running
+older tooling refuses the new manifests, so `git pull` there before `npm run music:pull`.
+Pull preserves local-only changes and backs up the local files it replaces;
+conflicting edits or changes to immutable revisions/events stop the restore.
 There is no delete propagation or force-overwrite option.
 
 Use one Mac at a time: push before switching, then pull on the other. The CLI checks
 for a changed remote head but does not provide an atomic distributed lock; simultaneous
-uploads can race on `latest.json`, although both named archives remain recoverable.
-Recover an older snapshot by downloading its matching `.zip` and `.json` objects
-from R2 and verifying checksums before a deliberate restore. Local backups live in
-`.slopwave/backups/`. Each push is a full compressed snapshot; retention is manual.
-Run `npm run music:storage-check` for local archive/conflict tests.
+uploads can race on `latest.json`, although both named manifests remain recoverable.
+Recover an older snapshot by restoring its `snapshots/<id>.json` manifest's blobs and
+verifying checksums before a deliberate restore. Local backups live in
+`.slopwave/backups/`; retention is manual.
+Run `npm run music:storage-check` for local archive, blob-sync and conflict tests.
 
 ## Brief to revision
 

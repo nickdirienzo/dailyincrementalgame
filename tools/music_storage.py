@@ -1,5 +1,12 @@
-"""Private R2 snapshots of consumer music data; never upload runtimes or credentials."""
+"""Private R2 snapshots of consumer music data; never upload runtimes or credentials.
+
+Schema 2 stores each file once, as blobs/<sha256>, and a snapshot is a JSON manifest mapping
+paths to hashes. A push uploads only blobs the remote head doesn't already reference, so no
+upload approaches Wrangler's 300 MiB per-object limit and pushes stay small. Schema 1 heads
+(one zip per snapshot) can still be pulled.
+"""
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -13,11 +20,22 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_ROOTS = ('sessions', 'work', 'preferences')
+SCHEMAS = (1, 2)
+MAX_BLOB = 300 * 1024 * 1024  # Wrangler's per-object upload limit
+PARALLEL = 8
 
 
 def digest(path):
+    # hashlib.file_digest needs Python 3.11; read in chunks so older interpreters work too.
+    h = hashlib.sha256()
     with path.open('rb') as stream:
-        return hashlib.file_digest(stream, 'sha256').hexdigest()
+        for chunk in iter(lambda: stream.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def is_hash(value):
+    return isinstance(value, str) and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
 
 
 def write_json(path, value):
@@ -54,14 +72,17 @@ def inventory(home):
     return files
 
 
-def pack(home, destination, snapshot):
+def pack(home, destination, snapshot, names=None):
     files = inventory(home)
+    if names is not None:
+        files = {name: files[name] for name in names if name in files}
     manifest = {'schema': 1, 'snapshot': snapshot, 'files': files}
     with zipfile.ZipFile(destination, 'x', zipfile.ZIP_DEFLATED, compresslevel=3) as archive:
         archive.writestr('manifest.json', json.dumps(manifest))
         for name in files:
             archive.write(home / name, name)
-    if inventory(home) != files:
+    current = inventory(home)
+    if any(current.get(name) != h for name, h in files.items()):
         raise ValueError('Music files changed while packing. Stop authoring and retry.')
     return manifest
 
@@ -120,22 +141,51 @@ class Storage:
         self.cache = self.home / 'backups'
         self.cache.mkdir(exist_ok=True)
 
-    def transfer(self, verb, key, path):
+    def wrangler(self, *args):
         cfg = self.config
         env = dict(os.environ, CLOUDFLARE_ACCOUNT_ID=cfg['account_id'], WRANGLER_SEND_METRICS='false')
         # Explicit named profile and account prevent accidental use of the default login.
-        command = ['node', str(ROOT / 'node_modules/wrangler/bin/wrangler.js'),
-                   'r2', 'object', verb, f"{cfg['bucket']}/{cfg['prefix']}/{key}",
-                   '--profile', cfg['profile'], '--cwd', str(self.home), '--remote', '--file', str(path)]
-        subprocess.run(command, cwd=ROOT, env=env, check=True)
+        command = ['node', str(ROOT / 'node_modules/wrangler/bin/wrangler.js'), 'r2', *args,
+                   '--profile', cfg['profile'], '--cwd', str(self.home), '--remote']
+        done = subprocess.run(command, cwd=ROOT, env=env, capture_output=True, text=True)
+        if done.returncode:
+            raise ValueError(f'wrangler r2 {args[0]} {args[1]} failed:\n{done.stdout[-2000:]}{done.stderr[-2000:]}')
+
+    def key(self, name):
+        return f"{self.config['prefix']}/{name}"
+
+    def transfer(self, verb, key, path):
+        self.wrangler('object', verb, f"{self.config['bucket']}/{self.key(key)}", '--file', str(path))
+
+    def put_blobs(self, hashes, paths):
+        """Uploads blobs (hash -> local path) with one bulk call."""
+        for h in hashes:
+            if paths[h].stat().st_size > MAX_BLOB:
+                raise ValueError(f'{paths[h]} is over 300 MiB; Wrangler cannot upload it.')
+        with tempfile.TemporaryDirectory(dir=self.cache) as temporary:
+            listing = Path(temporary) / 'blobs.json'
+            listing.write_text(json.dumps([{'key': self.key(f'blobs/{h}'), 'file': str(paths[h])} for h in hashes]))
+            self.wrangler('bulk', 'put', self.config['bucket'], '--filename', str(listing), '--concurrency', '8')
+
+    def get_blobs(self, hashes, directory):
+        """Downloads blobs into directory/<hash>, verifying each one."""
+        def one(h):
+            target = directory / h
+            self.transfer('get', f'blobs/{h}', target)
+            if digest(target) != h:
+                raise ValueError(f'Checksum mismatch for blob {h}')
+        with ThreadPoolExecutor(PARALLEL) as pool:
+            list(pool.map(one, sorted(hashes)))
 
     def head(self):
         with tempfile.TemporaryDirectory(dir=self.cache) as temporary:
             target = Path(temporary) / 'latest.json'
             self.transfer('get', 'latest.json', target)
             head = json.loads(target.read_text())
-        if head.get('schema') != 1:
-            raise ValueError('Unknown remote snapshot schema')
+        if head.get('schema') not in SCHEMAS:
+            raise ValueError('Unknown remote snapshot schema; update this repository (git pull) first.')
+        if head.get('schema') == 2 and not all(is_hash(h) for h in head['files'].values()):
+            raise ValueError('Remote manifest has an invalid file hash')
         return head
 
     def push(self):
@@ -145,23 +195,34 @@ class Storage:
         current = inventory(self.home)
         if set(self.state['files']) - set(current):
             raise ValueError('Previously synced files are missing locally. Restore them before pushing.')
-        if head['snapshot'] and current == self.state['files']:
+        # A schema 1 head still needs one push to move every file into blobs.
+        if head['snapshot'] and current == self.state['files'] and head['schema'] == 2:
             print('Music history is already backed up.'); return
         stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ') + '-' + uuid.uuid4().hex[:12]
-        archive = self.cache / (stamp + '.zip')
-        manifest = pack(self.home, archive, stamp)
-        remote = {**manifest, 'archive_sha256': digest(archive)}
-        self.transfer('put', f'snapshots/{stamp}.zip', archive)
-        # Retain the named archive even if a second writer advances the head meanwhile.
+        # Blobs the remote head references are already in R2 (they were uploaded before it was published).
+        known = set(head['files'].values()) if head.get('schema') == 2 else set()
+        paths = {}
+        for name, h in current.items():
+            paths.setdefault(h, self.home / name)
+        fresh = sorted(set(paths) - known)
+        if fresh:
+            size = sum(paths[h].stat().st_size for h in fresh)
+            print(f'Uploading {len(fresh)} new files ({size / 2**20:.1f} MiB)...')
+            self.put_blobs(fresh, paths)
+        if inventory(self.home) != current:
+            raise ValueError('Music files changed while uploading. Stop authoring and retry.')
+        # Uploaded blobs stay valid even if a second writer advances the head meanwhile.
         if self.head() != head:
-            raise ValueError(f'Remote changed during upload. Snapshot {stamp} is preserved; pull before retrying.')
+            raise ValueError('Remote changed during upload; pull before retrying (uploaded files are kept).')
+        manifest = {'schema': 2, 'snapshot': stamp, 'files': current}
+        remote = manifest
         pointer = self.cache / (stamp + '.json')
         write_json(pointer, remote)
         self.transfer('put', f'snapshots/{stamp}.json', pointer)
         self.transfer('put', 'latest.json', pointer)
         if self.head() != remote:
             raise ValueError('Remote changed after upload; pull before continuing.')
-        write_json(self.state_path, manifest)
+        write_json(self.state_path, manifest); self.state = manifest
         print(f'Backed up {len(manifest["files"])} files as {stamp}.')
 
     def pull(self):
@@ -173,18 +234,30 @@ class Storage:
             raise ValueError('Invalid snapshot identifier')
         with tempfile.TemporaryDirectory(dir=self.cache) as temporary:
             temporary = Path(temporary)
-            archive = temporary / 'snapshot.zip'
-            self.transfer('get', f'snapshots/{snapshot}.zip', archive)
-            if digest(archive) != head['archive_sha256']:
-                raise ValueError('Downloaded archive checksum does not match')
             incoming = {key: head[key] for key in ('schema', 'snapshot', 'files')}
-            extracted = temporary / 'extracted'
-            unpack(archive, extracted, incoming)
             local = inventory(self.home)
             changed = merge_plan(local, incoming['files'], self.state['files'])
+            if head['schema'] == 1:
+                archive = temporary / 'snapshot.zip'
+                self.transfer('get', f'snapshots/{snapshot}.zip', archive)
+                if digest(archive) != head['archive_sha256']:
+                    raise ValueError('Downloaded archive checksum does not match')
+                extracted = temporary / 'extracted'
+                unpack(archive, extracted, incoming)
+                source = lambda name: extracted / name
+            else:
+                blobs = temporary / 'blobs'; blobs.mkdir()
+                wanted = {incoming['files'][name] for name in changed}
+                if wanted:
+                    print(f'Downloading {len(wanted)} files...')
+                self.get_blobs(wanted, blobs)
+                source = lambda name: blobs / incoming['files'][name]
             if changed:
-                backup_id = 'before-pull-' + uuid.uuid4().hex
-                pack(self.home, self.cache / (backup_id + '.zip'), backup_id)
+                # Back up only the local files this pull replaces.
+                replaced = [name for name in changed if name in local]
+                if replaced:
+                    backup_id = 'before-pull-' + uuid.uuid4().hex
+                    pack(self.home, self.cache / (backup_id + '.zip'), backup_id, replaced)
                 # Preflight checks finish before writing anything into consumer data.
                 if inventory(self.home) != local:
                     raise ValueError('Local music changed during restore; retry when authoring is idle.')
@@ -192,9 +265,9 @@ class Storage:
                     destination = self.home / name
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     staging = destination.with_name(destination.name + '.r2-restore')
-                    shutil.copyfile(extracted / name, staging)
+                    shutil.copyfile(source(name), staging)
                     staging.replace(destination)
-            write_json(self.state_path, incoming)
+            write_json(self.state_path, incoming); self.state = incoming
             print(f'Pulled {snapshot}: restored {len(changed)} files; retained local-only work.')
 
     def verify(self):
