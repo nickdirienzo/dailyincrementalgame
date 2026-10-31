@@ -203,5 +203,42 @@
     "tone": "pirate radio",
     "context": "none",
     "palette": "nanner-pancakes"
+  },
+  {
+    "n": 9,
+    "slug": "we-have-a-pickle",
+    "date": "2026-10-31",
+    "title": "We Have a Pickle",
+    "tagline": "Halloween night. The Sun won't get up, so Mission Control chalks it a path to every pickle the kids threw away.",
+    "emoji": "☀️🥒",
+    "scale": "millions",
+    "minutes": "25–45",
+    "seed": 4181033764,
+    "interaction": "draw a path",
+    "arc": {
+      "drive": "hunger",
+      "obstacle": "the neighbors",
+      "turn": "the roles reverse",
+      "initial": "V"
+    },
+    "length": "mini (10–60 min)",
+    "structure": [
+      "sacrifice part of your progress to multiply the rest",
+      "craft: trade many of A for one B"
+    ],
+    "twist": "combos and streaks",
+    "ending": "a secret ending behind the obvious one",
+    "look": "chalkboard",
+    "music": {
+      "style": "8-bit chiptune",
+      "scale": "minor"
+    },
+    "tone": "mission control",
+    "context": {
+      "kind": "holiday",
+      "holiday": "Halloween",
+      "date": "2026-10-31"
+    },
+    "palette": "moonlight-gb"
   }
 ]

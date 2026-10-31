@@ -1,0 +1,23 @@
+{
+  "intro": "Every day the dice roll a premise and a dozen constraints, and the game has to honor all of them. Today's roll was seed 4181033764, and the calendar added one more: it's Halloween. Here is each roll and what came of it.",
+  "rolls": [
+    { "roll": "Premise", "value": "a lazy sun · rescuing · pickles", "became": "The Sun is the laziest thing in the solar system: it hasn't moved in 4.6 billion years. Everyone else does the going round. So when it gets hungry, the food has to come to it. The food is pickles, because nobody else wants them." },
+    { "roll": "Calendar", "value": "Halloween", "became": "Trick-or-treating is the one night food comes to you if you go door to door, and the Sun can't (see: lazy). Next door, Venus hands out pickles every Halloween, and every kid in the solar system flings them into the dark. Rescuing them is a public service. Eating them is a bonus. Also, the neighbors are in costume." },
+    { "roll": "Interaction", "value": "draw a path", "became": "You are Flight at Solar Mission Control, chalking trajectories on the plotting board. Draw a line from the Sun out through the drifting pickles and they ride the chalk home." },
+    { "roll": "Drive", "value": "hunger", "became": "The hunger meter at the top only fills one way: by eating. The Sun has two million pickles' worth of appetite." },
+    { "roll": "Obstacle", "value": "the neighbors", "became": "Mercury (a ghost), Venus (a witch), Earth (a pumpkin) and Mars (a devil) orbit right through your trajectories. Cross one and the line breaks there, and the neighbor keeps whatever was past it. Polite letters help. A treat for Mars helps more." },
+    { "roll": "Structure", "value": "sacrifice part of your progress to multiply the rest", "became": "Eat half: the Sun eats half your stash. It fills the meter and makes the Sun glow brighter, which lights up more of the dark, so every pickle after counts for more. Spend now, or eat now? That's the whole game." },
+    { "roll": "Structure", "value": "craft: trade many of A for one B", "became": "Brine half: a hundred pickles to a jar. Jars are space-rated and smell incredible, so Engineering builds everything out of them: probe hulls, an autopilot chalk arm, lids, and a jar of coffee nobody should drink." },
+    { "roll": "Twist", "value": "combos and streaks", "became": "One stroke through lots of pickles is a combo, and each pickle in it counts for more. Clean strokes in a row (no neighbor in the way) build a streak." },
+    { "roll": "Scale", "value": "millions", "became": "Two million pickles eaten fills the Sun. Venus has been busy." },
+    { "roll": "Length", "value": "mini (10–60 min)", "became": "About half an hour, in three courses: rescue, brine, and supper." },
+    { "roll": "Look", "value": "chalkboard", "became": "Everything is drawn in chalk on the Mission Control plotting board, wobbles and dust included." },
+    { "roll": "Palette", "value": "Moonlight GB", "became": "Four Game Boy colors: night slate, two chalks and a green that happens to be exactly pickle-colored." },
+    { "roll": "Music", "value": "8-bit chiptune, minor", "became": "A spooky little NES tune in A minor, a pulse lead over a triangle bass, that picks up an arpeggio when the jars arrive. Every catch blips up the same scale, so a big combo plays a run." },
+    { "roll": "Tone", "value": "mission control", "became": "Deadpan telemetry for a hungry Sun. \"Houston, we have a pickle.\" \"Recovery confirmed. Consumption nominal.\"" },
+    { "roll": "Initial", "value": "V", "became": "Venus: the neighbor with the witch hat and the pickles, and the porch light that's always on." },
+    { "roll": "Ending", "value": "a secret ending behind the obvious one", "became": "The obvious ending: tuck the stuffed Sun in for a nap. The secret one needs three silly purchases you probably made as jokes: walking shoes, Venus's address and a pickle costume. Then, with a full Sun, chalk a line from the Sun to Venus's door.", "spoiler": true },
+    { "roll": "Turn", "value": "the roles reverse", "became": "For 4.6 billion years everyone went round the Sun. In the secret ending everyone holds still, and the Sun goes round them in its pickle costume, trick-or-treating. Venus gives it a pickle, of course.", "spoiler": true }
+  ],
+  "outro": "None of these were chosen; all of them were rolled (well, except Halloween, which happens every year). The fun is finding the one story where they all make sense."
+}

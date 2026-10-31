@@ -11,6 +11,7 @@ public/games.json used (see fresh()), so a roll depends on its seed and on the g
 Edit the lists freely, but only append to them: inserting or removing entries changes what older
 seeds roll. Days 1-8 were rolled before history mattered; their rolls are recorded in games.json.
 """
+import datetime
 import json
 import random
 import secrets
@@ -185,6 +186,43 @@ CALENDAR_KINDS = [
 ]
 
 
+# Major US holidays. A game released on one always gets it as its context, and the holiday may
+# shape the whole game (setting, look, jokes), since it comes back every year. Not drawn from the
+# seed, so a replayed seed still rolls the same parts.
+def holiday(day):
+    y = day.year
+    def nth(month, weekday, n):  # n-th weekday (Mon=0) of the month; n=-1 for the last one
+        if n > 0:
+            first = datetime.date(y, month, 1)
+            return first + datetime.timedelta(days=(weekday - first.weekday()) % 7 + 7 * (n - 1))
+        last = datetime.date(y + month // 12, month % 12 + 1, 1) - datetime.timedelta(days=1)
+        return last - datetime.timedelta(days=(last.weekday() - weekday) % 7)
+    a, b, c = y % 19, y // 100, y % 100  # Easter (anonymous Gregorian algorithm)
+    d, e = b // 4, b % 4
+    g = (8 * b + 13) // 25
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = c // 4, c % 4
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    easter = datetime.date(y, (h + l - 7 * m + 114) // 31, (h + l - 7 * m + 114) % 31 + 1)
+    days = {
+        datetime.date(y, 1, 1): "New Year's Day", datetime.date(y, 2, 14): "Valentine's Day",
+        datetime.date(y, 3, 17): "St. Patrick's Day", easter: "Easter",
+        nth(5, 6, 2): "Mother's Day", nth(6, 6, 3): "Father's Day",
+        datetime.date(y, 7, 4): "Independence Day", datetime.date(y, 10, 31): "Halloween",
+        nth(11, 3, 4): "Thanksgiving", datetime.date(y, 12, 24): "Christmas Eve",
+        datetime.date(y, 12, 25): "Christmas", datetime.date(y, 12, 31): "New Year's Eve",
+    }
+    return days.get(day)
+
+
+def release_date(history):
+    """The day after the last game, which is when the rolled game goes live."""
+    if not history:
+        return None
+    return datetime.date.fromisoformat(history[-1]["date"]) + datetime.timedelta(days=1)
+
+
 # Color palettes from Lospec, vendored by tools/palettes.mjs (append-only, like these lists).
 PALETTES = [p["slug"] for p in json.loads(
     (Path(__file__).resolve().parent.parent / "public" / "shared" / "palettes.json").read_text())]
@@ -257,6 +295,9 @@ def roll(seed, history=()):
     r["context"] = rng.choice(CONTEXTS)
     if r["context"] == "calendar":
         r["context"] = {"kind": "calendar", "nod": pick(CALENDAR_KINDS, "context", "nod")}
+    day = release_date(history)
+    if day and holiday(day):
+        r["context"] = {"kind": "holiday", "holiday": holiday(day), "date": day.isoformat()}
     # Colors in public/shared/palettes.json under this slug.
     r["palette"] = pick(PALETTES, "palette")
     return r

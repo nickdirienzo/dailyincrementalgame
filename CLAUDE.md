@@ -84,6 +84,9 @@ Every game should have these bones:
 - **Timeless, mostly.** Games live in the archive forever, so they never riff on trending memes,
   news or real people. When the roll asks for a calendar nod, it's one small touch (an upgrade, a
   log line, a hat), never the premise, and it must not repeat a topic from the last two weeks.
+  Major US holidays are the exception: they come back every year, so a game released on one
+  (the roll's `"kind": "holiday"` context) leans into it. The holiday can set the scene, the
+  look and the jokes, as long as the rolled parts still drive the game.
 - **Not torture.** Length varies by day (the rolled `length`): mini games of 10–60 minutes,
   short ones of 1–3 hours, and story games of 3–10 hours played over several sittings. These are real incrementals, not toys: there's room for the
   numbers to snowball and the game to change shape. Whatever the length, there are no dead

@@ -557,5 +557,41 @@
    "float"
   ],
   "shopTab": "up"
+ },
+ "we-have-a-pickle": {
+  "p": 48000,
+  "eaten": 41000,
+  "jars": 85,
+  "total": 160000,
+  "t": 960,
+  "lv": {
+   "chalk": 9,
+   "light": 8,
+   "probe": 24,
+   "dust": 6,
+   "auto": 3,
+   "hull": 3,
+   "telemetry": 2,
+   "letter": 2,
+   "lids": 1
+  },
+  "odd": {
+   "bowl": true,
+   "dill": true,
+   "shades": true,
+   "kosher": true,
+   "halfsour": true,
+   "coffee": true,
+   "address": true
+  },
+  "streak": 14,
+  "bestStreak": 31,
+  "bestCombo": 9,
+  "strokes": 420,
+  "cuts": 30,
+  "eats": 11,
+  "brines": 9,
+  "venusMet": true,
+  "shopTab": "p"
  }
 }

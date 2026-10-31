@@ -1,0 +1,1152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>We Have a Pickle · Incremendle</title>
+<meta name="description" content="Halloween night. The Sun won't move, so Mission Control chalks trajectories to bring it the pickles everyone else threw away. Incremendle.">
+<meta property="og:site_name" content="Incremendle">
+<meta property="og:type" content="website">
+<meta property="og:title" content="We Have a Pickle">
+<meta property="og:description" content="Halloween night. The Sun won't get up, so Mission Control chalks it a path to every pickle the kids threw away.">
+<meta property="og:url" content="https://incremendle.com/we-have-a-pickle/">
+<meta property="og:image" content="https://incremendle.com/we-have-a-pickle/og.png?v=03ac2c8b">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="We Have a Pickle: Halloween night. The Sun won't get up, so Mission Control chalks it a path to every pickle the kids threw away.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/shared/fonts/cabin-sketch/font.css">
+<link rel="stylesheet" href="/shared/fonts/schoolbell/font.css">
+<link rel="stylesheet" href="/shared/fonts/share-tech-mono/font.css">
+<style>
+  /* Moonlight GB: night slate, dim chalk, teal chalk, bright chalk. */
+  :root {
+    --slate: #0f052d; --dim: #203671; --teal: #36868f; --chalk: #5fc75d;
+    --head: 'Cabin Sketch', 'Comic Sans MS', cursive; --hand: 'Schoolbell', 'Comic Sans MS', cursive; --mono: 'Share Tech Mono', ui-monospace, monospace;
+    color-scheme: dark;
+  }
+  html, body { background: var(--slate); color: var(--chalk); }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; font: 17px/1.35 var(--hand);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: max(10px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+    background:
+      radial-gradient(ellipse at 20% 10%, #20367133, transparent 50%),
+      radial-gradient(ellipse at 85% 70%, #20367126, transparent 55%), var(--slate);
+    background-attachment: fixed;
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; }
+  header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin: 2px 0 6px; }
+  h1 { font: 700 34px/1 var(--head); margin: 0; letter-spacing: .5px; text-shadow: 0 0 1px var(--chalk); }
+  header p { margin: 0; font: 14px var(--mono); color: var(--teal); text-transform: uppercase; letter-spacing: 1px; }
+  .game { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .game { grid-template-columns: 1fr; } h1 { font-size: 28px; } .hud { grid-template-columns: 1fr; } .counts { justify-content: flex-start; } }
+  main { min-width: 0; }
+
+  /* Telemetry strip above the board: the goal (hunger) and the counts. */
+  .hud { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; align-items: center; margin-bottom: 6px; }
+  .meter { position: relative; height: 26px; border: 2px solid var(--teal); border-radius: 13px 4px 13px 4px / 4px 13px 4px 13px; overflow: hidden; }
+  .meter i { position: absolute; inset: 0 auto 0 0; width: 0; background: repeating-linear-gradient(115deg, #36868fcc 0 6px, #203671cc 6px 11px); box-shadow: inset -3px 0 0 var(--chalk); transition: width .4s; }
+  .meter span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font: 15px var(--mono); color: var(--chalk); text-shadow: 0 0 3px var(--slate), 0 0 3px var(--slate), 0 0 2px var(--slate); }
+  .counts { display: flex; gap: 14px; font: 16px var(--mono); white-space: nowrap; }
+  .counts b { font: 700 24px/1 var(--head); color: var(--chalk); }
+  .counts small { color: var(--teal); font-size: 13px; }
+  .sub { grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap; font: 13px var(--mono); color: var(--teal); min-height: 18px; }
+  .sub .hot { color: var(--chalk); }
+  #tuck { grid-column: 1 / -1; font: 700 20px var(--head); color: var(--slate); background: var(--chalk); border: 0; border-radius: 14px 4px 14px 4px; padding: 6px 12px; cursor: pointer; animation: pulse 1.6s ease-in-out infinite; }
+  #tuck:focus-visible { outline: 2px dashed var(--chalk); outline-offset: 3px; }
+
+  .boardwrap { position: relative; display: flex; justify-content: center; }
+  canvas#board { display: block; touch-action: none; cursor: crosshair; border-radius: 10px; box-shadow: 0 0 0 3px #203671, 0 0 0 7px #0f052d, 0 0 0 9px #36868f55; }
+  .log { margin: 10px 2px 0; min-height: 2.7em; font: 17px/1.35 var(--hand); color: var(--chalk); }
+  .log b { font: 13px var(--mono); color: var(--teal); letter-spacing: 1px; margin-right: 4px; }
+  .log.fresh { animation: chalkin .5s ease-out; }
+  @keyframes chalkin { from { opacity: 0; filter: blur(2px); } }
+
+  /* The column: sticky, never taller than the window. */
+  aside { position: sticky; top: 10px; max-height: calc(100vh - 20px); overflow: auto; scrollbar-width: thin; padding: 2px 3px 6px; }
+  @media (max-width: 760px) { aside { position: static; max-height: none; overflow: visible; } }
+  aside h2 { font: 700 26px/1 var(--head); margin: 4px 0 8px; }
+  #afford { font: 14px var(--mono); color: var(--teal); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 0 0 10px; }
+  .actions:not(:has(> :not([hidden]))) { display: none; }
+  .act { position: relative; display: flex; flex-direction: column; align-items: flex-start; text-align: left; font: 700 19px/1.05 var(--head); color: var(--slate); background: var(--chalk); border: 0; border-radius: 14px 4px 12px 4px / 4px 12px 4px 14px; padding: 6px 10px 5px; cursor: pointer; }
+  .act.brine { background: var(--teal); color: var(--slate); }
+  .act small { font: 13px var(--mono); }
+  .act[aria-disabled="true"] { opacity: .45; cursor: default; }
+  .act:focus-visible { outline: 2px dashed var(--chalk); outline-offset: 2px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+  .tabs button { flex: 1; position: relative; font: 700 17px var(--head); color: var(--teal); background: none; border: 2px solid var(--dim); border-radius: 12px 3px 12px 3px; padding: 3px 6px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { color: var(--chalk); border-color: var(--chalk); }
+  .tabs button small { font: 12px var(--mono); }
+  .tabs button.fresh::after { content: ""; position: absolute; top: 4px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--chalk); }
+  .tabs button:focus-visible { outline: 2px dashed var(--chalk); outline-offset: 2px; }
+  #shop { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  @media (max-width: 760px) and (min-width: 520px) { #shop { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .up {
+    position: relative; display: flex; flex-direction: column; min-width: 0; text-align: left; font: 15px/1.2 var(--hand); color: var(--teal);
+    background: #20367155; border: 2px solid var(--dim); border-radius: 12px 3px 11px 4px / 4px 11px 3px 12px; padding: 4px 9px 5px; cursor: pointer;
+  }
+  .up b { font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--chalk); }
+  .up em { font: 13px var(--mono); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .up.can { border-color: var(--chalk); background: #36868f33; }
+  .up.can em { color: var(--chalk); }
+  .up[aria-disabled="true"] { cursor: default; }
+  .up[aria-disabled="true"]:not(.can) b { opacity: .7; }
+  .up.odd { border-style: dashed; }
+  .up .tag { position: absolute; top: -9px; right: 6px; font: 12px var(--mono); font-style: normal; color: var(--slate); background: var(--chalk); padding: 0 5px; border-radius: 6px 2px 6px 2px; transform: rotate(5deg); }
+  .up.new { animation: pulse 1.6s ease-in-out 4; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 3px #5fc75d66; } }
+  .up:focus-visible, .bought:focus-visible { outline: 2px dashed var(--chalk); outline-offset: 2px; }
+  #tip {
+    position: fixed; z-index: 50; width: 240px; padding: 9px 12px 10px; pointer-events: none; font: 15px/1.3 var(--hand); color: var(--chalk);
+    background: var(--slate); border: 2px solid var(--chalk); border-radius: 14px 4px 14px 4px / 4px 14px 4px 14px; box-shadow: 0 0 0 4px #0f052dcc, 0 6px 20px #000a;
+  }
+  #tip b { display: block; font: 700 21px/1.05 var(--head); margin-bottom: 3px; }
+  #tip i { display: block; margin-top: 6px; font-style: normal; font-size: 14px; color: var(--teal); border-top: 2px dashed var(--dim); padding-top: 5px; }
+  #tip small { display: block; margin-top: 6px; font: 12px var(--mono); color: var(--teal); }
+  #tip.inline { position: static; width: auto; margin-top: 10px; box-shadow: none; }
+  #bought { margin: 12px 0 2px; }
+  #bought summary { display: flex; align-items: center; gap: 6px; font: 700 20px/1 var(--head); color: var(--teal); cursor: pointer; list-style: none; padding: 3px 4px; }
+  #bought summary::-webkit-details-marker { display: none; }
+  #bought summary::before { content: "\25B8"; font-size: 14px; color: var(--chalk); transition: transform .2s; }
+  #bought[open] summary::before { transform: rotate(90deg); }
+  #bought summary:focus-visible { outline: 2px dashed var(--chalk); outline-offset: 2px; }
+  .shelf { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px 2px 2px; }
+  .bought { max-width: 100%; font: 14px/1.2 var(--hand); color: var(--teal); background: none; border: 1.5px solid var(--dim); border-radius: 10px 3px 9px 3px; padding: 2px 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bought.odd { border-style: dashed; }
+  .bought:hover, .bought.on { color: var(--chalk); border-color: var(--chalk); }
+
+  #ending { margin: 18px auto 0; max-width: 640px; text-align: center; padding: 16px 18px 20px; border: 2px dashed var(--teal); border-radius: 18px 5px 18px 5px; }
+  #ending h2 { font: 700 34px/1.05 var(--head); margin: 0 0 6px; }
+  #ending p { margin: 6px 0; }
+  #ending .hint { font: 14px var(--mono); color: var(--teal); }
+  #shareBtn, #againBtn { font: 700 20px var(--head); color: var(--slate); background: var(--chalk); border: 0; border-radius: 14px 4px 14px 4px; padding: 7px 16px; margin: 10px 4px 0; cursor: pointer; }
+  #againBtn { background: none; color: var(--chalk); border: 2px solid var(--chalk); }
+  #shareBtn:focus-visible, #againBtn:focus-visible { outline: 2px dashed var(--chalk); outline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) { .up.new, #tuck, .log.fresh { animation: none; } .meter i, #bought summary::before { transition: none; } }
+</style>
+<script type="importmap">
+{ "imports": {
+  "@strudel/web": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/core": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/webaudio": "/shared/lib/@strudel/web@1.3.0/index.mjs"
+} }
+</script>
+<script src="/shared/daily.js" data-day="9" data-credits data-why></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>We Have a Pickle</h1>
+    <p>Solar Mission Control · Halloween night</p>
+  </header>
+  <div class="game">
+    <main>
+      <div class="hud">
+        <div class="meter" id="meter" title="How full the Sun is"><i id="meterFill"></i><span><em id="hungerName">Peckish</em><em id="hungerPct">0%</em></span></div>
+        <div class="counts"><span><b id="pickles">0</b> <small>pickles</small></span><span id="jarBox" hidden><b id="jars">0</b> <small>jars</small></span></div>
+        <div class="sub" id="sub"></div>
+        <button id="tuck" type="button" class="tipped" hidden>Tuck the Sun in</button>
+      </div>
+      <div class="boardwrap"><canvas id="board" aria-label="The plotting board: draw a chalk line from the Sun through the pickles"></canvas></div>
+      <p class="log" id="log" aria-live="polite"></p>
+    </main>
+    <aside id="side">
+      <div class="actions">
+        <button id="eatBtn" type="button" class="act tipped" hidden>Eat half <small id="eatN"></small></button>
+        <button id="brineBtn" type="button" class="act brine tipped" hidden>Brine half <small id="brineN"></small></button>
+      </div>
+      <h2 hidden>Hardware <span id="afford"></span></h2>
+      <div class="tabs" id="tabs" role="tablist" hidden></div>
+      <div id="shop" role="tabpanel"></div>
+      <details id="bought" hidden><summary>Bought · <span id="boughtN">0</span></summary><div class="shelf" id="shelf"></div></details>
+      <div id="tip" role="tooltip" hidden></div>
+    </aside>
+  </div>
+  <section id="ending" hidden>
+    <h2 id="endTitle">Recovery complete.</h2>
+    <p id="endText"></p>
+    <p class="hint" id="endHint"></p>
+    <button id="shareBtn" type="button">Share result</button>
+  </section>
+</div>
+<script type="module">
+import { createAudio, scale } from '/shared/kit/audio.mjs';
+import { createMusic } from '/shared/kit/music.mjs';
+import { createSoundtrack } from './music.mjs';
+import * as Sprites from '/shared/kit/sprites.mjs';
+import { grain } from '/shared/kit/fx.mjs';
+import * as E from './economy.mjs';
+
+const $ = id => document.getElementById(id);
+const fmt = E.fmt;
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const C = { slate: '#0f052d', dim: '#203671', teal: '#36868f', chalk: '#5fc75d' };
+
+// ---------- State ----------
+const KEY = window.DailyGame ? DailyGame.storageKey('save') : 'di:9:save';
+let raw = null;
+try { raw = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+const S = E.load(raw);
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+// ---------- Sound ----------
+const A = createAudio({ sfxTrim: 2, musicTrim: 7.5 });
+const notes = scale('minor', 57); // A minor from A3, like the music
+let lastScratch = 0;
+const sfx = {
+  scratch() { const t = A.now; if (t - lastScratch < 0.07) return; lastScratch = t; A.noiseHit('hat', { vol: 0.077, dur: 0.03 }); },
+  catch(i = 0) { A.tone({ type: 'pulse', freq: notes(7 + Math.min(i, 9)), dur: 0.05, vol: 0.24, cutoff: 3200, at: A.now + 0.002 }); },
+  home() { A.tone({ type: 'triangle', freq: notes(7), dur: 0.1, vol: 0.224 }); A.tone({ type: 'pulse', freq: notes(11), dur: 0.08, vol: 0.072, cutoff: 3000, at: A.now + 0.06 }); },
+  cut() { A.tone({ type: 'square', freq: notes(2), dur: 0.16, vol: 0.168, glide: 0.5, cutoff: 1400 }); A.noiseHit('snare', { vol: 0.168 }); },
+  fizzle() { A.tone({ type: 'triangle', freq: notes(4), dur: 0.18, vol: 0.25, glide: 0.7 }); },
+  eat() {
+    A.noiseHit('kick', { vol: 0.113 });
+    A.tone({ type: 'triangle', freq: notes(0), dur: 0.12, vol: 0.144, glide: 0.6 });
+    A.noiseHit('kick', { vol: 0.09, at: A.now + 0.14 });
+    [0, 2, 4, 7].forEach((d, i) => A.tone({ type: 'pulse', freq: notes(d + 7), dur: 0.07, vol: 0.036, cutoff: 3000, at: A.now + 0.28 + i * 0.06 }));
+  },
+  brine() { [9, 7, 11, 8, 12].forEach((d, i) => A.tone({ type: 'sine', freq: notes(d), dur: 0.06, vol: 0.22, glide: 1.5, at: A.now + i * 0.07 })); },
+  buy() { [0, 2, 4, 7].forEach((d, i) => A.tone({ type: 'pulse', freq: notes(d + 7), dur: 0.06, vol: 0.209, cutoff: 3200, at: A.now + i * 0.055 })); },
+  unlock() { A.tone({ type: 'bell', freq: notes(9), dur: 0.4, vol: 0.16 }); A.tone({ type: 'bell', freq: notes(11), dur: 0.5, vol: 0.13, at: A.now + 0.12 }); },
+  streak() { [4, 7, 9, 11].forEach((d, i) => A.tone({ type: 'pulse', freq: notes(d + 7), dur: 0.05, vol: 0.25, cutoff: 3200, at: A.now + i * 0.045 })); },
+  deny() { A.tone({ type: 'triangle', freq: notes(-3), dur: 0.08, vol: 0.234 }); },
+  neighbor() { [4, 3, 2, 0].forEach((d, i) => A.tone({ type: 'triangle', freq: notes(d), dur: 0.14, vol: 0.12, at: A.now + i * 0.13 })); },
+  // The obvious ending: a music-box lullaby, falling asleep.
+  finale() {
+    [7, 4, 2, 4, 0, -1, 0, -3].forEach((d, i) => A.tone({ type: 'bell', freq: notes(d + 7), dur: 0.5, vol: 0.18, at: A.now + i * 0.32 }));
+    A.tone({ type: 'pad', freq: notes(0), dur: 2.4, vol: 0.06, attack: 0.6, release: 1.4, cutoff: 900 });
+  },
+  // The secret ending: a trick-or-treat march.
+  trick() {
+    [0, 0, 2, 4, 2, 4, 5, 7].forEach((d, i) => A.tone({ type: 'pulse', freq: notes(d + 7), dur: 0.12, vol: 0.079, cutoff: 3000, at: A.now + i * 0.17 }));
+    [0, 4, 0, 4].forEach((d, i) => A.tone({ type: 'triangle', freq: notes(d - 7), dur: 0.2, vol: 0.198, at: A.now + i * 0.34 }));
+    A.tone({ type: 'bell', freq: notes(14), dur: 0.8, vol: 0.092, at: A.now + 1.4 });
+  },
+};
+if (location.search.includes('debug')) window.__game = { A, sfx, long: ['finale', 'trick'], pos: id => planetPos(E.PLANETS.find(p => p.id === id)), S: () => S };
+
+// The game owns playback; music.mjs arranges the score per phase.
+let music = null, soundtrack = null;
+const musicKey = () => E.phase(S);
+function song() { return (soundtrack ??= createSoundtrack(music.strudel))(musicKey()); }
+createMusic(A, { song }).then(m => { music = m; music.update(); }).catch(e => console.warn('music', e));
+
+// ---------- Chalk art ----------
+// Everything is drawn in chalk once, up front, with a seeded wobble so it holds still.
+let seed = 9;
+const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+const rr = (a, b) => a + (b - a) * rnd();
+function chalk(ctx, path, { color = C.chalk, width = 3, passes = 3, jitter = 1, alpha = 0.6, fill = null } = {}) {
+  if (fill) { ctx.save(); ctx.globalAlpha = fill.alpha ?? 0.25; ctx.fillStyle = fill.color; ctx.beginPath(); path(ctx); ctx.fill(); ctx.restore(); }
+  for (let p = 0; p < passes; p++) {
+    ctx.save();
+    ctx.translate(rr(-jitter, jitter), rr(-jitter, jitter));
+    ctx.strokeStyle = color; ctx.globalAlpha = alpha * rr(0.7, 1.1);
+    ctx.lineWidth = width * rr(0.7, 1.15); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.setLineDash([rr(8, 18), rr(0.5, 2.5)]);
+    ctx.beginPath(); path(ctx); ctx.stroke();
+    ctx.restore();
+  }
+}
+// Chalk grain: knock tiny holes out of whatever was drawn.
+function dust(ctx, w, h, amount = 0.12) {
+  ctx.save(); ctx.globalCompositeOperation = 'destination-out';
+  for (let i = 0; i < w * h * amount / 9; i++) { ctx.globalAlpha = rr(0.3, 0.9); ctx.fillRect(rr(0, w), rr(0, h), rr(0.6, 1.8), rr(0.6, 1.8)); }
+  ctx.restore();
+}
+function hatch(ctx, cx, cy, r, color, gap = 7, alpha = 0.28) {
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
+  chalk(ctx, c => { for (let x = -r * 2; x < r * 2; x += gap) { c.moveTo(cx + x, cy - r); c.lineTo(cx + x + r * 0.9, cy + r); } }, { color, width: 1.6, passes: 1, alpha });
+  ctx.restore();
+}
+const circle = (cx, cy, r) => c => c.arc(cx, cy, r, 0, Math.PI * 2);
+
+// The Sun, 240 px: a round chalk face with wavy rays. mood: lazy | chomp | asleep | costume
+function drawSun(mood) {
+  const N = 240, c = Sprites.canvas(N, N), x = c.getContext('2d'), m = N / 2, R = 72;
+  seed = 31 + mood.length;
+  if (mood === 'costume') {
+    // A Sun-sized pickle suit: a bumpy green capsule with the face peeking out.
+    const path = q => { q.ellipse(m, m + 4, R * 0.95, R * 1.38, 0, 0, Math.PI * 2); };
+    chalk(x, path, { width: 4, fill: { color: C.chalk, alpha: 0.18 } });
+    for (let i = 0; i < 16; i++) { const a = rr(0, Math.PI * 2), d = rr(0.45, 0.9); chalk(x, circle(m + Math.cos(a) * R * 0.95 * d, m + 4 + Math.sin(a) * R * 1.38 * d, rr(2.5, 4)), { width: 2, passes: 2, color: C.teal }); }
+    chalk(x, circle(m, m - 14, 34), { width: 3, color: C.chalk, fill: { color: C.slate, alpha: 1 } });
+    chalk(x, q => { q.moveTo(m - 16, m - 18); q.quadraticCurveTo(m - 10, m - 13, m - 4, m - 18); q.moveTo(m + 4, m - 18); q.quadraticCurveTo(m + 10, m - 13, m + 16, m - 18); }, { width: 2.6 });
+    chalk(x, q => { q.moveTo(m - 9, m - 2); q.quadraticCurveTo(m, m + 6, m + 9, m - 2); }, { width: 2.6 });
+    dust(x, N, N, 0.1);
+    return c;
+  }
+  for (let i = 0; i < 14; i++) {
+    const a = i / 14 * Math.PI * 2 + 0.1;
+    chalk(x, q => {
+      for (let s = 0; s <= 8; s++) {
+        const rad = R + 10 + s * 3.3, wob = Math.sin(s * 1.4 + i) * 0.05;
+        const px = m + Math.cos(a + wob) * rad, py = m + Math.sin(a + wob) * rad;
+        s ? q.lineTo(px, py) : q.moveTo(px, py);
+      }
+    }, { width: 3.2, passes: 2 });
+  }
+  chalk(x, circle(m, m, R), { width: 4.5, fill: { color: C.chalk, alpha: 0.12 } });
+  hatch(x, m, m, R - 4, C.teal, 9, 0.35);
+  if (mood === 'chomp') {
+    chalk(x, q => { q.moveTo(m - 32, m - 12); q.lineTo(m - 20, m - 18); q.lineTo(m - 10, m - 12); q.moveTo(m + 10, m - 12); q.lineTo(m + 20, m - 18); q.lineTo(m + 32, m - 12); }, { width: 3.4 });
+    chalk(x, q => q.ellipse(m, m + 22, 22, 18, 0, 0, Math.PI * 2), { width: 3.4, fill: { color: C.slate, alpha: 1 } });
+  } else if (mood === 'asleep') {
+    chalk(x, q => { q.moveTo(m - 34, m - 10); q.quadraticCurveTo(m - 22, m - 2, m - 10, m - 10); q.moveTo(m + 10, m - 10); q.quadraticCurveTo(m + 22, m - 2, m + 34, m - 10); }, { width: 3.4 });
+    chalk(x, q => { q.moveTo(m - 12, m + 22); q.quadraticCurveTo(m, m + 30, m + 12, m + 22); }, { width: 3 });
+  } else {
+    // Lazy: heavy half-closed lids, a small content smile.
+    for (const s of [-1, 1]) {
+      chalk(x, q => { q.moveTo(m + s * 10, m - 12); q.lineTo(m + s * 34, m - 12); }, { width: 3.6 });
+      chalk(x, q => { q.arc(m + s * 22, m - 12, 11, 0.15, Math.PI - 0.15); }, { width: 3 });
+      chalk(x, circle(m + s * 22, m - 6, 3), { width: 3, passes: 2 });
+    }
+    chalk(x, q => { q.moveTo(m - 16, m + 22); q.quadraticCurveTo(m, m + 34, m + 18, m + 20); }, { width: 3.2 });
+  }
+  dust(x, N, N, 0.1);
+  return c;
+}
+// A pickle, 60x30: a curved gherkin with bumps. Two shapes, so the drift looks like a crowd.
+function drawPickle(v) {
+  const c = Sprites.canvas(60, 34), x = c.getContext('2d');
+  seed = 101 + v * 17;
+  const path = q => { q.ellipse(30, 17, 25 - v * 2, 11 + v, -0.08 + v * 0.12, 0, Math.PI * 2); };
+  chalk(x, path, { width: 2.6, fill: { color: C.chalk, alpha: 0.35 }, jitter: 0.6 });
+  for (let i = 0; i < 6; i++) chalk(x, circle(rr(12, 48), rr(12, 22), 1.4), { width: 1.8, passes: 1, color: C.slate, alpha: 0.9 });
+  chalk(x, q => { q.moveTo(8 + v, 17); q.lineTo(4, 16 - v); }, { width: 2, passes: 1 });
+  dust(x, 60, 34, 0.05);
+  return c;
+}
+// The neighbors, 96 px, each in a Halloween costume.
+function drawPlanet(id) {
+  const N = 96, c = Sprites.canvas(N, N), x = c.getContext('2d'), m = N / 2;
+  seed = 211 + id.length * 7;
+  const R = id === 'mercury' ? 22 : id === 'moon' ? 12 : id === 'mars' ? 26 : 30;
+  if (id === 'mercury') {
+    // A ghost sheet with eye holes.
+    chalk(x, q => { q.moveTo(m - R, m + R); q.lineTo(m - R, m - 2); q.arc(m, m - 2, R, Math.PI, 0); q.lineTo(m + R, m + R);
+      for (let i = 4; i >= 0; i--) q.quadraticCurveTo(m - R + (i + 0.5) * R * 0.4, m + R - 8 * (i % 2 ? 1 : -0.2), m - R + i * R * 0.4, m + R); }, { width: 3, fill: { color: C.teal, alpha: 0.3 } });
+    for (const s of [-1, 1]) chalk(x, q => q.ellipse(m + s * 8, m - 4, 3.5, 5.5, 0, 0, Math.PI * 2), { width: 2.4, fill: { color: C.slate, alpha: 1 } });
+  } else if (id === 'moon') {
+    for (const s of [-1, 1]) chalk(x, q => { q.moveTo(m + s * 9, m); q.quadraticCurveTo(m + s * 22, m - 14, m + s * 32, m - 6); q.lineTo(m + s * 27, m + 1); q.lineTo(m + s * 22, m - 2); q.lineTo(m + s * 18, m + 5); q.lineTo(m + s * 9, m + 3); }, { width: 2.2, color: C.teal, fill: { color: C.teal, alpha: 0.4 } });
+    chalk(x, circle(m, m, R), { width: 2.6, fill: { color: C.chalk, alpha: 0.2 } });
+    chalk(x, circle(m - 3, m - 2, 2.5), { width: 1.6, passes: 1 });
+  } else {
+    chalk(x, circle(m, m + 4, R), { width: 3.2, color: id === 'earth' ? C.chalk : C.teal, fill: { color: C.teal, alpha: 0.25 } });
+    hatch(x, m, m + 4, R - 3, C.teal, 8, 0.3);
+    if (id === 'venus') {
+      // Witch hat and a friendly face: she's the one handing out pickles.
+      chalk(x, q => { q.moveTo(m - 30, m - 18); q.quadraticCurveTo(m, m - 26, m + 30, m - 18); q.moveTo(m - 15, m - 21); q.lineTo(m + 4, m - 46); q.lineTo(m + 15, m - 21); }, { width: 3, color: C.chalk, fill: { color: C.slate, alpha: 0.9 } });
+      for (const s of [-1, 1]) chalk(x, circle(m + s * 10, m + 4, 2.5), { width: 2.4, passes: 2 });
+      chalk(x, q => { q.moveTo(m - 9, m + 14); q.quadraticCurveTo(m, m + 21, m + 9, m + 14); }, { width: 2.4 });
+    } else if (id === 'earth') {
+      // A jack-o'-lantern.
+      chalk(x, q => { q.moveTo(m, m - R + 4); q.quadraticCurveTo(m + 3, m - R - 6, m + 9, m - R - 9); }, { width: 3.2 });
+      for (const s of [-1, 1]) chalk(x, q => { q.moveTo(m + s * 5, m); q.lineTo(m + s * 17, m); q.lineTo(m + s * 11, m - 9); q.closePath(); }, { width: 2.4, fill: { color: C.chalk, alpha: 0.7 } });
+      chalk(x, q => { q.moveTo(m - 17, m + 12); for (let i = 0; i <= 6; i++) q.lineTo(m - 17 + i * 34 / 6, m + 12 + (i % 2 ? 7 : 0)); q.lineTo(m + 12, m + 24); q.lineTo(m - 12, m + 24); q.closePath(); }, { width: 2.4, fill: { color: C.chalk, alpha: 0.6 } });
+    } else if (id === 'mars') {
+      // Devil horns and a scowl.
+      for (const s of [-1, 1]) chalk(x, q => { q.moveTo(m + s * 10, m - R + 6); q.quadraticCurveTo(m + s * 22, m - R - 4, m + s * 20, m - R - 16); q.quadraticCurveTo(m + s * 14, m - R - 4, m + s * 4, m - R + 7); }, { width: 2.6, color: C.chalk, fill: { color: C.chalk, alpha: 0.5 } });
+      for (const s of [-1, 1]) chalk(x, q => { q.moveTo(m + s * 4, m - 2); q.lineTo(m + s * 15, m - 7); q.moveTo(m + s * 10, m + 1); q.lineTo(m + s * 10, m + 3); }, { width: 2.6 });
+      chalk(x, q => { q.moveTo(m - 9, m + 17); q.quadraticCurveTo(m, m + 11, m + 9, m + 17); }, { width: 2.4 });
+    }
+  }
+  dust(x, N, N, 0.08);
+  return c;
+}
+function drawProbe() {
+  const c = Sprites.canvas(28, 28), x = c.getContext('2d'); seed = 404;
+  chalk(x, q => { q.rect(8, 11, 12, 11); }, { width: 2, fill: { color: C.teal, alpha: 0.4 }, passes: 2 });
+  chalk(x, q => { q.moveTo(14, 11); q.lineTo(16, 3); q.moveTo(16, 3); q.arc(16, 3, 1.5, 0, 6.3); q.moveTo(8, 16); q.lineTo(2, 14); q.moveTo(20, 16); q.lineTo(26, 18); }, { width: 1.6, passes: 2 });
+  return c;
+}
+function drawJar() {
+  const c = Sprites.canvas(40, 48), x = c.getContext('2d'); seed = 505;
+  chalk(x, q => { q.moveTo(10, 12); q.lineTo(8, 42); q.quadraticCurveTo(20, 47, 32, 42); q.lineTo(30, 12); }, { width: 2.4, fill: { color: C.teal, alpha: 0.3 } });
+  chalk(x, q => q.rect(9, 5, 22, 7), { width: 2.4, fill: { color: C.chalk, alpha: 0.4 } });
+  chalk(x, q => q.ellipse(20, 28, 5, 11, 0.2, 0, Math.PI * 2), { width: 2, fill: { color: C.chalk, alpha: 0.4 } });
+  return c;
+}
+function drawBat() {
+  const c = Sprites.canvas(48, 24), x = c.getContext('2d'); seed = 606;
+  chalk(x, q => { q.moveTo(24, 12); q.quadraticCurveTo(14, 2, 2, 6); q.lineTo(8, 10); q.lineTo(6, 16); q.lineTo(14, 13); q.lineTo(18, 18); q.lineTo(24, 14);
+    q.lineTo(30, 18); q.lineTo(34, 13); q.lineTo(42, 16); q.lineTo(40, 10); q.lineTo(46, 6); q.quadraticCurveTo(34, 2, 24, 12); }, { width: 2, color: C.teal, fill: { color: C.teal, alpha: 0.5 }, passes: 2 });
+  return c;
+}
+const BODY = { mercury: 22, moon: 12, mars: 26, venus: 30, earth: 30 }; // body radius inside each 96 px planet sprite
+const ART = {
+  sun: drawSun('lazy'), chomp: drawSun('chomp'), asleep: drawSun('asleep'), costume: drawSun('costume'),
+  pickles: [drawPickle(0), drawPickle(1)], probe: drawProbe(), jar: drawJar(), bat: drawBat(),
+  planets: Object.fromEntries(['mercury', 'venus', 'earth', 'moon', 'mars'].map(id => [id, drawPlanet(id)])),
+};
+Sprites.register('sun (lazy)', ART.sun); Sprites.register('sun (chomp)', ART.chomp); Sprites.register('sun (asleep)', ART.asleep); Sprites.register('sun in a pickle costume', ART.costume);
+ART.pickles.forEach((p, i) => Sprites.register(`pickle ${i + 1}`, p));
+for (const [id, c] of Object.entries(ART.planets)) Sprites.register(id, c);
+Sprites.register('gherkin probe', ART.probe); Sprites.register('jar', ART.jar); Sprites.register('bat', ART.bat);
+if (Sprites.sheetRequested()) Sprites.showSheet({ zoom: 2 });
+
+// ---------- The board ----------
+// Board units: 1000 across, the Sun at the middle.
+const cv = $('board'), ctx = cv.getContext('2d');
+let size = 600, k = 0.6, dpr = 1, bg = null;
+const SUN = { x: 500, y: 500 };
+const sunR = () => 72 + 5 * Math.log2(E.stats(S).glow);
+function layout() {
+  const wrap = cv.parentElement, w = wrap.clientWidth;
+  const top = cv.getBoundingClientRect().top + scrollY;
+  const avail = innerWidth > 760 ? innerHeight - top - 70 : w;
+  size = Math.floor(Math.max(260, Math.min(w, avail, 760)));
+  dpr = Math.min(2, devicePixelRatio || 1);
+  cv.style.width = cv.style.height = size + 'px';
+  cv.width = cv.height = Math.round(size * dpr);
+  k = size / 1000;
+  // The slate: smudges of old erasing, a faint grid, chalk dust.
+  bg = Sprites.canvas(cv.width, cv.height);
+  const b = bg.getContext('2d'), W = cv.width;
+  b.fillStyle = C.slate; b.fillRect(0, 0, W, W);
+  seed = 77;
+  for (let i = 0; i < 9; i++) {
+    const gx = rr(0, W), gy = rr(0, W);
+    const g = b.createRadialGradient(gx, gy, 0, gx, gy, rr(W * 0.2, W * 0.5));
+    g.addColorStop(0, '#20367144'); g.addColorStop(1, '#20367100');
+    b.fillStyle = g; b.fillRect(0, 0, W, W);
+  }
+  b.save(); b.scale(W / 1000, W / 1000);
+  chalk(b, q => { for (let v = 100; v < 1000; v += 100) { q.moveTo(v, 0); q.lineTo(v, 1000); q.moveTo(0, v); q.lineTo(1000, v); } }, { color: C.dim, width: 1, passes: 1, alpha: 0.35 });
+  for (let i = 0; i < 5; i++) chalk(b, q => { const y = rr(80, 920), x = rr(60, 700); q.moveTo(x, y); q.bezierCurveTo(x + 80, y - 20, x + 160, y + 20, x + rr(200, 300), y); }, { color: C.dim, width: rr(14, 26), passes: 1, alpha: 0.25 });
+  b.font = '20px "Share Tech Mono", monospace'; b.fillStyle = C.teal; b.globalAlpha = 0.7;
+  b.fillText('PLOT BOARD · 31 OCT', 22, 38);
+  b.restore();
+  grain(b, W, W, { amount: 0.05 });
+}
+
+const pickles = [], strokes = [], movers = [], puffs = [], floats = [], probes = [];
+let spawnAcc = 0, drawing = null, autoAcc = 0, t0 = performance.now(), boardT = 0;
+const planetPos = (p, t = boardT) => {
+  const slow = E.stats(S).slow;
+  if (S.ended && S.ending === 'trick') t = trickFreeze;
+  const a = p.phase0 + (t / (p.period / slow)) * Math.PI * 2;
+  const r = p.r * 500;
+  return { x: 500 + Math.cos(a) * r, y: 500 + Math.sin(a) * r, a, r: p.size * (p.id === 'mars' && S.odd.mars ? 0.8 : E.stats(S).hit) };
+};
+function spawnPickle(edge = true) {
+  const a = Math.random() * Math.PI * 2, r = edge ? 485 : 160 + Math.random() * 310;
+  pickles.push({ a, r, rot: Math.random() * 6.3, spin: (Math.random() - 0.5) * 0.6, v: Math.random() < 0.5 ? 0 : 1, in: edge ? 0 : 1,
+    drift: 0.04 + Math.random() * 0.05, home: 150 + Math.random() * 320 });
+}
+const pxy = p => ({ x: 500 + Math.cos(p.a) * p.r, y: 500 + Math.sin(p.a) * p.r });
+function segDist(a, b, p) {
+  const dx = b.x - a.x, dy = b.y - a.y, l = dx * dx + dy * dy;
+  const t = l ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l)) : 0;
+  return Math.hypot(a.x + t * dx - p.x, a.y + t * dy - p.y);
+}
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+function updateBoard(dt) {
+  boardT += dt;
+  const st = E.stats(S);
+  if (!S.ended) {
+    spawnAcc += dt * st.spawn;
+    while (spawnAcc >= 1) { spawnAcc -= 1; if (pickles.length < st.cap) spawnPickle(); }
+  }
+  const out = E.planetsOut(S);
+  for (let i = pickles.length - 1; i >= 0; i--) {
+    const p = pickles[i];
+    // Pickles swirl lazily round the Sun and settle at their own distance from it.
+    p.a += p.drift * dt * (300 / p.r);
+    p.r += (p.home - p.r) * Math.min(1, dt * 0.25);
+    p.rot += p.spin * dt; p.in = Math.min(1, p.in + dt * 1.5);
+  }
+  for (let i = movers.length - 1; i >= 0; i--) {
+    const m = movers[i];
+    m.t += dt;
+    if (m.t < 0) continue;
+    m.d += dt * 1100;
+    // Walk back along the stroke toward the Sun (or to the neighbor who kept it).
+    while (m.seg > 0 && m.d > dist(m.path[m.seg], m.path[m.seg - 1])) { m.d -= dist(m.path[m.seg], m.path[m.seg - 1]); m.seg--; }
+    if (m.seg <= 0) {
+      movers.splice(i, 1);
+      if (m.to === 'sun') { if (m.i < 12) sfx.catch(m.i); puff(SUN.x + (Math.random() - 0.5) * 60, SUN.y + (Math.random() - 0.5) * 60, 4); chompT = 0.25; }
+      continue;
+    }
+    const a = m.path[m.seg], b = m.path[m.seg - 1], l = dist(a, b) || 1, f = Math.min(1, m.d / l);
+    m.x = a.x + (b.x - a.x) * f; m.y = a.y + (b.y - a.y) * f;
+  }
+  for (let i = puffs.length - 1; i >= 0; i--) { const q = puffs[i]; q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.t > q.life) puffs.splice(i, 1); }
+  for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.t += dt; f.y -= dt * 40; if (f.t > 1.6) floats.splice(i, 1); }
+  for (let i = strokes.length - 1; i >= 0; i--) { strokes[i].t += dt; if (strokes[i].t > 1.4) strokes.splice(i, 1); }
+  if (chompT > 0) chompT -= dt;
+  if (eatT > 0) eatT -= dt;
+  // Probes circle the far dark and bring back a pickle now and then.
+  const n = Math.min(14, E.lvl(S, 'probe'));
+  while (probes.length < n) probes.push({ a: Math.random() * 6.3, r: 455 + Math.random() * 30, w: 0.1 + Math.random() * 0.08, next: 1 + Math.random() * 4 });
+  for (const pr of probes) {
+    pr.a += pr.w * dt; pr.next -= dt;
+    if (pr.next <= 0 && !S.ended) {
+      pr.next = 2.5 + Math.random() * 4;
+      const from = { x: 500 + Math.cos(pr.a) * pr.r, y: 500 + Math.sin(pr.a) * pr.r };
+      movers.push({ path: [SUN, from], seg: 1, d: 0, t: 0, x: from.x, y: from.y, to: 'probe', v: Math.random() < 0.5 ? 0 : 1, i: 99, rot: Math.random() * 6 });
+    }
+  }
+  if (trick) updateTrick(dt);
+}
+function puff(x, y, n = 6) { if (reduced) n = Math.min(n, 2); for (let i = 0; i < n; i++) puffs.push({ x, y, vx: (Math.random() - 0.5) * 90, vy: (Math.random() - 0.5) * 90, t: 0, life: 0.5 + Math.random() * 0.4, r: 2 + Math.random() * 4 }); }
+function float(x, y, text, big = false) { floats.push({ x, y, text, t: 0, big }); }
+
+let chompT = 0, eatT = 0, bat = { t: -20 };
+function render() {
+  const W = cv.width;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(bg, 0, 0);
+  ctx.setTransform(W / 1000, 0, 0, W / 1000, 0, 0);
+  const out = E.planetsOut(S);
+  // Orbits, dashed in dim chalk.
+  ctx.save(); ctx.strokeStyle = C.dim; ctx.lineWidth = 2.5; ctx.setLineDash([10, 12]); ctx.globalAlpha = 0.8;
+  for (const p of out) { ctx.beginPath(); ctx.arc(500, 500, p.r * 500, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.restore();
+  // A bat crosses now and then. It's Halloween.
+  if (!reduced) {
+    bat.t += 1 / 60;
+    if (bat.t > 0 && bat.t < 9) { const bx = -60 + bat.t * 130, by = 140 + Math.sin(bat.t * 3) * 30; ctx.save(); ctx.translate(bx, by); ctx.scale(1, 0.8 + 0.3 * Math.sin(bat.t * 14)); ctx.drawImage(ART.bat, -36, -18, 72, 36); ctx.restore(); }
+    else if (bat.t >= 9) bat.t = -40 - Math.random() * 60;
+  }
+  // Probes.
+  for (const pr of probes) { const x = 500 + Math.cos(pr.a) * pr.r, y = 500 + Math.sin(pr.a) * pr.r; ctx.drawImage(ART.probe, x - 14, y - 14, 28, 28); }
+  // Pickles adrift. While drawing, the ones the line will catch glow.
+  const hot = drawing ? previewCatch(drawing.pts) : null;
+  for (const p of pickles) {
+    const { x, y } = pxy(p), s = p.in;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(p.rot); ctx.globalAlpha = s;
+    if (hot && hot.has(p)) { ctx.strokeStyle = C.chalk; ctx.lineWidth = 3; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.ellipse(0, 0, 42, 28, 0, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.drawImage(ART.pickles[p.v], -36, -20, 72, 41);
+    ctx.restore();
+  }
+  // Neighbors.
+  for (const p of out) {
+    const q = planetPos(p);
+    // Drawn so the body matches what blocks a line.
+    const img = ART.planets[p.id], sz = 96 * q.r / BODY[p.id];
+    ctx.drawImage(img, q.x - sz / 2, q.y - sz / 2, sz, sz);
+    if (p.moon) {
+      const ma = boardT * 1.1, mx = q.x + Math.cos(ma) * 46, my = q.y + Math.sin(ma) * 46;
+      if (!(S.odd.moon && !S.ended)) ctx.drawImage(ART.planets.moon, mx - 56, my - 56, 112, 112);
+    }
+  }
+  if (S.odd.moon && !S.ended) { const ma = boardT * 0.3; ctx.drawImage(ART.planets.moon, 500 + Math.cos(ma) * 440 - 56, 500 + Math.sin(ma) * 440 - 56, 112, 112); }
+  // Strokes, fading. A cut stroke goes dim past the neighbor.
+  for (const s of strokes) drawStroke(s.pts, 1 - s.t / 1.4, s.cutAt, s.auto);
+  if (drawing) drawStroke(drawing.pts, 1, null, false);
+  // The tutorial ghost line, until the first good stroke.
+  if (!S.strokes && !drawing && pickles.length && !S.ended) {
+    const p = pickles.reduce((a, b) => (a.in > 0.9 && (!a || b.r < a.r) ? b : a), pickles[0]), q = pxy(p);
+    ctx.save(); ctx.globalAlpha = 0.45 + 0.25 * Math.sin(boardT * 4); ctx.strokeStyle = C.chalk; ctx.lineWidth = 4; ctx.setLineDash([4, 14]); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(SUN.x, SUN.y); ctx.lineTo(q.x, q.y); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.font = '26px Schoolbell, cursive'; ctx.fillStyle = C.chalk; ctx.textAlign = 'center'; ctx.fillText('draw a line from the Sun to a pickle', 500, 960); ctx.restore();
+  }
+  // Movers: pickles riding the chalk home.
+  for (const m of movers) { if (m.t < 0) continue; ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.rot || 0); const z = m.to === 'probe' ? 0.6 : 1; ctx.drawImage(ART.pickles[m.v], -30 * z, -17 * z, 60 * z, 34 * z); ctx.restore(); }
+  // The Sun.
+  drawTheSun();
+  // Dust and numbers.
+  ctx.fillStyle = C.chalk;
+  for (const q of puffs) { ctx.globalAlpha = Math.max(0, 1 - q.t / q.life) * 0.7; ctx.fillRect(q.x, q.y, q.r, q.r); }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'center';
+  for (const f of floats) {
+    ctx.globalAlpha = Math.max(0, 1 - f.t / 1.6);
+    ctx.font = f.big ? '700 40px "Cabin Sketch", cursive' : '30px "Share Tech Mono", monospace';
+    ctx.lineWidth = 6; ctx.strokeStyle = C.slate; ctx.strokeText(f.text, f.x, f.y);
+    ctx.fillStyle = C.chalk; ctx.fillText(f.text, f.x, f.y);
+  }
+  ctx.globalAlpha = 1;
+}
+function drawTheSun() {
+  if (trick) return drawTrickSun();
+  const r = sunR(), sz = r / 72 * 240;
+  const img = S.ended ? ART.asleep : (chompT > 0 || eatT > 0) ? ART.chomp : ART.sun;
+  const bob = reduced ? 0 : Math.sin(boardT * 0.8) * 3;
+  ctx.drawImage(img, SUN.x - sz / 2, SUN.y - sz / 2 + bob, sz, sz);
+  const f = r / 72;
+  if (S.odd.shades && !S.ended) {
+    ctx.save(); ctx.translate(SUN.x, SUN.y + bob); ctx.scale(f, f);
+    ctx.fillStyle = C.slate; ctx.strokeStyle = C.chalk; ctx.lineWidth = 3;
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(s * 22, -10, 15, 10, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(-7, -12); ctx.lineTo(7, -12); ctx.stroke(); ctx.restore();
+  }
+  if (S.odd.bib && !S.ended) {
+    ctx.save(); ctx.translate(SUN.x, SUN.y + bob); ctx.scale(f, f);
+    ctx.strokeStyle = C.chalk; ctx.fillStyle = '#5fc75d33'; ctx.lineWidth = 3; ctx.setLineDash([9, 2]);
+    ctx.beginPath(); ctx.moveTo(-26, 40); ctx.lineTo(26, 40); ctx.lineTo(0, 74); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+  if (S.ended) {
+    // Nightcap and Zzz.
+    ctx.save(); ctx.translate(SUN.x, SUN.y + bob); ctx.scale(f, f);
+    ctx.strokeStyle = C.chalk; ctx.fillStyle = '#36868f66'; ctx.lineWidth = 3.5;
+    const cap = () => { ctx.beginPath(); ctx.moveTo(-64, -36); ctx.quadraticCurveTo(0, -56, 64, -36); ctx.quadraticCurveTo(52, -120, 118, -74); ctx.quadraticCurveTo(-10, -150, -64, -36); ctx.closePath(); };
+    ctx.fillStyle = C.slate; cap(); ctx.fill(); ctx.fillStyle = '#36868f66'; cap(); ctx.fill(); ctx.stroke();
+    ctx.setLineDash([6, 8]); ctx.beginPath(); ctx.moveTo(-60, -44); ctx.quadraticCurveTo(0, -64, 60, -44); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(120, -72, 10, 0, 6.3); ctx.fillStyle = C.slate; ctx.fill(); ctx.stroke();
+    ctx.font = '700 34px "Cabin Sketch", cursive'; ctx.fillStyle = C.chalk;
+    const z = (boardT % 3) / 3;
+    ['z', 'Z', 'Z'].forEach((c, i) => { ctx.globalAlpha = Math.max(0, Math.sin((z + i / 3) * Math.PI)); ctx.fillText(c, 80 + i * 22, -110 - i * 26 - z * 12); });
+    ctx.restore();
+  }
+}
+function drawStroke(pts, alpha, cutAt, auto) {
+  if (pts.length < 2) return;
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const end = cutAt == null ? pts.length - 1 : cutAt;
+  const line = (from, to, w, col, a, dash) => {
+    ctx.globalAlpha = a; ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(pts[from].x, pts[from].y); for (let i = from + 1; i <= to; i++) ctx.lineTo(pts[i].x, pts[i].y); ctx.stroke();
+  };
+  const col = auto ? C.teal : C.chalk;
+  line(0, end, 9, col, alpha * 0.25, []);
+  line(0, end, 5, col, alpha * 0.8, auto ? [14, 10] : [16, 2, 6, 2]);
+  if (cutAt != null && cutAt < pts.length - 1) {
+    line(cutAt, pts.length - 1, 4, C.dim, alpha * 0.8, [4, 9]);
+    const c = pts[cutAt];
+    ctx.globalAlpha = alpha; ctx.strokeStyle = C.chalk; ctx.lineWidth = 5; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(c.x - 14, c.y - 14); ctx.lineTo(c.x + 14, c.y + 14); ctx.moveTo(c.x + 14, c.y - 14); ctx.lineTo(c.x - 14, c.y + 14); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ---------- Drawing a trajectory ----------
+const toBoard = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * 1000, y: (e.clientY - r.top) / r.height * 1000 }; };
+cv.addEventListener('pointerdown', e => {
+  if (S.ended) return;
+  e.preventDefault();
+  cv.setPointerCapture(e.pointerId);
+  drawing = { id: e.pointerId, pts: [toBoard(e)] };
+});
+cv.addEventListener('pointermove', e => {
+  if (!drawing || e.pointerId !== drawing.id) return;
+  const p = toBoard(e), last = drawing.pts[drawing.pts.length - 1];
+  if (dist(p, last) >= 7 && drawing.pts.length < 500) { drawing.pts.push(p); sfx.scratch(); }
+});
+const finish = e => {
+  if (!drawing || e.pointerId !== drawing.id) return;
+  const pts = drawing.pts; drawing = null;
+  if (pts.length > 1) resolveStroke(pts);
+};
+cv.addEventListener('pointerup', finish);
+cv.addEventListener('pointercancel', e => { if (drawing && e.pointerId === drawing.id) drawing = null; });
+
+// Which pickles a path would catch, from the Sun end outward, up to reach and before any cut.
+function walk(ptsIn) {
+  const pts = ptsIn[0] && dist(ptsIn[ptsIn.length - 1], SUN) < dist(ptsIn[0], SUN) ? [...ptsIn].reverse() : ptsIn;
+  let cutAt = null, cutBy = null;
+  const out = E.planetsOut(S).filter(p => E.blocks(S, p)).map(p => ({ p, q: planetPos(p) }));
+  for (let i = 1; i < pts.length && cutAt == null; i++) {
+    for (const { p, q } of out) if (segDist(pts[i - 1], pts[i], q) < q.r * 1.15 + 8) { cutAt = i - 1; cutBy = p; break; }
+  }
+  const near = [];
+  for (const pk of pickles) {
+    if (pk.in < 0.6) continue;
+    const q = pxy(pk);
+    for (let i = 1; i < pts.length; i++) if (segDist(pts[i - 1], pts[i], q) < 40) { near.push({ pk, i }); break; }
+  }
+  near.sort((a, b) => a.i - b.i);
+  const reach = E.stats(S).reach;
+  const caught = near.filter(n => cutAt == null || n.i <= cutAt).slice(0, reach);
+  const lost = cutBy ? near.filter(n => n.i > cutAt).slice(0, 3) : [];
+  return { pts, cutAt, cutBy, caught, lost };
+}
+function previewCatch(pts) {
+  if (pts.length < 2) return new Set();
+  const touchesSun = dist(pts[0], SUN) < sunR() + 40 || dist(pts[pts.length - 1], SUN) < sunR() + 40;
+  if (!touchesSun) return new Set();
+  return new Set(walk(pts).caught.map(n => n.pk));
+}
+
+const CUT_LINES = {
+  mercury: ['MERCURY: Finders keepers!', 'MERCURY: Boo! Also, mine.'],
+  venus: ['VENUS: Oh! For me? You shouldn\'t have, hon. I\'ll just throw it again.', 'VENUS: Back at you, sugar. Well. Not back.'],
+  earth: ['EARTH: Is this yours? No? Mine.', 'EARTH: Sorry! Sorry. Still keeping it.'],
+  mars: ['MARS: MINE.', 'MARS: You crossed my yard. That is a toll.'],
+};
+function resolveStroke(raw) {
+  const R = sunR() + 40;
+  if (Math.min(dist(raw[0], SUN), dist(raw[raw.length - 1], SUN)) > R) {
+    sfx.fizzle(); strokes.push({ pts: raw, t: 0.6, cutAt: 0 });
+    say('FLIGHT', 'Negative: trajectories start at the Sun. The Sun does not go to the pickle. The pickle comes to the Sun.');
+    return;
+  }
+  const w = walk(raw);
+  // The secret: a full Sun, in costume and shoes, with an address, chalking its own way to Venus.
+  const venus = E.PLANETS.find(p => p.id === 'venus');
+  const vq = planetPos(venus), tip = w.pts[w.pts.length - 1];
+  if (E.planetsOut(S).includes(venus) && dist(tip, vq) < vq.r + 46 && E.secretReady(S)) {
+    if (E.full(S)) { strokes.push({ pts: w.pts, t: 0 }); startTrick(w.pts); return; }
+    say('CAPCOM', 'Flight, the Sun just tried to walk to Venus\'s. It sat back down. Too hungry to go anywhere. Finish supper first.');
+  }
+  strokes.push({ pts: w.pts, t: 0, cutAt: w.cutAt });
+  const n = w.caught.length, cut = !!w.cutBy;
+  const streakWas = S.streak;
+  const gain = E.stroke(S, n, cut);
+  w.caught.forEach((c, i) => {
+    pickles.splice(pickles.indexOf(c.pk), 1);
+    const q = pxy(c.pk);
+    const path = w.pts.slice(0, c.i + 1); path.push(q);
+    movers.push({ path, seg: path.length - 1, d: 0, t: -i * 0.05, x: q.x, y: q.y, to: 'sun', v: c.pk.v, i, rot: c.pk.rot });
+  });
+  for (const l of w.lost) { pickles.splice(pickles.indexOf(l.pk), 1); puff(pxy(l.pk).x, pxy(l.pk).y, 5); }
+  if (cut) {
+    sfx.cut();
+    const c = w.pts[w.cutAt]; puff(c.x, c.y, 10);
+    const lines = CUT_LINES[w.cutBy.id];
+    if (S.cuts <= 1 || Math.random() < 0.35) say(w.cutBy.name.toUpperCase(), lines[S.cuts % lines.length].replace(/^[A-Z]+: /, ''));
+  }
+  if (n) {
+    sfx.home();
+    const mult = E.comboMult(S, n);
+    float(SUN.x, SUN.y - sunR() - 30, '+' + fmt(gain));
+    if (n >= 3) float(tip.x, tip.y - 30, `${n} combo ×${mult.toFixed(1)}`, true);
+    if (!cut && S.streak && S.streak % 10 === 0 && S.streak !== streakWas) { sfx.streak(); say('TELEMETRY', `Streak ${S.streak}. Clean trajectories, Flight. The pickles are impressed. The neighbors are not.`); }
+    if (S.strokes === 1 || (S.strokes <= 3 && !greeted)) { greeted = true; say('FLIGHT', 'Houston, we have a pickle. Recovery confirmed. Consumption... pending.'); }
+  } else if (!cut) {
+    say('CAPCOM', 'Trajectory plotted, Flight. It went through no pickles. Very clean. Very empty.');
+  }
+  hud(); renderShop(); save();
+}
+let greeted = false;
+
+// ---------- Autopilot: the chalk arm draws to the thickest patch of pickles ----------
+function autopilot() {
+  const st = E.stats(S);
+  const want = Math.ceil(st.reach / 2);
+  const ready = pickles.filter(p => p.in > 0.9);
+  if (ready.length < 1) return;
+  const sorted = [...ready].sort((a, b) => (a.a % 6.283) - (b.a % 6.283));
+  let best = null;
+  for (let i = 0; i < sorted.length; i++) {
+    const grp = []; for (let j = 0; j < Math.min(want, sorted.length); j++) grp.push(sorted[(i + j) % sorted.length]);
+    const span = Math.abs(((grp[grp.length - 1].a - grp[0].a) % 6.283 + 6.283) % 6.283);
+    if (!best || span < best.span) best = { grp, span };
+  }
+  const grp = best.grp.sort((a, b) => a.r - b.r);
+  const pts = [SUN, ...grp.map(pxy)];
+  strokes.push({ pts, t: 0, auto: true });
+  E.stroke(S, grp.length, false, true);
+  grp.forEach((pk, i) => {
+    pickles.splice(pickles.indexOf(pk), 1);
+    const path = pts.slice(0, i + 2);
+    movers.push({ path, seg: path.length - 1, d: 0, t: -i * 0.06, x: path[path.length - 1].x, y: path[path.length - 1].y, to: 'sun', v: pk.v, i: 99, rot: pk.rot });
+  });
+}
+
+// ---------- Eating and brining ----------
+function doEat() {
+  if (!E.canEat(S) || S.p < 2 || S.ended) { sfx.deny(); return; }
+  const glowWas = E.stats(S).glow, phaseWas = E.phase(S), wasFull = E.full(S);
+  const bite = E.eat(S);
+  sfx.eat(); eatT = 0.9; puff(SUN.x, SUN.y + 30, 14);
+  float(SUN.x, SUN.y + sunR() + 50, `nom ${fmt(bite)}`, true);
+  const glow = E.stats(S).glow;
+  if (S.eats === 1) say('CAPCOM', `Flight, the Sun ate ${fmt(bite)} pickles. It is glowing. It is visibly glowing. Every pickle we bring in is worth more now.`);
+  else if (!wasFull && E.full(S)) say('FLIGHT', 'Belly at capacity. The Sun is stuffed. All that\'s left is to tuck it in.' + (E.secretReady(S) ? ' Unless... the porch light at Venus\'s is still on.' : ''));
+  else say(pick(EAT_LINES)(bite, glowWas, glow));
+  if (E.phase(S) !== phaseWas) phaseChange(phaseWas);
+  hud(); renderShop(); save();
+}
+function doBrine() {
+  if (!E.canBrine(S) || S.ended) { sfx.deny(); return; }
+  const n = E.brine(S);
+  if (!n) { sfx.deny(); say('CAPCOM', `Not enough for a jar, Flight. A jar is ${E.JAR} pickles. Half the stash has to fill at least one.`); return; }
+  sfx.brine();
+  say(S.brines === 1 ? 'CAPCOM' : 'TELEMETRY', S.brines === 1 ? `First batch brined: ${n} jar${n > 1 ? 's' : ''}. Jars are space-rated, sealed and smell incredible. Engineering wants them for everything.` : pick(BRINE_LINES)(n));
+  hud(); renderShop(); save();
+}
+const EAT_LINES = [
+  (b, g0, g) => `CAPCOM: ${fmt(b)} pickles down. Glow up from ×${g0.toFixed(2)} to ×${g.toFixed(2)}. The Sun says "mm".`,
+  (b) => `TELEMETRY: Bite of ${fmt(b)}. Chewing detected on all frequencies.`,
+  (b, g0, g) => `FLIGHT: Brighter Sun, more of the dark lit up. Every pickle now counts ×${g.toFixed(2)}.`,
+  (b) => `VENUS: Was that my pickles? All ${fmt(b)}? Oh, honey. I'll get more.`,
+];
+const BRINE_LINES = [
+  n => `${fmt(n)} jars sealed. Lids tight. Brine nominal.`,
+  n => `Brine batch complete: ${fmt(n)} jars. Engineering is hugging them.`,
+  n => `${fmt(n)} jars to the hardware budget. The budget smells of dill.`,
+];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+// ---------- The log ----------
+const logEl = $('log');
+let lastSay = 0;
+function say(who, text) {
+  if (text === undefined) { const m = /^([A-Z' ]+): (.*)$/.exec(who); if (m) { who = m[1]; text = m[2]; } else { text = who; who = ''; } }
+  logEl.innerHTML = '';
+  if (who) { const b = document.createElement('b'); b.textContent = who; logEl.append(b); }
+  logEl.append(document.createTextNode(text));
+  logEl.classList.remove('fresh'); void logEl.offsetWidth; logEl.classList.add('fresh');
+  lastSay = performance.now();
+}
+const AMBIENT = {
+  rescue: [
+    'CAPCOM: The Sun reports it is "resting its eyes". It has been resting them for 4.6 billion years.',
+    'TELEMETRY: Pickle drift nominal. Pickle morale low. Pickles cold.',
+    'VENUS: Trick or treat, sweetie! The treat is a pickle. It\'s always a pickle.',
+    'CAPCOM: A kid on Ganymede just threw a pickle at escape velocity. Impressive arm.',
+    'FLIGHT: Reminder: one stroke through lots of pickles is a combo. Clean strokes in a row build the streak.',
+    'TELEMETRY: Trick-or-treaters at the Sun\'s door this year: zero. Door temperature: 5,500 °C.',
+  ],
+  brine: [
+    'CAPCOM: Brine levels nominal. Smell levels: not nominal.',
+    'EARTH: Are you... jarring them? On Halloween?',
+    'TELEMETRY: Three kids on Earth dressed as the Sun. The Sun is flattered and has not moved.',
+    'FLIGHT: The Sun asks if the jars are for later. Everything is for later. Later is now.',
+    'CAPCOM: Engineering built a probe out of a jar. It is the best probe we have ever built.',
+  ],
+  supper: [
+    'MARS: I see you, Sun. I see your pickles.',
+    'FLIGHT: The belly is approaching orbital capacity. Keep them coming.',
+    'CAPCOM: The Sun asks if there\'s dessert. There is pickle.',
+    'VENUS: My porch light\'s on all night, sugar. Just saying.',
+  ],
+};
+function ambient() {
+  if (S.ended || performance.now() - lastSay < 22000) return;
+  const ph = E.phase(S);
+  if (E.secretReady(S) && Math.random() < 0.5) {
+    say(E.full(S) ? 'VENUS' : 'CAPCOM', E.full(S) ? 'Porch light\'s on, sugar. Chalk yourself over. I\'ve got a pickle with your name on it.' : 'Flight, the Sun has the costume on. And the shoes. It keeps looking at Venus\'s porch.');
+    return;
+  }
+  say(pick(AMBIENT[ph] || AMBIENT.rescue));
+}
+function phaseChange(was) {
+  const ph = E.phase(S);
+  if (music) music.update();
+  sfx.neighbor();
+  if (ph === 'brine') say('CAPCOM', 'Flight, Engineering found a crate of empty jars behind the console. We can brine pickles now, a hundred to a jar. Also, Earth is out. In a pumpkin costume.');
+  if (ph === 'supper') say('MARS', 'Hey. HEY. Is that supper? Nobody gives Mars anything. Mars is coming over.');
+}
+
+// ---------- HUD ----------
+let hudSig = '';
+function hud() {
+  const st = E.stats(S), full = E.full(S);
+  document.querySelector('.counts').hidden = S.ended;
+  $('pickles').textContent = fmt(S.p);
+  $('jarBox').hidden = !E.canBrine(S) && !S.jars;
+  $('jars').textContent = fmt(S.jars);
+  $('meterFill').style.width = (E.fullness(S) * 100).toFixed(1) + '%';
+  $('hungerName').textContent = `Hunger: ${E.hungerName(S)}`;
+  $('hungerPct').textContent = `${fmt(S.eaten)} / ${fmt(E.GOAL)} eaten`;
+  const bits = [];
+  if (S.eats) bits.push(`<span class="hot">glow ×${st.glow.toFixed(2)}</span>`);
+  if (S.strokes) bits.push(`streak ${S.streak}${S.streak ? ` <span class="hot">+${Math.round((E.streakMult(S) - 1) * 100)}%</span>` : ''}`);
+  if (S.strokes) bits.push(`reach ${st.reach}`);
+  if (st.probes) bits.push(`probes ${fmt(st.probes * st.value)}/s`);
+  const sig = bits.join('|');
+  if (sig !== hudSig) { hudSig = sig; $('sub').innerHTML = bits.join(' · '); }
+  $('tuck').hidden = !full || S.ended;
+  const eat = $('eatBtn'), brine = $('brineBtn');
+  eat.hidden = !E.canEat(S) || S.ended;
+  brine.hidden = !E.canBrine(S) || S.ended;
+  $('eatN').textContent = `+${fmt(Math.floor(S.p / 2))} to the belly`;
+  eat.setAttribute('aria-disabled', String(S.p < 2));
+  const jn = Math.floor(S.p / 2 / E.JAR);
+  $('brineN').textContent = `+${fmt(jn)} jar${jn === 1 ? '' : 's'}`;
+  brine.setAttribute('aria-disabled', String(jn < 1));
+}
+
+// ---------- Shop ----------
+const shop = $('shop');
+const newUntil = {}, unseen = new Set();
+const TABS = [{ tab: 'p', name: 'Pickles' }, { tab: 'j', name: 'Jars' }];
+let shopSig = '';
+const priceText = it => it.tab === 'j' ? `${fmt(it.price)} jars` : `${fmt(it.price)} 🥒`;
+function renderShop() {
+  if (S.ended) { shop.innerHTML = ''; $('tabs').hidden = true; document.querySelector('aside h2').hidden = true; renderShelf(); return; }
+  const fresh = E.reveal(S);
+  const all = E.items(S).sort((a, b) => a.price * (a.tab === 'j' ? E.JAR : 1) - b.price * (b.tab === 'j' ? E.JAR : 1));
+  const tabs = TABS.filter(t => all.some(i => i.tab === t.tab));
+  const tab = tabs.some(t => t.tab === S.shopTab) ? S.shopTab : (tabs[0]?.tab || 'p');
+  for (const id of fresh) {
+    if (S.t > 2) sfx.unlock();
+    if (E.BY_ID[id].tab === tab) newUntil[id] = performance.now() + 9000; else unseen.add(id);
+  }
+  const items = all.filter(i => i.tab === tab);
+  const sig = tab + '#' + all.map(i => i.id + ':' + i.price).join('|');
+  if (sig !== shopSig) {
+    shopSig = sig;
+    for (const it of items) if (unseen.delete(it.id)) newUntil[it.id] = performance.now() + 9000;
+    $('tabs').hidden = tabs.length < 2;
+    $('tabs').replaceChildren(...tabs.map(t => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.tab = t.tab; b.setAttribute('aria-selected', String(t.tab === tab));
+      b.innerHTML = `${t.name} <small></small>`;
+      b.addEventListener('click', () => { S.shopTab = t.tab; hideTip(); renderShop(); save(); });
+      return b;
+    }));
+    shop.innerHTML = '';
+    for (const it of items) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'up' + (it.silly ? ' odd' : '');
+      b.dataset.id = it.id; b.dataset.cost = it.price; b.dataset.tab = it.tab;
+      b.innerHTML = '<b></b><em></em>';
+      b.querySelector('b').textContent = it.name;
+      b.querySelector('em').textContent = priceText(it) + (it.max ? ` · ${it.level}` : '');
+      b.setAttribute('aria-describedby', 'tip');
+      b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showTip(b, upTip(it)); });
+      b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+      b.addEventListener('focus', () => { if (!b.dataset.touch) showTip(b, upTip(it)); });
+      b.addEventListener('blur', hideTip);
+      b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+      // On touch the first tap shows what it does; the second buys.
+      b.addEventListener('click', () => {
+        if (b.dataset.touch && tipFor !== it.id) { showTip(b, upTip(it)); return; }
+        if (b.getAttribute('aria-disabled') !== 'true') doBuy(it.id); else sfx.deny();
+      });
+      shop.append(b);
+    }
+  }
+  const have = t => t === 'j' ? S.jars : S.p;
+  const now = performance.now();
+  for (const b of shop.querySelectorAll('button.up')) {
+    const can = have(b.dataset.tab) >= Number(b.dataset.cost);
+    b.setAttribute('aria-disabled', String(!can)); b.classList.toggle('can', can);
+    const isNew = (newUntil[b.dataset.id] || 0) > now;
+    b.classList.toggle('new', isNew);
+    let tag = b.querySelector('.tag');
+    if (isNew && !tag) { tag = document.createElement('i'); tag.className = 'tag'; tag.textContent = 'new'; b.append(tag); }
+    if (!isNew && tag) tag.remove();
+  }
+  let n = 0;
+  for (const b of $('tabs').children) {
+    const c = all.filter(i => i.tab === b.dataset.tab && have(i.tab) >= i.price).length;
+    n += c; b.querySelector('small').textContent = c ? `· ${c}` : '';
+    b.classList.toggle('fresh', all.some(i => i.tab === b.dataset.tab && unseen.has(i.id)));
+  }
+  if (tabs.length < 2) n = all.filter(i => have(i.tab) >= i.price).length;
+  $('afford').textContent = n ? `· ${n} affordable` : '';
+  document.querySelector('aside h2').hidden = !all.length;
+  renderShelf();
+}
+let tipFor = null;
+function upTip(it) {
+  let foot = it.tab === 'j' ? `${fmt(it.price)} jars` : `${fmt(it.price)} pickles`;
+  if (it.max) foot += ` · level ${it.level} of ${it.max}`;
+  if (it.silly) foot += ' · does very little';
+  return { id: it.id, name: it.name, desc: it.desc, foot };
+}
+function showTip(b, it) {
+  const tip = $('tip'); tipFor = it.id;
+  tip.innerHTML = '<b></b><span></span><i></i><small></small>';
+  tip.querySelector('b').textContent = it.name;
+  tip.querySelector('span').textContent = it.desc;
+  tip.querySelector('i').textContent = it.joke || '';
+  tip.querySelector('i').hidden = !it.joke;
+  tip.querySelector('small').textContent = it.foot || '';
+  tip.querySelector('small').hidden = !it.foot;
+  const inline = !!it.inline && innerWidth <= 760;
+  tip.classList.toggle('inline', inline);
+  if (!it.inline) for (const o of document.querySelectorAll('.bought.on')) o.classList.remove('on');
+  if (inline) { if (tip.previousElementSibling !== $('shelf')) $('shelf').after(tip); } else if (tip.parentElement !== document.body) { document.body.append(tip); tipMoved = performance.now(); }
+  tip.hidden = false;
+  if (inline) { tip.style.left = tip.style.top = ''; tip.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' }); return; }
+  const r = b.getBoundingClientRect(), t = tip.getBoundingClientRect();
+  const inSide = !!b.closest('#side');
+  if (inSide && r.left > t.width + 24 && innerWidth > 760) {
+    const col = $('side').getBoundingClientRect();
+    tip.style.left = `${col.left - t.width - 12}px`;
+    tip.style.top = `${Math.max(8, Math.min(innerHeight - t.height - 8, r.top + r.height / 2 - t.height / 2))}px`;
+  } else {
+    tip.style.left = `${Math.max(8, Math.min(innerWidth - t.width - 8, r.left))}px`;
+    tip.style.top = `${r.top - t.height - 8 > 8 ? r.top - t.height - 8 : r.bottom + 8}px`;
+  }
+}
+function hideTip(force) {
+  const tip = $('tip');
+  if (tip.classList.contains('inline') && force !== true) return;
+  tip.hidden = true; tip.classList.remove('inline'); tipFor = null;
+  for (const b of document.querySelectorAll('.bought.on')) b.classList.remove('on');
+}
+let tipMoved = 0;
+addEventListener('scroll', () => { if (performance.now() - tipMoved > 400) hideTip(); }, true);
+addEventListener('resize', () => { if (innerWidth > 760) hideTip(true); });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.up, .tipped, .bought')) hideTip(); });
+
+// Buttons whose effect isn't obvious from the label explain themselves (on touch, the first tap of the session).
+const explained = new Set();
+function actionTip(id) {
+  const st = E.stats(S);
+  if (id === 'eatBtn') {
+    const after = Math.pow(1 + (S.eaten + Math.floor(S.p / 2)) / E.T.glowK, E.T.glowP);
+    return { id, name: 'Eat half', desc: `The Sun eats half your pickles (${fmt(Math.floor(S.p / 2))}). It fills the hunger meter and the Sun glows brighter, lighting more of the dark: every pickle after counts ×${after.toFixed(2)} instead of ×${st.glow.toFixed(2)}. Everything else stays.`, foot: 'The meter only fills by eating.' };
+  }
+  if (id === 'brineBtn') return { id, name: 'Brine half', desc: `Packs half your pickles into jars, ${E.JAR} to a jar (${fmt(Math.floor(S.p / 2 / E.JAR))} now). Jars pay for hardware in the Jars tab.`, foot: 'Pickles in jars can\'t be eaten. They\'re for engineering.' };
+  if (id === 'tuck') return { id, name: 'Tuck the Sun in', desc: 'Ends the night: the Sun, stuffed, goes to sleep. Mission accomplished.', foot: E.secretReady(S) ? 'Venus\'s porch light is still on, though.' : 'Ends the game.' };
+}
+for (const id of ['eatBtn', 'brineBtn', 'tuck']) {
+  const b = $(id);
+  b.setAttribute('aria-describedby', 'tip');
+  b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showTip(b, actionTip(id)); });
+  b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+  b.addEventListener('focus', () => { if (!b.dataset.touch) showTip(b, actionTip(id)); });
+  b.addEventListener('blur', hideTip);
+  b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+  b.addEventListener('click', () => {
+    if (b.dataset.touch && !explained.has(id)) { explained.add(id); showTip(b, actionTip(id)); return; }
+    hideTip();
+    if (id === 'eatBtn') doEat(); else if (id === 'brineBtn') doBrine(); else end('nap');
+  });
+}
+
+// ---------- The Bought shelf ----------
+const shelfEl = $('bought');
+shelfEl.open = !!S.boughtOpen;
+shelfEl.addEventListener('toggle', () => {
+  if (!shelfEl.open) hideTip(true);
+  if (!!S.boughtOpen === shelfEl.open) return;
+  S.boughtOpen = shelfEl.open; save();
+});
+let shelfSig = null;
+function renderShelf() {
+  const list = S.ended ? [] : E.UPGRADES.filter(u => !u.max && S.odd[u.id]);
+  const sig = list.map(i => i.id).join('|');
+  if (sig === shelfSig) return;
+  shelfSig = sig;
+  shelfEl.hidden = !list.length;
+  $('boughtN').textContent = list.length;
+  $('shelf').replaceChildren(...list.map(it => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'bought' + (it.silly ? ' odd' : '');
+    b.textContent = it.name; b.dataset.id = it.id;
+    b.setAttribute('aria-describedby', 'tip');
+    const show = () => { hideTip(true); b.classList.add('on'); showTip(b, { id: 'bought:' + it.id, name: it.name, desc: it.desc, joke: it.joke, foot: 'Bought', inline: true }); };
+    b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') show(); });
+    b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+    b.addEventListener('focus', () => { if (!b.dataset.touch) show(); });
+    b.addEventListener('blur', hideTip);
+    b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+    b.addEventListener('click', () => { if (tipFor === 'bought:' + it.id && b.dataset.touch) hideTip(true); else show(); });
+    return b;
+  }));
+}
+
+function doBuy(id) {
+  const u = E.BY_ID[id];
+  if (!E.buy(S, id)) { sfx.deny(); return; }
+  delete newUntil[id];
+  hideTip();
+  sfx.buy();
+  say(u.joke);
+  if (id === 'mars' || id === 'moon') puff(500, 500, 6);
+  save(); renderShop(); hud();
+}
+
+// ---------- The secret: the Sun goes trick-or-treating ----------
+let trick = null, trickFreeze = 0;
+function startTrick(pts) {
+  trickFreeze = boardT;
+  S.ending = 'trick';
+  trick = { t: 0, a: 0 };
+  end('trick');
+}
+// Everyone holds still while the Sun, in its pickle costume, goes round the neighbors door to door.
+function updateTrick(dt) {
+  trick.t += dt;
+  trick.a = trick.t * 0.35;
+}
+function drawTrickSun() {
+  const out = E.PLANETS;
+  const n = out.length, seg = (trick.t * 0.25) % n, i = Math.floor(seg), f = seg - i;
+  const stop = j => { const q = planetPos(out[j % n]); const ang = Math.atan2(q.y - 500, q.x - 500); return { x: q.x + Math.cos(ang) * 95, y: q.y + Math.sin(ang) * 95 }; };
+  const a = stop(i), b = stop(i + 1);
+  const e = f < 0.6 ? 0 : (f - 0.6) / 0.4, ease = e * e * (3 - 2 * e);
+  const x = a.x + (b.x - a.x) * ease, y = a.y + (b.y - a.y) * ease - (reduced ? 0 : Math.abs(Math.sin(trick.t * 6)) * 8);
+  // The empty spot in the middle where the Sun always was.
+  ctx.save(); ctx.globalAlpha = 0.35; ctx.strokeStyle = C.teal; ctx.lineWidth = 3; ctx.setLineDash([6, 10]);
+  ctx.beginPath(); ctx.arc(500, 500, 72, 0, Math.PI * 2); ctx.stroke();
+  ctx.font = '24px Schoolbell, cursive'; ctx.fillStyle = C.teal; ctx.textAlign = 'center'; ctx.globalAlpha = 0.8; ctx.fillText('back soon', 500, 508); ctx.restore();
+  ctx.drawImage(ART.costume, x - 95, y - 95, 190, 190);
+  // A treat bag, getting fuller.
+  ctx.save(); ctx.strokeStyle = C.chalk; ctx.lineWidth = 3; ctx.fillStyle = '#36868f66';
+  ctx.beginPath(); ctx.moveTo(x + 52, y + 14); ctx.lineTo(x + 48, y + 54); ctx.lineTo(x + 86, y + 54); ctx.lineTo(x + 82, y + 14); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+  if (f < 0.6) {
+    const who = out[i % n];
+    ctx.save(); ctx.font = '26px Schoolbell, cursive'; ctx.textAlign = 'center'; ctx.fillStyle = C.chalk;
+    const q = planetPos(who);
+    ctx.lineWidth = 6; ctx.strokeStyle = C.slate;
+    const txt = TRICK_LINES[who.id];
+    ctx.strokeText(txt, q.x, q.y - 60); ctx.fillText(txt, q.x, q.y - 60);
+    ctx.restore();
+  }
+}
+const TRICK_LINES = { mercury: '"A visitor? For ME?"', venus: '"Here you go, sugar. A pickle."', earth: '"Trick or tr- oh! It\'s warm out!"', mars: '"...Fine. Take two."' };
+
+// ---------- Ending ----------
+function end(kind, resumed = false) {
+  S.ended = true; S.ending = kind || S.ending || 'nap'; save();
+  const secret = S.ending === 'trick';
+  if (secret && !trick) { trick = { t: 0, a: 0 }; trickFreeze = boardT; }
+  pickles.length = 0; drawing = null; hideTip(true);
+  $('ending').hidden = false;
+  $('endTitle').textContent = secret ? 'The roles reverse.' : 'Recovery complete.';
+  $('endText').textContent = secret
+    ? 'For 4.6 billion years everyone went round the Sun. Tonight, just once, everyone held still and the Sun went round them: shoes on, pickle costume on, door to door. Mercury had never had a visitor. Mars gave it two. Venus gave it a pickle, of course.'
+    : 'The Sun ate its fill, two million pickles and change, and fell asleep exactly where it has always been. Mission Control turned the lights down. Venus\'s porch light stayed on.';
+  $('endHint').textContent = secret ? 'Secret ending found. MISSION CONTROL: Flight, the Sun has moved. Repeat: the Sun has moved.' : '1 of 2 endings. CAPCOM: The Sun kept looking at Venus\'s porch. Something about a costume, some shoes and an address.';
+  if (resumed) setTimeout(() => $('ending').scrollIntoView({ behavior: 'auto', block: 'nearest' }), 300);
+  if (!resumed) {
+    (secret ? sfx.trick : sfx.finale)();
+    if (window.DailyGame) {
+      const m = Math.floor(S.t / 60), s = String(Math.floor(S.t % 60)).padStart(2, '0');
+      DailyGame.finish({ lines: secret
+        ? ['🎃 The Sun went trick-or-treating', `⏱ ${m}m${s}s`, `🥒 ${fmt(S.eaten)} pickles eaten`]
+        : ['☀️ Tucked in', `⏱ ${m}m${s}s`, `🥒 ${fmt(S.eaten)} eaten`, `🔥 best streak ${S.bestStreak}`] });
+    }
+    setTimeout(() => $('ending').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' }), 600);
+  }
+  if (music) music.update();
+  hud(); renderShop();
+}
+$('shareBtn').addEventListener('click', () => window.DailyGame && DailyGame.share());
+
+// ---------- Loop ----------
+let last = performance.now(), econLast = performance.now(), saveAcc = 0, probeAcc = 0;
+function frame(now) {
+  const dt = Math.max(0, Math.min(0.1, (now - last) / 1000)); last = now;
+  updateBoard(dt);
+  render();
+  requestAnimationFrame(frame);
+}
+// The economy ticks on a timer so probes keep fetching in a background tab.
+setInterval(() => {
+  const now = performance.now(), dt = Math.min(2, (now - econLast) / 1000); econLast = now;
+  if (S.ended) return;
+  const phaseWas = E.phase(S), venusWas = S.venusMet, outWas = E.planetsOut(S).length;
+  E.tick(S, dt);
+  const st = E.stats(S);
+  if (st.autoEvery) { autoAcc += dt; if (autoAcc >= st.autoEvery) { autoAcc = 0; autopilot(); } }
+  if (st.probes) { probeAcc += dt; if (probeAcc > 3) { probeAcc = 0; } }
+  if (!S.venusMet && S.total >= 400) { S.venusMet = true; sfx.neighbor(); say('VENUS', 'Happy Halloween, hon! Pickle? ...No? Suit yourself.' + ' (She throws it into the dark. Of course she does.)'); }
+  else if (E.planetsOut(S).length > outWas && E.phase(S) === phaseWas) sfx.neighbor();
+  if (E.phase(S) !== phaseWas) phaseChange(phaseWas);
+  saveAcc += dt; if (saveAcc > 5) { saveAcc = 0; save(); }
+  hud(); renderShop(); ambient();
+}, 250);
+addEventListener('pagehide', save);
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+addEventListener('resize', layout);
+
+layout();
+if (S.ended) { end(S.ending || 'nap', true); }
+else {
+  for (let i = 0; i < Math.min(E.stats(S).cap, 6 + S.strokes); i++) spawnPickle(false);
+  if (!S.strokes) say('FLIGHT', 'Halloween night. The Sun is hungry and will not get up. Pickles adrift. Plot a trajectory: draw a line from the Sun through them.');
+  else say('CAPCOM', 'Welcome back, Flight. The Sun has not moved. The pickles are still adrift.');
+}
+hud(); renderShop();
+document.fonts?.ready.then(layout);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
