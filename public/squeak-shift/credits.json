@@ -1,0 +1,110 @@
+{
+  "libs": [
+    {
+      "name": "@strudel/web",
+      "version": "1.3.0",
+      "license": "AGPL-3.0-or-later",
+      "what": "pattern music: synths, samples, Tidal mini-notation",
+      "home": "https://strudel.cc",
+      "support": "https://opencollective.com/tidalcycles"
+    }
+  ],
+  "art": [
+    {
+      "set": "Material Design Icons",
+      "license": "Apache-2.0",
+      "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+      "home": "https://github.com/Templarian/MaterialDesign",
+      "support": "https://github.com/Templarian/MaterialDesign",
+      "icons": [
+        {
+          "icon": "mdi:wheelchair",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/wheelchair/"
+        },
+        {
+          "icon": "mdi:bed",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/bed/"
+        },
+        {
+          "icon": "mdi:bell",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/bell/"
+        },
+        {
+          "icon": "mdi:door",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/door/"
+        },
+        {
+          "icon": "mdi:cart",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/cart/"
+        },
+        {
+          "icon": "mdi:elevator",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/elevator/"
+        },
+        {
+          "icon": "mdi:chair-rolling",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/chair-rolling/"
+        },
+        {
+          "icon": "mdi:clock-outline",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/clock-outline/"
+        },
+        {
+          "icon": "mdi:pill",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/pill/"
+        },
+        {
+          "icon": "mdi:boom-gate",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/boom-gate/"
+        },
+        {
+          "icon": "mdi:stairs",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/stairs/"
+        },
+        {
+          "icon": "mdi:desk",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/desk/"
+        },
+        {
+          "icon": "mdi:pool",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/pool/"
+        },
+        {
+          "icon": "mdi:tumble-dryer",
+          "author": "Pictogrammers",
+          "source": "https://icon-sets.iconify.design/mdi/tumble-dryer/"
+        }
+      ]
+    }
+  ],
+  "fonts": [
+    {
+      "name": "Architects Daughter",
+      "license": "OFL-1.1",
+      "home": "https://fonts.google.com/specimen/Architects+Daughter"
+    },
+    {
+      "name": "Share Tech Mono",
+      "license": "OFL-1.1",
+      "home": "https://fonts.google.com/specimen/Share+Tech+Mono"
+    }
+  ],
+  "palette": {
+    "name": "SLSO8",
+    "author": "Luis Miguel Maldonado",
+    "home": "https://lospec.com/palette-list/slso8"
+  }
+}

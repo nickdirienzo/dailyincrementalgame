@@ -1,0 +1,128 @@
+{
+  "mdi--wheelchair.svg": {
+    "icon": "mdi:wheelchair",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/wheelchair/"
+  },
+  "mdi--bed.svg": {
+    "icon": "mdi:bed",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/bed/"
+  },
+  "mdi--bell.svg": {
+    "icon": "mdi:bell",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/bell/"
+  },
+  "mdi--door.svg": {
+    "icon": "mdi:door",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/door/"
+  },
+  "mdi--cart.svg": {
+    "icon": "mdi:cart",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/cart/"
+  },
+  "mdi--elevator.svg": {
+    "icon": "mdi:elevator",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/elevator/"
+  },
+  "mdi--chair-rolling.svg": {
+    "icon": "mdi:chair-rolling",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/chair-rolling/"
+  },
+  "mdi--clock-outline.svg": {
+    "icon": "mdi:clock-outline",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/clock-outline/"
+  },
+  "mdi--pill.svg": {
+    "icon": "mdi:pill",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/pill/"
+  },
+  "mdi--boom-gate.svg": {
+    "icon": "mdi:boom-gate",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/boom-gate/"
+  },
+  "mdi--stairs.svg": {
+    "icon": "mdi:stairs",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/stairs/"
+  },
+  "mdi--desk.svg": {
+    "icon": "mdi:desk",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/desk/"
+  },
+  "mdi--pool.svg": {
+    "icon": "mdi:pool",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/pool/"
+  },
+  "mdi--tumble-dryer.svg": {
+    "icon": "mdi:tumble-dryer",
+    "set": "Material Design Icons",
+    "setUrl": "https://github.com/Templarian/MaterialDesign",
+    "author": "Pictogrammers",
+    "license": "Apache-2.0",
+    "licenseUrl": "https://github.com/Templarian/MaterialDesign/blob/master/LICENSE",
+    "source": "https://icon-sets.iconify.design/mdi/tumble-dryer/"
+  }
+}

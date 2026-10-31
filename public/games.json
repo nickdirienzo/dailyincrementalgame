@@ -240,5 +240,39 @@
       "date": "2026-10-31"
     },
     "palette": "moonlight-gb"
+  },
+  {
+    "n": 10,
+    "slug": "squeak-shift",
+    "date": "2026-11-01",
+    "title": "Squeak Shift",
+    "tagline": "An owl on the night shift tunes rubber ducks to prank the whole hospital, on a Toy Fund of three pence a night.",
+    "emoji": "🦉🦆",
+    "scale": "tens",
+    "minutes": "180–240",
+    "seed": 3394538433,
+    "interaction": "aim and release",
+    "arc": {
+      "drive": "mischief",
+      "obstacle": "a tiny budget",
+      "turn": "they give it all away",
+      "initial": "B"
+    },
+    "length": "story (3–10 hours, over several sittings)",
+    "structure": [
+      "automation you program (an action queue with priorities)",
+      "a mid-game rule change that reshapes everything",
+      "workers you assign between jobs"
+    ],
+    "twist": "a hidden mechanic to discover",
+    "ending": "one last purchase that costs everything",
+    "look": "blueprint",
+    "music": {
+      "style": "polka",
+      "scale": "whole tone"
+    },
+    "tone": "cozy",
+    "context": "none",
+    "palette": "slso8"
   }
 ]

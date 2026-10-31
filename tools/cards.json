@@ -593,5 +593,172 @@
   "brines": 9,
   "venusMet": true,
   "shopTab": "p"
+ },
+ "squeak-shift": {
+  "t": 4300,
+  "night": 41,
+  "nightT": 60,
+  "pence": 4,
+  "favours": 17,
+  "raw": 3,
+  "rack": [
+   1,
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0
+  ],
+  "plan": 6,
+  "slots": [
+   1,
+   2,
+   1,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "stars": 1,
+  "installed": 35,
+  "perfect": 12,
+  "tuned": 58,
+  "honks": 3,
+  "wheels": 120,
+  "bellsAnswered": 40,
+  "lv": {
+   "glasses": 1,
+   "oil": 3,
+   "clip": 2,
+   "lamp": 1,
+   "fork": 2,
+   "tag": 1,
+   "memo": 2,
+   "feel": 1,
+   "lostkey": 1,
+   "slippers": 1,
+   "ear": 2,
+   "quick": 1,
+   "chart": 1,
+   "card": 1,
+   "kazoo": 1,
+   "bags": 1,
+   "biscuits": 1,
+   "rota": 1
+  },
+  "queue": [
+   {
+    "id": "bell",
+    "on": true
+   },
+   {
+    "id": "tune",
+    "on": true
+   },
+   {
+    "id": "buy",
+    "on": true,
+    "stock": 2
+   },
+   {
+    "id": "cover",
+    "on": true
+   },
+   {
+    "id": "lost",
+    "on": false
+   },
+   {
+    "id": "chairs",
+    "on": false,
+    "upto": 20
+   }
+  ],
+  "qTask": "cover",
+  "qProg": 0.4,
+  "bells": [
+   {
+    "bed": 3,
+    "age": 8,
+    "seed": 0.5
+   },
+   {
+    "bed": 6,
+    "age": 2,
+    "seed": 0.9
+   }
+  ],
+  "bellT": 30,
+  "hush": 2,
+  "matron": 0,
+  "review": true,
+  "staff": 6,
+  "jobs": {
+   "scrounge": 2,
+   "tune": 2,
+   "hush": 1,
+   "cover": 1
+  },
+  "jobProg": {
+   "scrounge": 0,
+   "tune": 0,
+   "hush": 0,
+   "cover": 0
+  },
+  "honk": true,
+  "flats": [
+   [
+    2,
+    1
+   ],
+   [
+    4,
+    3
+   ]
+  ],
+  "seen": [
+   "glasses",
+   "oil",
+   "clip",
+   "lamp",
+   "fork",
+   "tag",
+   "memo",
+   "feel",
+   "lostkey",
+   "slippers",
+   "kazoo",
+   "ear",
+   "quick",
+   "chart",
+   "card",
+   "spanner",
+   "pull",
+   "polish",
+   "wrap",
+   "accordion",
+   "recruit",
+   "bags",
+   "sonar",
+   "biscuits",
+   "kettle",
+   "rota",
+   "whistle",
+   "lessons",
+   "map",
+   "hat",
+   "torch"
+  ],
+  "shopTab": "f",
+  "lastSeen": 0
  }
 }

@@ -1,0 +1,1273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Squeak Shift · Incremendle</title>
+<meta name="description" content="An owl on the night shift tunes the ward's rubber ducks and hides them around the hospital, on a Toy Fund of three pence a night. Incremendle.">
+<meta property="og:site_name" content="Incremendle">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Squeak Shift">
+<meta property="og:description" content="An owl on the night shift tunes rubber ducks to prank the whole hospital, on a Toy Fund of three pence a night.">
+<meta property="og:url" content="https://incremendle.com/squeak-shift/">
+<meta property="og:image" content="https://incremendle.com/squeak-shift/og.png?v=412a248b">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Squeak Shift: An owl on the night shift tunes rubber ducks to prank the whole hospital, on a Toy Fund of three pence a night.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/shared/fonts/architects-daughter/font.css">
+<link rel="stylesheet" href="/shared/fonts/share-tech-mono/font.css">
+<style>
+  /* SLSO8: #0d2b45 #203c56 #544e68 #8d697a #d08159 #ffaa5e #ffd4a3 #ffecd6 */
+  :root {
+    --navy: #0d2b45; --deep: #203c56; --slate: #544e68; --mauve: #8d697a; --rust: #d08159; --orange: #ffaa5e; --peach: #ffd4a3; --cream: #ffecd6;
+    --bg: var(--navy); --ink: var(--cream); --hand: 'Architects Daughter', 'Comic Sans MS', cursive; --mono: 'Share Tech Mono', ui-monospace, monospace;
+    color-scheme: dark;
+  }
+  html, body { background: var(--bg); color: var(--ink); }
+  /* Keep this: any display rule (flex, grid) would otherwise override the hidden attribute. */
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; font: 15px/1.45 var(--hand);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: max(14px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
+    /* Blueprint paper: a fine grid with a heavier line every fifth square. */
+    background-image:
+      linear-gradient(#ffecd60f 1px, transparent 1px), linear-gradient(90deg, #ffecd60f 1px, transparent 1px),
+      linear-gradient(#ffecd606 1px, transparent 1px), linear-gradient(90deg, #ffecd606 1px, transparent 1px);
+    background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; }
+  header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin: 2px 0 8px; }
+  header h1 { font: 400 clamp(28px, 5vw, 40px)/1 var(--hand); margin: 0; color: var(--cream); letter-spacing: 1px; text-decoration: underline 2px var(--orange); text-underline-offset: 6px; }
+  header p { margin: 0; color: var(--peach); font-size: 14px; }
+  .game { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .game { grid-template-columns: 1fr; } }
+  /* A drafting panel: a thin cream rule with corner ticks. */
+  .sheet { position: relative; border: 1.5px solid #ffecd677; border-radius: 3px; background: #0d2b45cc; }
+  .sheet::before, .sheet::after { content: ""; position: absolute; width: 9px; height: 9px; border: 1.5px solid var(--orange); pointer-events: none; }
+  .sheet::before { top: -5px; left: -5px; border-right: 0; border-bottom: 0; }
+  .sheet::after { bottom: -5px; right: -5px; border-left: 0; border-top: 0; }
+  .stagebox { max-width: min(100%, calc(47vh * 640 / 400)); padding: 4px; }
+  canvas#stage { display: block; width: 100%; height: auto; aspect-ratio: 640 / 400; touch-action: none; cursor: grab; }
+  canvas#stage:focus-visible { outline: 2px dashed var(--orange); outline-offset: 3px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 2px 16px; margin: 8px 2px 0; font: 15px var(--mono); color: var(--peach); }
+  .stats b { color: var(--cream); font-weight: 400; }
+  .stats .hush b { color: var(--orange); letter-spacing: 2px; }
+  .meter { margin: 5px 2px 0; }
+  .meter .label { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; color: var(--peach); }
+  .meter .label b { color: var(--cream); font-weight: 400; }
+  .bar { position: relative; height: 10px; border: 1.5px solid #ffecd688; border-radius: 2px; overflow: hidden; }
+  .bar i { position: absolute; inset: 0 auto 0 0; width: 0; background: repeating-linear-gradient(135deg, var(--orange) 0 5px, #ffaa5e99 5px 8px); transition: width .4s; }
+  /* Clipboard and staff, one tab at a time so the play area never runs below the fold. */
+  .desk { margin: 8px 0 0; padding: 6px 10px 8px; }
+  .desk .tabs { display: flex; gap: 6px; margin: 0 0 4px; }
+  .desk .tabs button { font: 15px var(--hand); color: var(--peach); background: none; border: 0; border-bottom: 2px solid transparent; padding: 2px 6px; cursor: pointer; }
+  .desk .tabs button[aria-selected="true"] { color: var(--cream); border-bottom-color: var(--orange); }
+  .desk .tabs button.fresh::after { content: " •"; color: var(--orange); }
+  .desk .tabs button:focus-visible { outline: 2px dashed var(--orange); }
+  .desk .note { font-size: 13px; color: var(--peach); margin: 0 0 3px; }
+  .row { display: grid; grid-template-columns: 50px 22px minmax(0, 1fr) auto minmax(78px, auto); align-items: center; gap: 6px; font-size: 14px; min-height: 27px; }
+  .row.off { opacity: .55; }
+  .row.noroom .name::after { content: " (no room)"; color: var(--rust); font-size: 12px; }
+  .row .mv { display: flex; gap: 2px; }
+  .mini { font: 13px/1 var(--mono); color: var(--cream); background: none; border: 1px solid #ffecd666; border-radius: 3px; width: 23px; height: 22px; padding: 0; cursor: pointer; }
+  .mini:hover { border-color: var(--orange); color: var(--orange); }
+  .mini:disabled { opacity: .3; cursor: default; }
+  .mini:focus-visible { outline: 2px dashed var(--orange); outline-offset: 1px; }
+  .row input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--orange); margin: 0; cursor: pointer; }
+  .row .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .param { display: flex; align-items: center; gap: 3px; font: 12px var(--mono); color: var(--peach); white-space: nowrap; }
+  .row .st { font: 12px var(--mono); color: var(--mauve); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .st.go { color: var(--orange); }
+  @media (max-width: 560px) {
+    .row { grid-template-columns: 50px 22px minmax(0, 1fr) auto; grid-template-areas: "mv cb name st" "mv cb param param"; row-gap: 2px; padding: 2px 0; }
+    .row .mv { grid-area: mv; } .row input[type=checkbox] { grid-area: cb; } .row .name { grid-area: name; } .row .st { grid-area: st; } .row .param { grid-area: param; }
+    .row .param:empty { display: none; }
+  }
+  .jobs .row { grid-template-columns: 22px minmax(0, 1fr) 82px; grid-template-areas: none; }
+  .jobs .ct { display: flex; align-items: center; gap: 4px; justify-content: flex-end; font: 14px var(--mono); }
+  .jobs .ct b { min-width: 18px; text-align: center; font-weight: 400; color: var(--orange); }
+  .jobs .what { font-size: 12px; color: var(--peach); }
+  .log { margin: 8px 2px 0; min-height: 2.9em; font-size: 15px; color: var(--cream); }
+  .log.fresh { animation: fresh 1s ease-out; }
+  @keyframes fresh { from { color: var(--orange); } }
+  /* The column stays in view and scrolls on its own, so nothing on it is ever below the fold. */
+  aside { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain;
+          padding: 8px 6px 6px; scrollbar-width: thin; scrollbar-color: var(--slate) transparent; }
+  @media (max-width: 760px) { aside { position: static; max-height: none; overflow: visible; } }
+  aside h2 { font: 400 21px var(--hand); margin: 2px 0 8px; color: var(--cream); }
+  #afford { font: 13px var(--mono); color: var(--orange); }
+  .actions { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; }
+  .actions:not(:has(.btn:not([hidden]))) { display: none; }
+  .btn {
+    font: 17px var(--hand); color: var(--navy); background: var(--orange); border: 0; border-radius: 3px; padding: 7px 12px;
+    cursor: pointer; text-align: left; box-shadow: 0 0 0 1.5px var(--navy) inset, 3px 3px 0 #ffaa5e44;
+  }
+  .btn small { display: block; font: 12px var(--mono); color: var(--navy); }
+  .btn[aria-disabled="true"] { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 1.5px #ffecd677; cursor: default; }
+  .btn[aria-disabled="true"] small { color: var(--peach); }
+  .btn.ring { animation: ring 1.3s ease-in-out infinite; }
+  @keyframes ring { 50% { box-shadow: 0 0 0 1.5px var(--navy) inset, 0 0 14px var(--orange); } }
+  .btn:focus-visible { outline: 2px dashed var(--orange); outline-offset: 2px; }
+  #shop { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  @media (max-width: 760px) and (min-width: 520px) { #shop { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  /* Two to a row, name over price. What it does is in the tooltip. */
+  .up {
+    position: relative; display: flex; flex-direction: column; min-width: 0; text-align: left; font: 14px/1.25 var(--hand); color: var(--cream);
+    background: #0d2b45; border: 1.5px solid #ffecd655; border-radius: 3px; padding: 5px 9px; cursor: pointer;
+  }
+  .up b { font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .up em { font: normal 12px var(--mono); color: var(--peach); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .up.can { border-color: var(--orange); background: #203c56; }
+  .up.can em { color: var(--orange); }
+  .up[aria-disabled="true"] { cursor: default; }
+  .up[aria-disabled="true"]:not(.can) { opacity: .62; }
+  .up.odd { border-style: dashed; }
+  .up .tag { position: absolute; top: -8px; right: 7px; font: 11px var(--mono); padding: 0 5px; border-radius: 2px; background: var(--orange); color: var(--navy); }
+  .up.new { animation: pulse 1.6s ease-in-out 4; }
+  @keyframes pulse { 50% { box-shadow: 0 0 12px var(--orange); } }
+  .up:focus-visible { outline: 2px dashed var(--orange); outline-offset: 2px; }
+  #tip {
+    position: fixed; z-index: 50; width: 238px; padding: 9px 12px; pointer-events: none; font: 14px/1.38 var(--hand); color: var(--navy);
+    background: var(--cream); border-radius: 2px; box-shadow: 4px 4px 0 #ffaa5e88;
+    background-image: linear-gradient(#0d2b4512 1px, transparent 1px), linear-gradient(90deg, #0d2b4512 1px, transparent 1px); background-size: 12px 12px;
+  }
+  #tip b { display: block; font: 400 16px var(--hand); color: var(--navy); border-bottom: 1.5px solid var(--rust); margin-bottom: 3px; }
+  #tip small { display: block; margin-top: 5px; font: 12px var(--mono); color: var(--slate); }
+  #tip.inline { position: static; width: auto; margin-top: 10px; }
+  #tip i { display: block; margin-top: 6px; font-style: normal; font-size: 13px; color: var(--slate); border-top: 1.5px dashed #8d697a88; padding-top: 5px; }
+  #bought { margin: 12px 0 2px; }
+  #bought summary { display: flex; align-items: center; gap: 6px; font: 15px var(--hand); color: var(--peach); cursor: pointer; list-style: none;
+                    padding: 4px 9px; border: 1.5px dashed #ffecd644; border-radius: 3px; }
+  #bought summary::-webkit-details-marker { display: none; }
+  #bought summary::before { content: "\25B8"; color: var(--orange); transition: transform .2s; }
+  #bought[open] summary::before { transform: rotate(90deg); }
+  #bought summary:focus-visible { outline: 2px dashed var(--orange); outline-offset: 2px; }
+  .shelf { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .bought { max-width: 100%; font: 12px/1.2 var(--hand); color: var(--peach); background: #203c56; border: 1px solid #ffecd633; border-radius: 2px; padding: 4px 8px;
+            cursor: help; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bought.odd { border-style: dashed; }
+  .bought:hover, .bought.on { color: var(--cream); border-color: var(--orange); }
+  .bought:focus-visible { outline: 2px dashed var(--orange); outline-offset: 2px; }
+  #ending { margin: 24px auto 10px; max-width: 680px; text-align: center; padding: 20px 22px; }
+  #ending h2 { font: 400 36px/1.1 var(--hand); margin: 0 0 10px; color: var(--cream); text-decoration: underline 2px var(--orange); text-underline-offset: 7px; }
+  #ending p { margin: 8px 0; }
+  #ending .stamp { display: inline-block; margin: 8px 0 12px; padding: 6px 14px; border: 2px solid var(--orange); color: var(--orange); font: 15px var(--mono); transform: rotate(-2deg); letter-spacing: 1px; }
+  #ending .btn { text-align: center; }
+  #shareBtn, #againBtn { margin: 4px; }
+  @media (prefers-reduced-motion: reduce) { .up.new, .log.fresh, .btn.ring { animation: none; } .bar i, #bought summary::before { transition: none; } }
+</style>
+<!-- Libraries from /shared/lib/libs.json, by version. List only what this game imports: the credits tool reads these.
+     Strudel's soundfonts import @strudel/core and @strudel/webaudio, which are both inside the @strudel/web bundle. -->
+<script type="importmap">
+{ "imports": {
+  "@strudel/web": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/core": "/shared/lib/@strudel/web@1.3.0/index.mjs",
+  "@strudel/webaudio": "/shared/lib/@strudel/web@1.3.0/index.mjs"
+} }
+</script>
+<!-- Shared site runtime: top bar, credits, share card, streaks. data-day is this game's "n" from games.json (an internal id, never shown). -->
+<script src="/shared/daily.js" data-day="10" data-credits data-why></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Squeak Shift</h1>
+    <p>Pull the duck back on the bench, listen, let go on a line.</p>
+  </header>
+  <div class="game">
+    <main>
+      <div class="stagebox sheet"><canvas id="stage" width="640" height="400" tabindex="0" aria-label="A blueprint of Bramble Ward at night: eight beds, Nurse Hoo the owl, and a tuning bench with a duck on a slingshot beside a gauge of notes. Drag back from the duck and let go on a line; arrow keys and Enter work too."></canvas></div>
+      <div class="stats">
+        <span>🦆 to tune <b id="raw">0</b></span>
+        <span id="penceBox">Toy Fund <b id="pence">0</b>p</span>
+        <span id="favBox" hidden>Favours <b id="fav">0</b></span>
+        <span>Night <b id="night">1</b></span>
+        <span class="hush">Hush <b id="hush">●●●</b></span>
+      </div>
+      <div class="meter">
+        <div class="label"><span id="meterLabel"></span><span id="meterVal"></span></div>
+        <div class="bar"><i id="meterFill"></i></div>
+      </div>
+      <div class="desk sheet" id="desk" hidden>
+        <div class="tabs" role="tablist" id="deskTabs">
+          <button type="button" role="tab" id="tabClip" aria-selected="true">📋 Hoo’s clipboard</button>
+          <button type="button" role="tab" id="tabStaff" aria-selected="false" hidden>🦇 Night staff</button>
+        </div>
+        <div id="clip" role="tabpanel"><p class="note" id="clipNote"></p><div id="clipRows"></div></div>
+        <div id="staff" role="tabpanel" class="jobs" hidden><p class="note" id="staffNote"></p><div id="staffRows"></div></div>
+      </div>
+      <div class="log" id="log" aria-live="polite"></div>
+    </main>
+    <aside id="side">
+      <div class="actions">
+        <button class="btn" id="giveBtn" type="button" hidden>🎁 Discharge morning<small id="giveSub"></small></button>
+        <button class="btn" id="fitBtn" type="button" hidden>🔧 <span id="fitName">Fit it</span><small id="fitSub"></small></button>
+        <button class="btn" id="duckBtn" type="button" hidden>🦆 Buy a duck<small id="duckSub"></small></button>
+      </div>
+      <h2 id="shopHead" hidden>Supplies <span id="afford"></span></h2>
+      <div id="shop"></div>
+      <details id="bought" hidden><summary>Bought · <span id="boughtN">0</span></summary><div class="shelf" id="shelf"></div></details>
+      <div id="tip" role="tooltip" hidden></div>
+    </aside>
+  </div>
+  <section id="ending" class="sheet" hidden>
+    <h2>Every duck, given away.</h2>
+    <div class="stamp">ALL SHEETS COMPLETE · DISCHARGE MORNING</div>
+    <p id="endText"></p>
+    <p id="endStats"></p>
+    <button class="btn" id="shareBtn" type="button">Share result</button>
+  </section>
+</div>
+<script type="module">
+import { createAudio, scale, midiToHz } from '/shared/kit/audio.mjs';
+import { createMusic } from '/shared/kit/music.mjs';
+import { createSoundtrack } from './music.mjs';
+import * as Sprites from '/shared/kit/sprites.mjs';
+import * as E from './economy.mjs';
+
+const $ = id => document.getElementById(id);
+const DEBUG = location.search.includes('debug');
+const KEY = window.DailyGame ? DailyGame.storageKey('save') : 'di:10:save';
+let S = E.newState();
+try { const raw = localStorage.getItem(KEY); if (raw) S = E.load(JSON.parse(raw)); } catch (e) {}
+const save = () => { S.lastSeen = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const C = { navy: '#0d2b45', deep: '#203c56', slate: '#544e68', mauve: '#8d697a', rust: '#d08159', orange: '#ffaa5e', peach: '#ffd4a3', cream: '#ffecd6' };
+const HAND = "'Architects Daughter', cursive", MONO = "'Share Tech Mono', monospace";
+const NOTE = E.NOTE;
+
+// ---------- Sound ----------
+// Everything on C whole tone (C D E F# G# A#), the soundtrack's scale. Honks are the other six.
+const A = createAudio({ sfxTrim: 1, musicTrim: 7.4 });
+const N = scale('whole tone', 60);
+const hz = p => midiToHz(72 + p);
+const sfx = {
+  // The reed stretching: a tiny squeak at the current (continuous) pitch.
+  stretch(p = 0) { A.tone({ type: 'triangle', freq: hz(p), dur: 0.05, vol: 0.05, cutoff: 2600 }); },
+  squeak(n = 0) {
+    A.tone({ type: 'square', freq: hz(n), dur: 0.09, vol: 0.06, cutoff: 2200, attack: 0.008 });
+    A.tone({ type: 'triangle', freq: hz(n), dur: 0.16, vol: 0.16, attack: 0.01, at: A.now + 0.02 });
+  },
+  honk(n = 1) {
+    A.tone({ type: 'sawtooth', freq: midiToHz(60 + n), dur: 0.2, vol: 0.07, cutoff: 900, attack: 0.02 });
+    A.tone({ type: 'square', freq: midiToHz(48 + n), dur: 0.22, vol: 0.05, cutoff: 700, attack: 0.02 });
+  },
+  off() { A.tone({ type: 'triangle', freq: N(-2), dur: 0.08, vol: 0.12 }); A.tone({ type: 'triangle', freq: N(-3), dur: 0.14, vol: 0.1, at: A.now + 0.08 }); },
+  slot(n = 0) { A.tone({ type: 'bell', freq: midiToHz(72 + n), dur: 0.12, vol: 0.09, at: A.now + 0.45 }); },
+  rack() { A.tone({ type: 'pluck', freq: N(4), dur: 0.08, vol: 0.12, at: A.now + 0.45 }); },
+  ready() { [0, 2, 4].forEach((d, i) => A.tone({ type: 'bell', freq: N(d + 6), dur: 0.2, vol: 0.08, at: A.now + 0.5 + i * 0.09 })); },
+  // A finished prank plays its own little tune.
+  prank(notes = [0, 4, 8]) {
+    notes.slice(0, 16).forEach((n, i) => A.tone({ type: E.isHonk(n) ? 'triangle' : 'pluck', freq: midiToHz(72 + n), dur: 0.12, vol: 0.14, at: A.now + 0.05 + i * 0.13 }));
+    const end = A.now + 0.12 + Math.min(16, notes.length) * 0.13;
+    [0, 2, 4].forEach(d => A.tone({ type: 'keys', freq: N(d), dur: 0.5, vol: 0.06, at: end }));
+  },
+  buy() { [0, 2, 4].forEach((d, i) => A.tone({ type: 'keys', freq: N(d + 3), dur: 0.14, vol: 0.13, at: A.now + i * 0.065 })); },
+  duck() { A.tone({ type: 'pluck', freq: N(5), dur: 0.08, vol: 0.12 }); A.tone({ type: 'pluck', freq: N(8), dur: 0.1, vol: 0.1, at: A.now + 0.06 }); },
+  unlock() { A.tone({ type: 'bell', freq: N(8), dur: 0.3, vol: 0.08 }); A.tone({ type: 'bell', freq: N(10), dur: 0.35, vol: 0.07, at: A.now + 0.12 }); },
+  deny() { A.tone({ type: 'triangle', freq: N(1), dur: 0.07, vol: 0.11 }); A.tone({ type: 'triangle', freq: N(0), dur: 0.11, vol: 0.1, at: A.now + 0.08 }); },
+  bell() { A.tone({ type: 'bell', freq: N(9), dur: 0.25, vol: 0.06 }); A.tone({ type: 'bell', freq: N(9), dur: 0.3, vol: 0.05, at: A.now + 0.16 }); },
+  answer() { A.tone({ type: 'keys', freq: N(4), dur: 0.12, vol: 0.1 }); A.tone({ type: 'keys', freq: N(2), dur: 0.2, vol: 0.08, at: A.now + 0.1 }); },
+  coin() { A.tone({ type: 'bell', freq: N(12), dur: 0.05, vol: 0.04, cutoff: 3000 }); },
+  wake() { A.tone({ type: 'pad', freq: N(-4), dur: 0.7, vol: 0.06, attack: 0.1 }); },
+  matron() { A.tone({ type: 'keys', freq: N(-3), dur: 0.35, vol: 0.12 }); A.tone({ type: 'keys', freq: N(-6), dur: 0.5, vol: 0.11, at: A.now + 0.3 }); },
+  flat() { A.tone({ type: 'triangle', freq: N(3), dur: 0.12, vol: 0.09 }); A.tone({ type: 'triangle', freq: midiToHz(65), dur: 0.22, vol: 0.08, at: A.now + 0.12 }); },
+  repair() { A.tone({ type: 'bell', freq: N(7), dur: 0.15, vol: 0.07, at: A.now + 0.45 }); A.tone({ type: 'bell', freq: N(9), dur: 0.2, vol: 0.06, at: A.now + 0.55 }); },
+  discover() { [1, 3, 5, 7, 9, 11].forEach((s, i) => A.tone({ type: 'triangle', freq: midiToHz(72 + s), dur: 0.14, vol: 0.1, at: A.now + 0.3 + i * 0.09 })); },
+  review() { [0, -2, -4].forEach((d, i) => A.tone({ type: 'keys', freq: N(d), dur: 0.45, vol: 0.11, at: A.now + i * 0.35 })); A.tone({ type: 'pad', freq: N(-6), dur: 1.6, vol: 0.06, attack: 0.3, at: A.now + 1 }); },
+  recruit() { [2, 4, 6].forEach((d, i) => A.tone({ type: 'pluck', freq: N(d), dur: 0.1, vol: 0.12, at: A.now + i * 0.08 })); A.tone({ type: 'bell', freq: N(9), dur: 0.3, vol: 0.06, at: A.now + 0.26 }); },
+  finale() {
+    const tune = [0, 4, 8, 10, 8, 4, 0, 6, 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    tune.forEach((s, i) => A.tone({ type: E.isHonk(s) ? 'triangle' : 'bell', freq: midiToHz(72 + s), dur: 0.2, vol: 0.08, at: A.now + i * 0.12 }));
+    [0, 4, 8].forEach(s => A.tone({ type: 'pad', freq: midiToHz(60 + s), dur: 3, vol: 0.05, attack: 0.6, at: A.now + 1.4 }));
+    A.tone({ type: 'keys', freq: N(6), dur: 1.4, vol: 0.09, at: A.now + 2.8 });
+  },
+};
+// Per-effect levels, measured with npm run mix so every effect peaks near -10 dBFS.
+// The rapid ones (the reed ratchet, the penny, the call bell) sit a few dB under the rest on purpose.
+const LEVEL = {
+  stretch: 5, squeak: 2.3, honk: 4.5, off: 4.1, slot: 7.4, rack: 5, ready: 3.6, prank: 1.55, buy: 1, duck: 5.9, unlock: 4.5, deny: 4.5,
+  bell: 6.5, answer: 2, coin: 4, wake: 8.4, matron: 2.1, flat: 5.6, repair: 5.1, discover: 2.5, review: 1.4, recruit: 3.8, finale: 1.8,
+};
+for (const k of Object.keys(sfx)) {
+  const fn = sfx[k];
+  sfx[k] = (...a) => {
+    const tone = A.tone, m = LEVEL[k] || 1;
+    A.tone = o => tone({ ...o, vol: (o.vol ?? 0.3) * m });
+    try { fn(...a); } finally { A.tone = tone; }
+  };
+}
+if (DEBUG) window.__game = { A, sfx, long: ['finale', 'prank', 'review'], S: () => S, E };
+
+// The game owns playback; music.mjs arranges the composed polka per phase.
+function musicKey() { return S.ended ? 'finale' : S.matron > 0 ? 'matron' : E.phase(S) === 3 ? 'dawn' : S.review ? 'staff' : 'clipboard'; }
+let music = null, soundtrack = null, lastKey = musicKey();
+// Fuller phases measure louder (npm run mix): bring them back to about -24 dBFS. Matron's tiptoe stays quieter.
+const PHASE_GAIN = { staff: 0.8, dawn: 0.73 };
+const phased = new Map();
+function song() {
+  soundtrack ||= createSoundtrack(music.strudel);
+  const [k, pat, cps] = soundtrack(musicKey());
+  if (!PHASE_GAIN[k]) return [k, pat, cps];
+  if (!phased.has(k)) phased.set(k, pat.mul(music.strudel.gain(PHASE_GAIN[k])));
+  return [k, phased.get(k), cps];
+}
+createMusic(A, { song }).then(m => { music = m; music.update(); if (DEBUG) Object.assign(window.__game, { music: m, song }); });
+
+// ---------- Canvas ----------
+const cv = $('stage'), g = cv.getContext('2d');
+const W = 640, H = 400;
+function fit() {
+  const dpr = Math.min(2, devicePixelRatio || 1), r = cv.getBoundingClientRect();
+  const w = Math.round((r.width || W) * dpr), h = Math.round(w * H / W);
+  if (cv.width !== w) { cv.width = w; cv.height = h; }
+}
+addEventListener('resize', fit);
+// Layout (canvas units).
+const BEDS = [1, 2, 3, 4, 5, 6, 7, 8].map(b => ({ b, x: 30 + ((b - 1) % 4) * 66, y: b <= 4 ? 52 : 252, w: 46, h: 70 }));
+const PLACES = { idle: [154, 186], bell: null, chairs: [36, 342], buy: [36, 148], tune: [268, 210], lost: [268, 148], cover: [268, 330] };
+const FORK = [452, 300], GX = 604, G0 = 366, GPX = 14.6; // gauge: pitch 0 at y=G0, GPX px per semitone
+const gy = p => G0 - p * GPX;
+const SLOT = (i, n) => { const per = n > 8 ? Math.ceil(n / 2) : n, row = Math.floor(i / per), col = i % per; return [400 + col * (n > 8 ? 26 : 28), n > 8 ? 62 + row * 40 : 78]; };
+const RACK = n => [312 + n * 26.3, 172];
+
+// ---------- Sprites ----------
+const spr = {};
+// Blueprint line art: a cream contour around a faint fill, the way a draughtsman would trace an icon.
+async function bp(file, size, color = C.cream, fill = 0.12) {
+  const src = await Sprites.loadSvg(file);
+  const shape = await Sprites.svgToCanvas(Sprites.recolor(src, color), size);
+  const pad = 3, c = Sprites.canvas(size + pad * 2, size + pad * 2), x = c.getContext('2d');
+  const ring = Sprites.outline(shape, color, 1.5);
+  x.drawImage(ring, pad - 1.5, pad - 1.5);
+  x.globalCompositeOperation = 'destination-out'; x.drawImage(shape, pad, pad);
+  x.globalCompositeOperation = 'source-over'; x.globalAlpha = fill; x.drawImage(shape, pad, pad);
+  return c;
+}
+function duckSprite(fill, s = 1) {
+  const c = Sprites.canvas(34 * s, 30 * s), x = c.getContext('2d');
+  x.scale(s, s); drawDuck(x, 17, 17, fill); return c;
+}
+function drawDuck(x, cx, cy, fill, k = 1, flat = false) {
+  x.save(); x.translate(cx, cy); x.scale(k, k);
+  x.lineWidth = 1.4; x.strokeStyle = C.cream; x.fillStyle = fill; x.lineJoin = 'round';
+  // body
+  x.beginPath(); x.moveTo(-12, 1); x.quadraticCurveTo(-13, 10, -2, 10); x.lineTo(7, 10); x.quadraticCurveTo(14, 9, 13, 1); x.quadraticCurveTo(8, 4, 3, 2); x.quadraticCurveTo(-4, -1, -12, 1); x.fill(); x.stroke();
+  // tail
+  x.beginPath(); x.moveTo(-12, 1); x.lineTo(-15, -3); x.lineTo(-9, 0); x.fill(); x.stroke();
+  // head
+  x.beginPath(); x.arc(4, -5, 6.5, 0, 7); x.fill(); x.stroke();
+  // beak
+  x.fillStyle = C.rust; x.beginPath(); x.moveTo(10, -6); x.quadraticCurveTo(16, -5, 15, -2); x.quadraticCurveTo(12, -2, 9.5, -3); x.fill(); x.stroke();
+  // eye and wing
+  x.fillStyle = C.navy; x.beginPath(); x.arc(5.5, -6.5, 1.2, 0, 7); x.fill();
+  x.beginPath(); x.moveTo(-5, 4); x.quadraticCurveTo(0, 7, 5, 4); x.stroke();
+  if (flat) { x.fillStyle = C.cream; x.font = `bold 11px ${MONO}`; x.textAlign = 'center'; x.fillText('♭', 0, -12); }
+  x.restore();
+}
+// Nurse Hoo: a tawny owl in a starched cap, drawn in blueprint line. `look` turns the head.
+function drawHoo(x, cx, cy, { k = 1, look = 0, blink = false, wing = 0 } = {}) {
+  x.save(); x.translate(cx, cy); x.scale(k, k);
+  x.lineWidth = 1.5; x.strokeStyle = C.cream; x.lineJoin = 'round';
+  // body and apron
+  x.fillStyle = C.deep; x.beginPath(); x.ellipse(0, 6, 15, 19, 0, 0, 7); x.fill(); x.stroke();
+  x.fillStyle = '#ffecd622'; x.beginPath(); x.moveTo(-9, 2); x.lineTo(9, 2); x.lineTo(7, 22); x.lineTo(-7, 22); x.closePath(); x.fill(); x.stroke();
+  x.strokeStyle = C.rust; x.beginPath(); x.moveTo(-2, 8); x.lineTo(2, 8); x.moveTo(0, 6); x.lineTo(0, 10); x.stroke(); x.strokeStyle = C.cream;
+  // wings
+  x.beginPath(); x.moveTo(-14, -2); x.quadraticCurveTo(-21 - wing * 4, 8, -13, 18); x.stroke();
+  x.beginPath(); x.moveTo(14, -2); x.quadraticCurveTo(21 + wing * 6, 6 - wing * 8, 13, 18); x.stroke();
+  // feet
+  x.strokeStyle = C.orange; x.beginPath(); x.moveTo(-5, 25); x.lineTo(-7, 28); x.moveTo(-5, 25); x.lineTo(-3, 28); x.moveTo(5, 25); x.lineTo(3, 28); x.moveTo(5, 25); x.lineTo(7, 28); x.stroke();
+  // head (turns)
+  x.save(); x.translate(look * 2, -16); x.rotate(look * 0.12); x.strokeStyle = C.cream;
+  x.fillStyle = C.deep; x.beginPath(); x.ellipse(0, 0, 14, 12, 0, 0, 7); x.fill(); x.stroke();
+  x.beginPath(); x.moveTo(-11, -7); x.lineTo(-13, -15); x.lineTo(-6, -10); x.moveTo(11, -7); x.lineTo(13, -15); x.lineTo(6, -10); x.stroke();
+  // cap
+  x.fillStyle = C.cream; x.beginPath(); x.moveTo(-7, -10); x.lineTo(7, -10); x.lineTo(5, -17); x.lineTo(-5, -17); x.closePath(); x.fill();
+  x.fillStyle = C.rust; x.fillRect(-1, -16, 2, 5); x.fillRect(-2.5, -14.5, 5, 2);
+  // eyes
+  for (const s of [-1, 1]) {
+    x.fillStyle = C.cream; x.beginPath(); x.arc(s * 6, 0, 5, 0, 7); x.fill();
+    if (blink) { x.strokeStyle = C.navy; x.beginPath(); x.moveTo(s * 6 - 4, 0); x.lineTo(s * 6 + 4, 0); x.stroke(); x.strokeStyle = C.cream; }
+    else { x.fillStyle = C.orange; x.beginPath(); x.arc(s * 6 + look, 0.5, 2.6, 0, 7); x.fill(); x.fillStyle = C.navy; x.beginPath(); x.arc(s * 6 + look, 0.5, 1.2, 0, 7); x.fill(); }
+  }
+  x.fillStyle = C.orange; x.beginPath(); x.moveTo(-2, 4); x.lineTo(2, 4); x.lineTo(0, 8); x.closePath(); x.fill();
+  x.restore();
+  x.restore();
+}
+// Matron Bramble: a tall grey heron with a matron's watch and a cap like a folded letter.
+function drawMatron(x, cx, fy, { k = 1, face = 1, dashed = false, t = 0 } = {}) {
+  x.save(); x.translate(cx, fy); x.scale(face * k, k);
+  x.lineWidth = 1.5; x.strokeStyle = C.peach; x.lineJoin = 'round';
+  if (dashed) x.setLineDash([4, 3]);
+  const step = Math.sin(t * 6) * 3;
+  x.beginPath(); x.moveTo(-2, 0); x.lineTo(-3 + step, -22); x.moveTo(3, 0); x.lineTo(2 - step, -22); x.stroke();
+  x.fillStyle = '#544e68cc'; x.beginPath(); x.ellipse(0, -36, 11, 16, 0.15, 0, 7); x.fill(); x.stroke();
+  x.beginPath(); x.moveTo(4, -48); x.quadraticCurveTo(12, -58, 6, -66); x.stroke();
+  x.beginPath(); x.ellipse(6, -70, 6, 5, 0, 0, 7); x.fill(); x.stroke();
+  x.beginPath(); x.moveTo(11, -71); x.lineTo(26, -68); x.lineTo(11, -67); x.closePath(); x.fillStyle = C.rust; x.fill(); x.stroke();
+  x.fillStyle = C.cream; x.beginPath(); x.moveTo(1, -75); x.lineTo(11, -75); x.lineTo(6, -81); x.closePath(); x.fill();
+  x.fillStyle = C.navy; x.beginPath(); x.arc(8, -71, 1.1, 0, 7); x.fill();
+  x.strokeStyle = C.orange; x.setLineDash([]); x.beginPath(); x.arc(-4, -36, 2.5, 0, 7); x.stroke();
+  x.restore();
+}
+// A child asleep (or not): round head on the pillow, ears by bed.
+const EARS = ['bunny', 'bear', 'cat', 'bunny', 'mouse', 'bear', 'cat', 'mouse'];
+function drawKid(x, cx, cy, kind, awake, t) {
+  x.save(); x.translate(cx, cy);
+  x.lineWidth = 1.2; x.strokeStyle = C.cream; x.fillStyle = C.deep;
+  if (kind === 'bunny') { x.beginPath(); x.ellipse(-4, -11, 2.5, 7, -0.2, 0, 7); x.ellipse(4, -11, 2.5, 7, 0.2, 0, 7); x.fill(); x.stroke(); }
+  if (kind === 'bear' || kind === 'mouse') { const r = kind === 'mouse' ? 4.5 : 3; x.beginPath(); x.arc(-6, -6, r, 0, 7); x.fill(); x.stroke(); x.beginPath(); x.arc(6, -6, r, 0, 7); x.fill(); x.stroke(); }
+  if (kind === 'cat') { x.beginPath(); x.moveTo(-8, -3); x.lineTo(-6, -11); x.lineTo(-2, -6); x.moveTo(8, -3); x.lineTo(6, -11); x.lineTo(2, -6); x.fill(); x.stroke(); }
+  x.beginPath(); x.arc(0, 0, 8, 0, 7); x.fill(); x.stroke();
+  if (awake) { x.fillStyle = C.cream; x.beginPath(); x.arc(-3, -1, 1.4, 0, 7); x.arc(3, -1, 1.4, 0, 7); x.fill(); }
+  else { x.beginPath(); x.moveTo(-5, -1); x.quadraticCurveTo(-3, 1, -1, -1); x.moveTo(1, -1); x.quadraticCurveTo(3, 1, 5, -1); x.stroke(); }
+  x.restore();
+}
+const STAFF_KINDS = ['bat', 'hedgehog', 'mouse'];
+function drawStaff(x, cx, cy, kind, t) {
+  x.save(); x.translate(cx, cy); x.lineWidth = 1.2; x.strokeStyle = C.peach; x.fillStyle = C.slate;
+  if (kind === 'bat') {
+    const f = Math.sin(t * 9) * 3;
+    x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(-6, -6 - f, -12, -2 - f); x.quadraticCurveTo(-7, 0, -5, 3); x.quadraticCurveTo(-2, 1, 0, 4);
+    x.quadraticCurveTo(2, 1, 5, 3); x.quadraticCurveTo(7, 0, 12, -2 - f); x.quadraticCurveTo(6, -6 - f, 0, 0); x.fill(); x.stroke();
+    x.beginPath(); x.arc(0, 0, 3.5, 0, 7); x.fill(); x.stroke();
+  } else if (kind === 'hedgehog') {
+    x.beginPath(); x.moveTo(-9, 4); for (let i = 0; i <= 8; i++) { const a = Math.PI + i * Math.PI / 8; x.lineTo(Math.cos(a) * (i % 2 ? 11 : 8), 4 + Math.sin(a) * (i % 2 ? 9 : 6)); } x.lineTo(9, 4); x.closePath(); x.fill(); x.stroke();
+    x.fillStyle = C.peach; x.beginPath(); x.arc(9, 2, 2, 0, 7); x.fill();
+  } else {
+    x.beginPath(); x.ellipse(0, 0, 7, 4.5, 0, 0, 7); x.fill(); x.stroke();
+    x.beginPath(); x.arc(5, -4, 2.5, 0, 7); x.stroke(); x.beginPath(); x.moveTo(-7, 0); x.quadraticCurveTo(-12, -4, -13, 2); x.stroke();
+  }
+  x.restore();
+}
+const PICTO = {
+  door: './art/mdi--door.svg', trolley: './art/mdi--cart.svg', lift: './art/mdi--elevator.svg', chute: './art/mdi--tumble-dryer.svg',
+  chair: './art/mdi--chair-rolling.svg', clock: './art/mdi--clock-outline.svg', hatch: './art/mdi--pill.svg', barrier: './art/mdi--boom-gate.svg',
+  stairs: './art/mdi--stairs.svg', office: './art/mdi--desk.svg', pool: './art/mdi--pool.svg',
+};
+async function makeSprites() {
+  spr.duck = Sprites.register('duck (tuned)', duckSprite(C.orange));
+  spr.honk = Sprites.register('duck (honk)', duckSprite(C.rust));
+  spr.raw = Sprites.register('duck (untuned)', duckSprite(C.slate));
+  spr.flat = Sprites.register('duck (gone flat)', duckSprite(C.mauve));
+  spr.bed = Sprites.register('bed (blueprint)', await bp('./art/mdi--bed.svg', 40));
+  spr.bell = Sprites.register('call bell', await bp('./art/mdi--bell.svg', 18, C.orange, 0.35));
+  spr.chair = Sprites.register('wheelchair (blueprint)', await bp('./art/mdi--wheelchair.svg', 22, C.peach));
+  spr.picto = {};
+  for (const [id, f] of Object.entries(PICTO)) spr.picto[id] = Sprites.register(`sheet: ${id}`, await bp(f, 60, C.cream, 0.1));
+  const h = Sprites.canvas(60, 76); drawHoo(h.getContext('2d'), 30, 40, { k: 1.3 }); Sprites.register('Nurse Hoo', h);
+  const m = Sprites.canvas(60, 96); drawMatron(m.getContext('2d'), 24, 92, {}); Sprites.register('Matron Bramble', m);
+  const kids = Sprites.canvas(150, 30); EARS.slice(0, 5).forEach((k, i) => drawKid(kids.getContext('2d'), 15 + i * 30, 18, k, i === 3, 0)); Sprites.register('the children (Pip awake)', kids);
+  const st = Sprites.canvas(90, 26); STAFF_KINDS.forEach((k, i) => drawStaff(st.getContext('2d'), 15 + i * 30, 14, k, 0.3)); Sprites.register('night staff', st);
+}
+
+// ---------- The tuning bench ----------
+let pull = null;             // { x0, y0, pitch, last }
+let kbPitch = null;          // keyboard aiming
+const fx = [];
+const cssToCanvas = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height]; };
+const PX_PER_SEMI = 17;      // CSS pixels of pull per semitone, the same on every screen
+const canTune = () => !S.ended && S.raw > 0 && S.matron <= 0;
+cv.addEventListener('pointerdown', e => {
+  const [px, py] = cssToCanvas(e);
+  // A ringing bed: answer it.
+  for (const b of S.bells) {
+    const bd = BEDS[b.bed - 1];
+    if (px > bd.x - 12 && px < bd.x + bd.w + 12 && py > bd.y - 26 && py < bd.y + bd.h + 6) { answer(S.bells.indexOf(b)); return; }
+  }
+  if (px < 300) return;
+  if (!canTune()) { if (!S.ended) { sfx.deny(); say(S.matron > 0 ? 'Not with Matron on the ward. Hoo looks extremely busy with a thermometer.' : S.review ? 'No ducks to tune. Buy one with favours, or put someone on Scrounge.' : 'No ducks to tune. Buy one from the gift shop: they’re three pence.'); } return; }
+  pull = { x0: e.clientX, y0: e.clientY, pitch: -1, last: -9, dx: 0, dy: 1 };
+  try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+  cv.style.cursor = 'grabbing';
+});
+cv.addEventListener('pointermove', e => {
+  if (!pull) return;
+  const dx = e.clientX - pull.x0, dy = e.clientY - pull.y0, d = Math.hypot(dx, dy);
+  pull.dx = dx; pull.dy = dy; pull.d = d;
+  pull.pitch = d < 12 ? -1 : Math.min(11.49, (d - 12) / PX_PER_SEMI);
+  if (pull.pitch >= 0 && Math.abs(pull.pitch - pull.last) >= 0.5) { pull.last = pull.pitch; sfx.stretch(pull.pitch); }
+});
+function endPull() {
+  if (!pull) return;
+  const p = pull.pitch; pull = null; cv.style.cursor = 'grab';
+  if (p >= 0) release(p);
+}
+cv.addEventListener('pointerup', endPull);
+cv.addEventListener('pointercancel', () => { pull = null; cv.style.cursor = 'grab'; });
+cv.addEventListener('keydown', e => {
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+    e.preventDefault();
+    const d = (e.key === 'ArrowUp' || e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 1 : 0.25);
+    kbPitch = Math.max(0, Math.min(11.49, (kbPitch ?? 0) + d)); sfx.stretch(kbPitch);
+  } else if ((e.key === 'Enter' || e.key === ' ') && kbPitch != null) {
+    e.preventDefault();
+    if (canTune()) release(kbPitch); else sfx.deny();
+  } else if (e.key === 'b' && S.bells.length) answer(0);
+});
+cv.addEventListener('blur', () => { kbPitch = null; });
+function release(pitch) {
+  const out = [];
+  const r = E.tune(S, pitch, out);
+  if (!r) return;
+  handle(out, { pitch });
+  save();
+}
+function answer(i) { const out = []; E.answerBell(S, i, out); handle(out); }
+
+// ---------- Log ----------
+let logT = 0, ambT = 0;
+// Big moments hold the log line for a few seconds; anything said meanwhile waits its turn (the latest wins).
+let holdT = 0, pending = null;
+function say(msg, hold = 0) {
+  if (T < holdT && !hold) { pending = msg; return; }
+  const el = $('log'); el.textContent = msg; el.classList.remove('fresh'); void el.offsetWidth; el.classList.add('fresh'); logT = 0;
+  if (hold) holdT = T + hold;
+}
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const AMBIENT = [
+  'Bramble Ward is asleep. Somewhere a radiator ticks, very slightly flat.',
+  'Hoo tunes with one wing and does her rounds with the other. It’s an owl thing.',
+  'Bed 6 is talking in their sleep. Something about a pony who is also a bus.',
+  'The night is long and quiet, and full of things that squeak if you know where to press.',
+  'Hoo checks the gauge she drew on the back of a fluid chart. Six lines. She drew them very carefully.',
+  'A moth bumps against the night light by Bed 2 and apologises.',
+  'Matron Bramble’s office light is off. Hoo checks twice.',
+];
+const PIP = [
+  'Bed 4. Pip, wide awake, whispers: “Is that a duck? Is there a duck for me?” Hoo says it’s for the hospital. Pip nods slowly, like that’s not a no.',
+  'Pip in Bed 4 rang to ask if ducks can live in hospitals. Hoo says some of them work here.',
+  'Pip in Bed 4 wants to know what the ducks are for. Hoo says inventory.',
+  'Pip in Bed 4 heard the lift play “going up” all the way down. Pip has decided it was a dream, and is delighted.',
+  'Pip asks which note is Pip’s note. Hoo thinks about it for a long time and says E. Pip is very pleased with E.',
+  'Pip in Bed 4 goes home soon. Pip mentions this, then mentions ducks, then mentions going home again.',
+];
+const MATRON_LINES = [
+  'Matron Bramble has written “Call bells: ANSWER THEM” on the whiteboard and underlined it three times.',
+  'Matron Bramble is humming something on her way past. She stops when she sees Hoo.',
+  'Matron Bramble checks the duck cupboard. It is very full. She closes it without a word.',
+];
+const STAFF_NAMES = ['Wendell, a bat porter', 'Hettie, a hedgehog cleaner', 'Pim, a mouse from the night kitchen', 'Bertil, a bat from the X-ray department', 'Mo, the hedgehog who mops the stairs', 'Squeaks, a pharmacy mouse (no relation)',
+  'Dora, a bat on switchboard', 'Prickles, a hedgehog porter', 'Tansy, a mouse from Records', 'Old Basil, a bat who has worked nights since 1962', 'Nib, a hedgehog in Linen', 'Crumb, a mouse from the café'];
+const BUY_LINES = {
+  glasses: 'Hoo puts on the reading glasses. She can see exactly as well as before. She looks extremely qualified.',
+  oil: 'A drop of oil on every wheelchair wheel. They roll back to the bay like they’ve been waiting to.',
+  clip: 'A bigger clipboard. Hoo can remember one more chore, and writes it in very small handwriting.',
+  lamp: 'Night lights by the beds. Fewer children wake up wanting a drink, a story, or to discuss bears.',
+  feel: 'Hoo learns to tune by feel. She is slower than you and she misses, but she does it with her eyes shut.',
+  lostkey: 'The lost property key. Inside: an umbrella, a single shoe, and nine ducks nobody has ever claimed.',
+  fork: 'A tuning fork, struck on the edge of the desk. The lines on the gauge seem wider. Near enough is nearer.',
+  tag: 'The Name-Tag Gun goes click. Hoo labels a duck “BED 1”. Then “BED 2”. For inventory, she says.',
+  slippers: 'Quiet slippers. Hoo moves through the ward like a rumour.',
+  ear: 'Hoo practises listening. The ducks squeak; Hoo’s head tilts; the duck squeaks again, but righter.',
+  quick: 'Quick talons. Hoo can tune a duck in the time it takes to say “just a quick one”.',
+  chart: 'Hoo writes each child’s favourite note at the foot of their bed. Pip’s is E. Pip chose it personally.',
+  card: 'The gift shop loyalty card. The volunteer behind the till stamps it with a duck stamp. He has been waiting years to use it.',
+  spanner: 'The coin-lock spanner. Some wheelchairs, it turns out, take bigger coins.',
+  memo: 'Hoo writes a strongly worded memo about the Toy Fund. Matron writes back “NOTED.” One more penny a night.',
+  pull: 'Longer bell pulls. Half-asleep children are much more generous with their wash-bag ducks.',
+  polish: 'Duck polish. Every prank squeaks a little brighter, and people stop to listen.',
+  kazoo: 'Hoo phones Hospital Radio for “anything with a tuba in it”. They play the shipping forecast. Hoo listens to the whole thing anyway.',
+  wrap: 'A roll of gift wrap with ducks on it, just in case. Hoo puts it at the back of the cupboard, where it can wait.',
+  accordion: 'A very small accordion. Hoo practises in the sluice room. The sluice room has excellent acoustics.',
+  recruit: '',
+  bags: 'Laundry bags for the scroungers. The bags come back full of ducks, and one sock.',
+  sonar: 'The bats practise sonar on the ducks. They can hear a flat squeak from three wards away.',
+  biscuits: 'Better biscuits in the staff room. Breaks get longer, and everyone owes everyone more.',
+  kettle: 'A bigger kettle. Hoo covers breaks at twice the tea.',
+  map: 'The porters draw a map of every cupboard in the building. Some of the cupboards are not on the plans. Some of them are full of ducks.',
+  hat: 'Hoo wears the night porter’s hat. It squeaks when she nods. She nods a lot.',
+  rota: 'The polka rota goes up on the staff room door. Breaks now go: one-two, one-two.',
+  whistle: 'A honk whistle. The gaps between the lines feel roomier. The ducks seem pleased about it.',
+  lessons: 'Honking lessons in the boiler room. By the end, everyone on Tune can honk on purpose.',
+  torch: 'Head torches. Under the radiators: dust, a lost pen, and an entire colony of ducks.',
+  cushion: 'Squeak cushions under every prank. They sound warmer, like they mean it.',
+  specs: 'Hoo hands in Matron’s spare glasses. Matron says “thank you”. Hoo has to sit down for a bit.',
+  drawing: 'Pip’s drawing goes on the clipboard: a duck, very orange, with “PIP’S” written on it in large letters.',
+  ribbon: 'Ninety-eight lengths of ribbon, curled. Hoo says it’s for the pool. Nobody asks which pool.',
+};
+
+// ---------- Events ----------
+function flyTo(kind, target, note, perfect) {
+  fx.push({ kind: 'fly', from: [...FORK], to: target, t: 0, life: reduced ? 0.01 : 0.5, sprite: kind, note, perfect });
+}
+function pop(x, y, text, color = C.orange) { fx.push({ kind: 'text', x, y, text, color, t: 0, life: 1.4 }); }
+let pendingTune = null;
+function handle(out, ctx = {}) {
+  for (const ev of out) {
+    switch (ev.type) {
+      case 'off': sfx.off(); pop(GX - 18, gy(ctx.pitch ?? 0), Math.abs(ev.d) > 0.4 ? 'between' : 'not quite', C.mauve);
+        if (!S.honk && E.isHonk(ev.note) && S.review && Math.random() < 0.5) say('That one nearly did something odd. Between the lines, it sounded almost like a honk.');
+        break;
+      case 'discover':
+        sfx.discover();
+        say('HONK. That duck didn’t land on a line; it landed exactly between two, and honked. Not wrong, exactly. The other way right. There are six more notes on the gauge than Hoo drew.', 10);
+        pop(GX - 30, 120, 'HONK!', C.orange);
+        break;
+      case 'slot': {
+        const t = SLOT(ev.i, E.PLANS[S.plan]?.notes.length ?? 1);
+        if (ev.fromRack) { fx.push({ kind: 'spark', x: t[0], y: t[1], t: 0, life: 0.6 }); break; }
+        flyTo(E.isHonk(ev.note) ? 'honk' : 'duck', t, ev.note, ev.perfect);
+        if (ctx.pitch != null) { (E.isHonk(ev.note) ? sfx.honk : sfx.squeak)(ev.note); sfx.slot(ev.note); }
+        if (ev.perfect) pop(t[0], t[1] - 18, '★ dead on');
+        break;
+      }
+      case 'rack': flyTo(E.isHonk(ev.note) ? 'honk' : 'duck', RACK(ev.note), ev.note);
+        if (ctx.pitch != null) { (E.isHonk(ev.note) ? sfx.honk : sfx.squeak)(ev.note); sfx.rack(); pop(RACK(ev.note)[0], 158, 'spare ' + NOTE[ev.note]); }
+        break;
+      case 'repair': {
+        if (!ev.fromRack) flyTo(E.isHonk(ev.note) ? 'honk' : 'duck', tabPos(ev.plan), ev.note);
+        if (ctx.pitch != null) { (E.isHonk(ev.note) ? sfx.honk : sfx.squeak)(ev.note); sfx.repair(); }
+        else if (!ev.fromRack) sfx.repair();
+        pop(tabPos(ev.plan)[0], 368, 'retuned');
+        break;
+      }
+      case 'ready': sfx.ready(); say(`Sheet ${ev.plan + 1} is full: every duck in place for ${E.PLANS[ev.plan].name.replace(/^The /, 'the ')}. Now it needs fitting: ${E.fitCost(S)}${E.fitCur(S) === 'p' ? 'p of tape and screws' : ' favours (somebody has to hold the ladder)'}.`); break;
+      case 'prank': {
+        const P = E.PLANS[ev.plan];
+        sfx.prank(P.notes);
+        let line = P.gag;
+        if (ev.pence) line += ` (+${ev.pence}p in the lift by morning.)`;
+        if (ev.favours) line += ` (+${ev.favours} favours.)`;
+        say(line, 7);
+        if (S.plan === E.PLANS.length) setTimeout(() => say('Every sheet is fitted. The hospital is one big, quiet instrument. Hoo looks at Bed 4, where Pip is asleep, and at the Gift Wrap, Just in Case.'), 9000);
+        if (music) music.update();
+        break;
+      }
+      case 'review':
+        sfx.review();
+        setTimeout(() => say('Matron Bramble, scarlet, cuts the Toy Fund to nothing and pulls the coin locks off every wheelchair. But the porters were at handover too. It was the funniest thing they’d seen all year, and they’d like to help. They pay in favours.', 12), 7200);
+        deskTab = 'staff'; renderDesk(); if (music) music.update();
+        break;
+      case 'answer':
+        sfx.answer();
+        if (ev.pip) say(PIP[Math.min(PIP.length - 1, S.pipAsked - 1)], 6);
+        else if (ev.gift) { say(pick([`Bed ${ev.bed} only wanted a sip of water, and hands Hoo a duck from their wash bag on the way back to sleep.`, `Bed ${ev.bed} rang to say there was a duck in their bed. There was. Hoo takes it for tuning.`, `Bed ${ev.bed} is half asleep and very generous. One duck, with thanks.`])); sfx.duck(); }
+        else if (logT > 6) say(pick([`Bed ${ev.bed} needed their pillow turned to the cool side.`, `Bed ${ev.bed} wanted to know if owls sleep. Hoo says later.`, `Bed ${ev.bed} had a bad dream about a goose. Hoo sits with them until it goes.`, `Bed ${ev.bed} just wanted someone to say goodnight again.`]));
+        break;
+      case 'bell': sfx.bell(); break;
+      case 'wake': sfx.wake(); say(`Nobody answered Bed ${ev.bed}. They’re awake now and singing. Hush ${'●'.repeat(Math.max(0, S.hush))}${'○'.repeat(E.HUSH_MAX - Math.max(0, S.hush))}.`); break;
+      case 'matron': sfx.matron(); say('Matron Bramble’s office light goes on. She comes out to see who’s singing. Hoo hides the bench under a towel and takes everyone’s temperature, very slowly.'); if (music) music.update(); break;
+      case 'matronEnd': say(pick(['Matron Bramble goes back to her office. The towel comes off the bench.', 'Matron Bramble’s door clicks shut. Hoo breathes out.'])); if (music) music.update(); break;
+      case 'wheel': sfx.coin(); if (Math.random() < 0.08 && logT > 10) say('Hoo returns a wheelchair from the car park. The coin lock gives back its deposit with a satisfied clunk.'); break;
+      case 'night': if (ev.fund) sfx.coin(); break;
+      case 'lost': sfx.duck(); if (logT > 8) say(pick(['Lost property yields a duck in a sou’wester.', 'Lost property: one duck, slightly chewed, much loved.', 'A duck from lost property. Its tag says “PROPERTY OF DUCK”.'])); break;
+      case 'autotune': if (ev.who === 'hoo' && logT > 12) say(`Hoo tunes a duck by feel: ${NOTE[ev.note]}. Close enough to count.`); break;
+      case 'buyduck': break;
+      case 'scrounge': break;
+      case 'cover': break;
+      case 'flat': sfx.flat(); if (logT > 6) say(`A duck in ${E.PLANS[ev.plan].name.replace(/^The /, 'the ')} has gone flat (♭). Old rubber. It wants a fresh ${NOTE[ev.note]}, and won’t make anyone smile until it gets one.`); break;
+      case 'honkhint': say('The “?” slots on this sheet sit between the lines on the gauge, not on them. Hoo squints at the gauge, then at the duck.'); break;
+    }
+  }
+}
+
+// ---------- Shop ----------
+const shop = $('shop');
+const newUntil = {};
+let shopSig = '';
+const priceText = it => it.cur === 'p' ? `${it.cost}p` : `${it.cost} favours`;
+function renderShop() {
+  const all = S.plan >= 1 ? E.items(S).sort((a, b) => a.cost - b.cost) : [];
+  for (const it of all) if (!S.seen.includes(it.id)) { S.seen.push(it.id); if (S.t > 2) sfx.unlock(); newUntil[it.id] = performance.now() + 9000; }
+  $('shopHead').hidden = !all.length && !E.bought(S).length;
+  const sig = all.map(i => i.id + ':' + i.cost + i.cur).join('|');
+  if (sig !== shopSig) {
+    shopSig = sig;
+    shop.innerHTML = '';
+    for (const it of all) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'up' + (it.kind === 'odd' ? ' odd' : '');
+      b.dataset.id = it.id; b.dataset.cost = it.cost; b.dataset.cur = it.cur;
+      b.innerHTML = '<b></b><em></em>';
+      b.querySelector('b').textContent = it.name;
+      b.querySelector('em').textContent = priceText(it) + (it.max > 1 ? ` · ${it.l}/${it.max}` : it.kind === 'staff' ? ` · ${S.staff}` : '');
+      b.setAttribute('aria-describedby', 'tip');
+      tipWire(b, () => upTip(it), () => { if (b.getAttribute('aria-disabled') !== 'true') doBuy(it.id); else sfx.deny(); });
+      shop.append(b);
+    }
+  }
+  const now = performance.now();
+  let n = 0;
+  for (const b of shop.querySelectorAll('button.up')) {
+    const can = E.have(S, b.dataset.cur) >= Number(b.dataset.cost) && !S.ended;
+    if (can) n++;
+    b.setAttribute('aria-disabled', String(!can)); b.classList.toggle('can', can);
+    const isNew = (newUntil[b.dataset.id] || 0) > now;
+    b.classList.toggle('new', isNew);
+    let tag = b.querySelector('.tag');
+    if (isNew && !tag) { tag = document.createElement('i'); tag.className = 'tag'; tag.textContent = 'new'; tag.style.fontStyle = 'normal'; b.append(tag); }
+    if (!isNew && tag) tag.remove();
+  }
+  $('afford').textContent = n ? `· ${n} affordable` : '';
+  renderShelf();
+}
+function upTip(it) {
+  let foot = it.cur === 'p' ? `${it.cost} pence` : `${it.cost} favours`;
+  if (it.max > 1) foot += ` · level ${it.l} of ${it.max}`;
+  if (it.kind === 'staff') foot += ` · ${S.staff} of ${E.MAX_STAFF} staff`;
+  if (it.kind === 'odd') foot += ' · does very little';
+  return { id: it.id, name: it.name, desc: it.desc, foot };
+}
+let tipFor = null, tipMoved = 0;
+function tipWire(b, tipOf, act) {
+  b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showTip(b, tipOf()); });
+  b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+  b.addEventListener('focus', () => { if (!b.dataset.touch) showTip(b, tipOf()); });
+  b.addEventListener('blur', hideTip);
+  b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+  // On touch the first tap shows what it does; the second does it.
+  b.addEventListener('click', () => {
+    const t = tipOf();
+    if (b.dataset.touch && tipFor !== t.id) { showTip(b, t); return; }
+    act();
+  });
+}
+function showTip(b, it) {
+  const tip = $('tip'); tipFor = it.id;
+  tip.innerHTML = '<b></b><span></span><i></i><small></small>';
+  tip.querySelector('b').textContent = it.name;
+  tip.querySelector('span').textContent = it.desc;
+  tip.querySelector('i').textContent = it.joke || ''; tip.querySelector('i').hidden = !it.joke;
+  tip.querySelector('small').textContent = it.foot || ''; tip.querySelector('small').hidden = !it.foot;
+  const inline = !!it.inline && innerWidth <= 760;
+  tip.classList.toggle('inline', inline);
+  if (!it.inline) for (const o of document.querySelectorAll('.bought.on')) o.classList.remove('on');
+  if (inline) { if (tip.previousElementSibling !== $('shelf')) $('shelf').after(tip); } else if (tip.parentElement !== $('side')) { $('side').append(tip); tipMoved = performance.now(); }
+  tip.hidden = false;
+  if (inline) { tip.style.left = tip.style.top = ''; tip.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' }); return; }
+  const r = b.getBoundingClientRect(), t = tip.getBoundingClientRect();
+  if (r.left > t.width + 24 && innerWidth > 760) {
+    const col = $('side').getBoundingClientRect();
+    tip.style.left = `${col.left - t.width - 10}px`;
+    tip.style.top = `${Math.max(8, Math.min(innerHeight - t.height - 8, r.top + r.height / 2 - t.height / 2))}px`;
+  } else {
+    tip.style.left = `${Math.max(8, Math.min(innerWidth - t.width - 8, r.left))}px`;
+    tip.style.top = `${r.bottom + t.height + 14 < innerHeight ? r.bottom + 6 : r.top - t.height - 6}px`;
+  }
+}
+function hideTip(force) {
+  const tip = $('tip');
+  if (tip.classList.contains('inline') && force !== true) return;
+  tip.hidden = true; tip.classList.remove('inline'); tipFor = null;
+  for (const b of document.querySelectorAll('.bought.on')) b.classList.remove('on');
+}
+addEventListener('scroll', () => { if (performance.now() - tipMoved > 400) hideTip(); }, true);
+addEventListener('resize', () => { if (innerWidth > 760) hideTip(true); });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.up, .tipped, .bought')) hideTip(); });
+
+// The buttons at the top of the column explain themselves; on touch, the first tap of the session explains.
+const ACTION_TIPS = {
+  duckBtn: () => ({ id: 'duck', name: S.review ? 'Ask a porter for a duck' : 'Buy a duck', desc: S.review ? 'The gift shop won’t take pennies from Bramble Ward any more, but the porters know a man. One untuned duck for the bench.' : 'One untuned duck from the gift shop, for the bench. The Toy Fund is three pence a night, and so is a duck.', foot: `${E.stats(S).price} ${S.review ? 'favours' : 'pence'} · you have ${S.raw} to tune` }),
+  fitBtn: () => ({ id: 'fit', name: `Fit ${E.plan(S)?.name || 'it'}`, desc: 'Every duck is in place on the sheet. Fitting them where they go takes tape, screws and somebody to hold the ladder. Then the prank goes off.', foot: `${E.fitCost(S)} ${E.fitCur(S) === 'p' ? 'pence' : 'favours'}` }),
+  giveBtn: () => ({ id: 'give', name: 'Discharge morning', desc: `Unscrew every duck from every prank in the hospital, and every spare one, and give them all away to the children going home. It costs everything: all ${E.TOTAL_DUCKS} fitted ducks, every favour and every penny. This ends the game.`, foot: E.canGive(S) ? `Everything: ${E.TOTAL_DUCKS} ducks · ${S.favours} favours · ${S.pence}p` : `Needs at least ${E.GIVE_FAVOURS} favours (it takes them all) · you have ${S.favours}` }),
+};
+const explained = new Set();
+for (const [id, tipOf] of Object.entries(ACTION_TIPS)) {
+  const b = $(id); b.classList.add('tipped'); b.setAttribute('aria-describedby', 'tip');
+  b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') showTip(b, tipOf()); });
+  b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+  b.addEventListener('focus', () => { if (!b.dataset.touch) showTip(b, tipOf()); });
+  b.addEventListener('blur', hideTip);
+  b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+  b.addEventListener('click', e => {
+    if (b.dataset.touch && !explained.has(id)) { explained.add(id); showTip(b, tipOf()); e.stopImmediatePropagation(); }
+  }, { capture: true });
+}
+$('duckBtn').addEventListener('click', () => {
+  const out = [];
+  if (!E.buyDuck(S, out)) { sfx.deny(); return; }
+  sfx.duck(); hud(); save();
+  if (tipFor === 'duck') showTip($('duckBtn'), ACTION_TIPS.duckBtn());
+});
+$('fitBtn').addEventListener('click', () => {
+  const out = [];
+  if (!E.fit(S, out)) { sfx.deny(); return; }
+  hideTip(); handle(out); hud(); renderShop(); save();
+});
+$('giveBtn').addEventListener('click', () => {
+  if (!E.canGive(S)) { sfx.deny(); return; }
+  hideTip(true); E.giveAway(S); end(false);
+});
+
+// ---------- The Bought shelf ----------
+const shelfEl = $('bought');
+const UI_KEY = window.DailyGame ? DailyGame.storageKey('ui') : 'di:10:ui';
+let ui = {};
+try { ui = JSON.parse(localStorage.getItem(UI_KEY) || '{}') || {}; } catch (e) {}
+shelfEl.open = !!ui.bought;
+const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (e) {} };
+shelfEl.addEventListener('toggle', () => {
+  if (!shelfEl.open) hideTip(true);
+  if (!!ui.bought === shelfEl.open) return;
+  ui.bought = shelfEl.open; saveUi();
+});
+const shortName = n => n.replace(/^(The|A|An) /, '');
+function boughtTip(it) {
+  return { id: 'bought:' + it.id, name: it.name, desc: it.desc, joke: BUY_LINES[it.id] || '', foot: it.max > 1 ? `Bought · all ${it.max} levels` : it.kind === 'odd' ? 'Bought · did very little' : 'Bought', inline: true };
+}
+let shelfSig = null;
+function renderShelf() {
+  const list = S.ended ? [] : E.bought(S);
+  const sig = list.map(i => i.id).join('|');
+  if (sig === shelfSig) return;
+  shelfSig = sig;
+  shelfEl.hidden = !list.length;
+  $('boughtN').textContent = list.length;
+  $('shelf').replaceChildren(...list.map(it => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'bought' + (it.kind === 'odd' ? ' odd' : '');
+    b.textContent = shortName(it.name); b.dataset.id = it.id;
+    b.setAttribute('aria-describedby', 'tip');
+    const show = () => { hideTip(true); b.classList.add('on'); showTip(b, boughtTip(it)); };
+    b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') show(); });
+    b.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hideTip(); });
+    b.addEventListener('focus', () => { if (!b.dataset.touch) show(); });
+    b.addEventListener('blur', hideTip);
+    b.addEventListener('pointerdown', e => { b.dataset.touch = e.pointerType !== 'mouse' ? '1' : ''; });
+    b.addEventListener('click', () => { if (tipFor === 'bought:' + it.id && b.dataset.touch) hideTip(true); else show(); });
+    return b;
+  }));
+}
+function doBuy(id) {
+  const out = [];
+  if (!E.buy(S, id, out)) { sfx.deny(); return; }
+  delete newUntil[id];
+  hideTip();
+  if (id === 'recruit') {
+    sfx.recruit();
+    const who = STAFF_NAMES[(S.staff - 1) % STAFF_NAMES.length];
+    say(`${who}, joins the plan. They start on Scrounge; move them in the Night staff tab.`);
+    renderDesk();
+  } else { sfx.buy(); say(BUY_LINES[id] || `Bought: ${out[0].name}.`); }
+  if (id === 'feel' || id === 'lostkey' || id === 'clip') renderDesk();
+  save(); renderShop(); hud();
+}
+
+// ---------- Clipboard and staff ----------
+let deskTab = S.review ? 'staff' : 'clip';
+$('tabClip').addEventListener('click', () => { deskTab = 'clip'; renderDesk(); });
+$('tabStaff').addEventListener('click', () => { deskTab = 'staff'; renderDesk(); });
+let deskSig = '';
+function renderDesk() {
+  const st = E.stats(S);
+  $('desk').hidden = S.ended || S.plan < 1;
+  $('tabStaff').hidden = !S.review;
+  if (!S.review) deskTab = 'clip';
+  $('tabClip').setAttribute('aria-selected', String(deskTab === 'clip'));
+  $('tabStaff').setAttribute('aria-selected', String(deskTab === 'staff'));
+  $('clip').hidden = deskTab !== 'clip'; $('staff').hidden = deskTab !== 'staff';
+  const known = E.knownTasks(S);
+  const sig = deskTab + '|' + S.queue.map(q => `${q.id}${q.on ? 1 : 0}${q.stock ?? ''}${q.upto ?? ''}`).join(',') + '|' + st.lines + '|' + known.join(',') + '|' + S.staff + JSON.stringify(S.jobs) + S.review;
+  if (sig === deskSig) return;
+  deskSig = sig;
+  $('clipNote').textContent = `Hoo does the first ticked chore she can, top to bottom. She can remember ${st.lines} at once.`;
+  const rows = [];
+  const visible = S.queue.filter(q => known.includes(q.id));
+  let ticks = 0;
+  visible.forEach((q, i) => {
+    const T = E.TASKS[q.id];
+    const r = document.createElement('div');
+    if (q.on) ticks++;
+    r.className = 'row' + (q.on ? '' : ' off') + (q.on && ticks > st.lines ? ' noroom' : '');
+    r.dataset.id = q.id;
+    r.innerHTML = `<span class="mv"><button type="button" class="mini" aria-label="Move up">▲</button><button type="button" class="mini" aria-label="Move down">▼</button></span>
+      <input type="checkbox" aria-label="${T.name}"><span class="name">${T.icon} ${T.name}</span><span class="param"></span><span class="st"></span>`;
+    const [up, down] = r.querySelectorAll('.mini');
+    up.disabled = i === 0; down.disabled = i === visible.length - 1;
+    const move = d => { const a = S.queue.indexOf(q), other = visible[i + d], b = S.queue.indexOf(other); S.queue[a] = other; S.queue[b] = q; renderDesk(); save(); };
+    up.addEventListener('click', () => move(-1)); down.addEventListener('click', () => move(1));
+    const cb = r.querySelector('input'); cb.checked = !!q.on;
+    cb.addEventListener('change', () => { q.on = cb.checked; renderDesk(); save(); });
+    const param = r.querySelector('.param');
+    const stepper = (label, key, step, min, max, unit) => {
+      const minus = document.createElement('button'), plus = document.createElement('button'), v = document.createElement('span');
+      minus.type = plus.type = 'button'; minus.className = plus.className = 'mini'; minus.textContent = '−'; plus.textContent = '+';
+      minus.setAttribute('aria-label', `${label}: less`); plus.setAttribute('aria-label', `${label}: more`);
+      v.textContent = `${label} ${q[key]}${unit}`;
+      minus.addEventListener('click', () => { q[key] = Math.max(min, q[key] - step); renderDesk(); save(); });
+      plus.addEventListener('click', () => { q[key] = Math.min(max, q[key] + step); renderDesk(); save(); });
+      param.append(minus, v, plus);
+    };
+    if (q.id === 'buy') { q.stock ??= 2; stepper('keep', 'stock', 1, 0, 9, ''); }
+    if (q.id === 'chairs' && !S.review) { q.upto ??= 20; stepper('until', 'upto', 5, 5, 95, 'p'); }
+    rows.push(r);
+  });
+  $('clipRows').replaceChildren(...rows);
+  // Staff
+  $('staffNote').textContent = `${S.staff} night staff · ${E.idle(S)} in the staff room. Everyone helps for favours.`;
+  const jr = Object.entries(E.JOBS).map(([id, J]) => {
+    const r = document.createElement('div'); r.className = 'row';
+    r.innerHTML = `<span>${J.icon}</span><span class="name">${J.name} <span class="what">${J.desc}</span></span><span class="ct"><button type="button" class="mini" aria-label="${J.name}: one fewer">−</button><b>${S.jobs[id]}</b><button type="button" class="mini" aria-label="${J.name}: one more">+</button></span>`;
+    const [minus, plus] = r.querySelectorAll('.mini');
+    minus.disabled = S.jobs[id] < 1; plus.disabled = E.idle(S) < 1 && !Object.keys(S.jobs).some(k => k !== id && S.jobs[k] > 0);
+    minus.addEventListener('click', () => { E.assign(S, id, -1); renderDesk(); save(); });
+    // + takes someone from the staff room, or else from the busiest other job.
+    plus.addEventListener('click', () => {
+      if (E.idle(S) < 1) { const from = Object.keys(S.jobs).filter(k => k !== id && S.jobs[k] > 0).sort((a, b) => S.jobs[b] - S.jobs[a])[0]; if (!from) return; E.assign(S, from, -1); }
+      E.assign(S, id, 1); renderDesk(); save();
+    });
+    return r;
+  });
+  $('staffRows').replaceChildren(...jr);
+}
+function deskStatus() {
+  const st = E.stats(S);
+  let ticks = 0;
+  for (const r of $('clipRows').children) {
+    const q = S.queue.find(x => x.id === r.dataset.id); if (!q) continue;
+    const el = r.querySelector('.st');
+    if (q.on) ticks++;
+    let text = '', go = false;
+    if (!q.on) text = '';
+    else if (ticks > st.lines) text = '';
+    else if (S.qTask === q.id) { text = `doing ${Math.floor(S.qProg * 100)}%`; go = true; }
+    else { const b = E.taskBlock(S, q); text = b || 'waiting'; }
+    if (el.textContent !== text) el.textContent = text;
+    el.classList.toggle('go', go);
+  }
+}
+
+// ---------- HUD ----------
+function hud() {
+  $('raw').textContent = S.raw;
+  $('pence').textContent = S.pence;
+  $('penceBox').hidden = S.review && S.pence === 0;
+  $('favBox').hidden = !S.review; $('fav').textContent = S.favours;
+  $('night').textContent = S.night;
+  $('hush').textContent = '●'.repeat(Math.max(0, S.hush)) + '○'.repeat(E.HUSH_MAX - Math.max(0, S.hush));
+  const P = E.plan(S);
+  if (S.ended || !P) {
+    $('meterLabel').innerHTML = '<b>Every sheet fitted</b>';
+    $('meterVal').textContent = S.ended ? 'every duck given away' : `${E.TOTAL_DUCKS} ducks around the hospital`;
+    $('meterFill').style.width = '100%';
+  } else {
+    const filled = S.slots.filter(Boolean).length;
+    $('meterLabel').innerHTML = `Sheet ${S.plan + 1} of ${E.PLANS.length}: <b></b>`;
+    $('meterLabel').querySelector('b').textContent = P.name;
+    $('meterVal').textContent = S.ready ? `ready to fit · ${E.fitCost(S)}${E.fitCur(S) === 'p' ? 'p' : ' favours'}` : `${filled}/${P.notes.length} ducks · ${S.installed}/${E.TOTAL_DUCKS} in all`;
+    $('meterFill').style.width = `${(S.installed / E.TOTAL_DUCKS) * 100}%`;
+  }
+  // Column actions
+  const duckShow = !S.ended && S.plan >= 1 && S.plan < E.PLANS.length;
+  $('duckBtn').hidden = !duckShow;
+  if (duckShow) {
+    const st = E.stats(S), can = E.have(S, E.duckCur(S)) >= st.price;
+    $('duckBtn').firstChild.textContent = S.review ? '🦆 Ask a porter for a duck' : '🦆 Buy a duck';
+    $('duckSub').textContent = `${st.price}${S.review ? ' favours' : 'p'} · ${S.raw} to tune`;
+    $('duckBtn').setAttribute('aria-disabled', String(!can));
+  }
+  $('fitBtn').hidden = !S.ready || S.ended;
+  if (S.ready) {
+    $('fitName').textContent = `Fit ${P.name.replace(/^The /, 'the ')}`;
+    $('fitSub').textContent = `${E.fitCost(S)}${E.fitCur(S) === 'p' ? 'p' : ' favours'} · the prank goes off`;
+    const can = E.canFit(S);
+    $('fitBtn').setAttribute('aria-disabled', String(!can)); $('fitBtn').classList.toggle('ring', can);
+  }
+  $('giveBtn').hidden = S.ended || S.plan < E.PLANS.length;
+  if (!$('giveBtn').hidden) {
+    $('giveSub').textContent = E.canGive(S) ? `costs everything: ${E.TOTAL_DUCKS} ducks · ${S.favours} favours · ${S.pence}p` : `needs ${E.GIVE_FAVOURS} favours · ${S.favours} so far`;
+    $('giveBtn').setAttribute('aria-disabled', String(!E.canGive(S))); $('giveBtn').classList.toggle('ring', E.canGive(S));
+  }
+}
+
+// ---------- Drawing ----------
+let bgCache = null;
+function background() {
+  const c = Sprites.canvas(W * 2, H * 2), x = c.getContext('2d');
+  x.scale(2, 2);
+  x.fillStyle = C.navy; x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#ffecd610'; x.lineWidth = 1;
+  for (let i = 0; i <= W; i += 16) { x.beginPath(); x.moveTo(i + 0.5, 0); x.lineTo(i + 0.5, H); x.stroke(); }
+  for (let j = 0; j <= H; j += 16) { x.beginPath(); x.moveTo(0, j + 0.5); x.lineTo(W, j + 0.5); x.stroke(); }
+  x.strokeStyle = '#ffecd61e';
+  for (let i = 0; i <= W; i += 80) { x.beginPath(); x.moveTo(i + 0.5, 0); x.lineTo(i + 0.5, H); x.stroke(); }
+  for (let j = 0; j <= H; j += 80) { x.beginPath(); x.moveTo(0, j + 0.5); x.lineTo(W, j + 0.5); x.stroke(); }
+  // Ward walls with door gaps.
+  x.strokeStyle = C.cream; x.lineWidth = 2.2; x.globalAlpha = 0.85;
+  x.beginPath(); x.moveTo(12, 130); x.lineTo(12, 28); x.lineTo(292, 28); x.lineTo(292, 130);
+  x.moveTo(292, 166); x.lineTo(292, 314); x.moveTo(292, 350); x.lineTo(292, 362); x.lineTo(176, 362); x.moveTo(132, 362); x.lineTo(12, 362); x.lineTo(12, 350);
+  x.moveTo(12, 314); x.lineTo(12, 166); x.stroke();
+  x.globalAlpha = 1;
+  // Door swings (dashed arcs).
+  x.setLineDash([3, 3]); x.lineWidth = 1; x.strokeStyle = '#ffecd688';
+  for (const [dx, dy, a0] of [[12, 130, 0], [292, 130, Math.PI / 2], [12, 314, 0], [292, 314, Math.PI / 2], [132, 362, -Math.PI / 2]]) { x.beginPath(); x.arc(dx, dy, 36, a0, a0 + Math.PI / 2); x.stroke(); }
+  x.setLineDash([]);
+  x.fillStyle = C.peach; x.font = `11px ${MONO}`;
+  x.fillText('GIFT SHOP ←', 18, 160); x.fillText('CORRIDOR ←', 18, 344);
+  x.textAlign = 'right'; x.fillText('→ LOST PROPERTY', 286, 160); x.fillText('→ STAFF ROOM', 286, 344);
+  x.textAlign = 'center'; x.fillText('MATRON ↓', 154, 357);
+  x.textAlign = 'left'; x.fillStyle = C.cream; x.font = `14px ${HAND}`;
+  x.fillText('WARD 4 · BRAMBLE WARD', 14, 20);
+  // Dimension line under the ward.
+  x.strokeStyle = '#ffd4a366'; x.lineWidth = 1; x.beginPath(); x.moveTo(12, 372); x.lineTo(292, 372); x.moveTo(12, 368); x.lineTo(12, 376); x.moveTo(292, 368); x.lineTo(292, 376); x.stroke();
+  // Bench box.
+  x.strokeStyle = '#ffecd655'; x.setLineDash([5, 4]); x.strokeRect(306, 196, 322, 172); x.setLineDash([]);
+  x.fillStyle = C.peach; x.font = `11px ${MONO}`; x.fillText('TUNING BENCH (DRAG BACK, LET GO ON A LINE)', 312, 208);
+  return c;
+}
+function tabPos(k) { return [16 + k * 56.5 + 26, 388]; }
+function aimPitch() { return pull && pull.pitch >= 0 ? pull.pitch : kbPitch; }
+let T = 0;
+const hoo = { x: 154, y: 186 };
+const blinkAt = { t: 3 };
+function draw() {
+  const k = cv.width / W;
+  g.setTransform(k, 0, 0, k, 0, 0);
+  g.drawImage(bgCache, 0, 0, W, H);
+  const done = S.ended;
+  // Dawn creeping in at the end.
+  if (done) { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#ffaa5e30'); gr.addColorStop(0.5, '#ffd4a310'); gr.addColorStop(1, '#0000'); g.fillStyle = gr; g.fillRect(0, 0, W, H); }
+  drawWard(done);
+  drawSheet(done);
+  drawRack(done);
+  drawBench(done);
+  drawTabs(done);
+  // Effects
+  for (const f of fx) {
+    const u = Math.min(1, f.t / f.life);
+    if (f.kind === 'fly') {
+      const x = f.from[0] + (f.to[0] - f.from[0]) * u, y = f.from[1] + (f.to[1] - f.from[1]) * u - Math.sin(u * Math.PI) * 60;
+      drawDuck(g, x, y, f.sprite === 'honk' ? C.rust : C.orange, 0.8 + 0.2 * Math.sin(u * Math.PI));
+    } else if (f.kind === 'text') {
+      g.globalAlpha = 1 - u; g.fillStyle = f.color; g.font = `14px ${HAND}`; g.textAlign = 'center'; g.fillText(f.text, f.x, f.y - u * 16); g.globalAlpha = 1; g.textAlign = 'left';
+    } else if (f.kind === 'spark') {
+      g.strokeStyle = C.orange; g.globalAlpha = 1 - u; g.beginPath(); g.arc(f.x, f.y, 6 + u * 14, 0, 7); g.stroke(); g.globalAlpha = 1;
+    }
+  }
+}
+function drawWard(done) {
+  const st = E.stats(S);
+  for (const bd of BEDS) {
+    g.drawImage(spr.bed, bd.x - 1, bd.y + 14, bd.w + 4, bd.w + 4);
+    g.strokeStyle = '#ffecd6aa'; g.lineWidth = 1.2; g.strokeRect(bd.x, bd.y, bd.w, bd.h);
+    g.fillStyle = '#ffecd618'; g.fillRect(bd.x + 6, bd.y + 4, bd.w - 12, 14);
+    const bell = S.bells.find(b => b.bed === bd.b);
+    const awake = !!bell;
+    if (!done) drawKid(g, bd.x + bd.w / 2, bd.y + 13, EARS[bd.b - 1], awake || (bd.b === 4 && Math.sin(T * 0.4) > 0.6), T);
+    else { g.fillStyle = C.orange; g.font = `10px ${MONO}`; g.textAlign = 'center'; g.fillText('HOME ✓', bd.x + bd.w / 2, bd.y + 15); g.textAlign = 'left'; }
+    g.fillStyle = C.peach; g.font = `11px ${MONO}`; g.fillText(String(bd.b), bd.x + 2, bd.y + bd.h + 11);
+    if (L('chart') && !done) { g.fillStyle = C.orange; g.fillText([4, 8, 0, 4, 6, 2, 10, 8][bd.b - 1] != null ? NOTE[[4, 8, 0, 4, 6, 2, 10, 8][bd.b - 1]] : '', bd.x + bd.w - 12, bd.y + bd.h + 11); }
+    if (!awake && !done) { g.fillStyle = '#ffecd666'; g.font = `10px ${HAND}`; g.fillText('z', bd.x + bd.w - 8, bd.y + 6 - ((T * 6 + bd.b * 3) % 8)); }
+    if (bell) {
+      const wob = reduced ? 0 : Math.sin(T * 18) * 0.25;
+      const bx = bd.x + bd.w / 2, by = bd.y - 12;
+      g.save(); g.translate(bx, by); g.rotate(wob); g.drawImage(spr.bell, -12, -12, 24, 24); g.restore();
+      g.strokeStyle = C.orange; g.lineWidth = 2; g.beginPath(); g.arc(bx, by, 15, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - bell.age / st.wakeAt)); g.stroke(); g.lineWidth = 1;
+    }
+  }
+  // Hoo walks to her current chore.
+  let tgt = PLACES.idle;
+  if (done) tgt = [110, 196];
+  else if (S.qTask === 'bell' && S.bells[0]) { const bd = BEDS[S.bells[0].bed - 1]; tgt = [bd.x + bd.w / 2, bd.y <= 52 ? 150 : 222]; }
+  else if (S.qTask && PLACES[S.qTask]) tgt = PLACES[S.qTask];
+  const sp = reduced ? 1 : Math.min(1, 0.05);
+  hoo.x += (tgt[0] - hoo.x) * sp; hoo.y += (tgt[1] - hoo.y) * sp;
+  if (T > blinkAt.t) blinkAt.t = T + 2.5 + Math.random() * 4;
+  drawHoo(g, hoo.x, hoo.y, { k: 0.95, look: Math.sin(T * 0.7) * (S.qTask ? 0.5 : 1.4), blink: blinkAt.t - T < 0.12, wing: S.qTask ? Math.abs(Math.sin(T * 5)) * 0.6 : 0 });
+  if (S.qTask && !done) {
+    const lab = E.TASKS[S.qTask].name.toLowerCase();
+    const lx = Math.max(52, Math.min(250, hoo.x));
+    g.fillStyle = C.peach; g.font = `10px ${MONO}`; g.textAlign = 'center'; g.fillText(lab, lx, hoo.y - 46);
+    g.strokeStyle = C.orange; g.beginPath(); g.moveTo(lx - 20, hoo.y - 42); g.lineTo(lx - 20 + 40 * S.qProg, hoo.y - 42); g.stroke();
+    g.textAlign = 'left';
+    if (S.qTask === 'chairs') g.drawImage(spr.chair, hoo.x - 34, hoo.y + 2, 22, 22);
+  }
+  // Night staff about the ward, by job.
+  if (S.review && !done) {
+    let n = 0;
+    const spots = { scrounge: (i) => [40 + ((T * 18 + i * 70) % 220), 236], hush: (i) => [60 + i * 50, 140], tune: (i) => [282, 240 - i * 14], cover: (i) => [250 - i * 16, 344] };
+    for (const [job, count] of Object.entries(S.jobs)) for (let i = 0; i < count; i++) { const [x, y] = spots[job](i); drawStaff(g, x, y, STAFF_KINDS[n++ % 3], T + n); }
+  }
+  // Matron, humming, in the empty ward.
+  if (done) { drawMatron(g, 210, 232, { face: -1, t: 0 }); g.fillStyle = C.peach; g.font = `14px ${HAND}`; g.fillText('♪ hm hm', 222, 150 + Math.sin(T * 2) * 3); }
+  // Matron on her round.
+  if (S.matron > 0 && !done) {
+    const u = 1 - S.matron / E.MATRON_ROUND, x = 30 + 240 * (u < 0.5 ? u * 2 : 2 - u * 2);
+    drawMatron(g, x, 236, { face: u < 0.5 ? 1 : -1, dashed: true, t: T });
+  }
+}
+const L = id => E.L(S, id);
+function drawSheet(done) {
+  g.strokeStyle = '#ffecd6aa'; g.lineWidth = 1.2; g.strokeRect(306, 14, 322, 140);
+  const P = E.plan(S);
+  g.fillStyle = C.cream; g.font = `15px ${HAND}`;
+  if (!P) {
+    g.fillText(done ? 'SHEET 11/11 · DISCHARGE MORNING' : 'ALL SHEETS FITTED', 314, 34);
+    g.drawImage(spr.picto.pool, 314, 44, 66, 66);
+    g.font = `13px ${HAND}`; g.fillStyle = C.peach;
+    const lines = done ? ['Every duck unscrewed, tagged', 'and wrapped, and gone home', 'with somebody. Quiet again.'] : ['98 ducks, all in tune, all', 'over the hospital. And it’s', 'nearly discharge morning…'];
+    lines.forEach((l, i) => g.fillText(l, 392, 66 + i * 20));
+    return;
+  }
+  g.fillText(`SHEET ${S.plan + 1}/${E.PLANS.length} · ${P.name.toUpperCase()}`, 314, 34);
+  g.drawImage(spr.picto[P.id], 314, 44, 66, 66);
+  g.fillStyle = '#ffd4a3aa'; g.font = `10px ${MONO}`; g.fillText(`DRAWN: H. OWL · NIGHT ${S.night}`, 314, 146);
+  const n = P.notes.length;
+  P.notes.forEach((note, i) => {
+    const [x, y] = SLOT(i, n), f = S.slots[i];
+    const honk = E.isHonk(note);
+    g.strokeStyle = f ? C.orange : '#ffecd699'; g.setLineDash(f ? [] : [3, 2]); g.lineWidth = 1.2;
+    g.beginPath(); g.arc(x, y, 11, 0, 7); g.stroke(); g.setLineDash([]);
+    if (f) drawDuck(g, x, y + 1, honk ? C.rust : C.orange, 0.62);
+    g.fillStyle = honk && !S.honk ? C.orange : C.peach; g.font = `11px ${MONO}`; g.textAlign = 'center';
+    g.fillText(honk && !S.honk ? '?' : NOTE[note], x, y + 24);
+    if (f === 2) { g.fillStyle = C.orange; g.fillText('★', x + 10, y - 8); }
+    g.textAlign = 'left';
+  });
+  if (S.ready) { g.fillStyle = C.orange; g.font = `13px ${HAND}`; g.fillText('ready to fit →', 530, 146); }
+}
+function drawRack(done) {
+  g.fillStyle = C.peach; g.font = `10px ${MONO}`; g.fillText('SPARES', 312, 164);
+  for (let n = 0; n < 12; n++) {
+    const [x, y] = RACK(n), c = S.rack[n], honk = E.isHonk(n);
+    if (honk && !S.honk && !c) continue;
+    g.strokeStyle = c ? C.orange : '#ffecd633'; g.strokeRect(x, y, 24, 18);
+    g.fillStyle = c ? C.cream : '#ffecd655'; g.font = `10px ${MONO}`; g.textAlign = 'center';
+    g.fillText(c ? `${NOTE[n]}·${c}` : NOTE[n], x + 12, y + 13); g.textAlign = 'left';
+  }
+}
+function drawBench(done) {
+  const st = E.stats(S);
+  // The gauge, drawn by Hoo on the back of a fluid chart.
+  const want = E.wanted(S), openNow = Array(12).fill(0);
+  const P = E.plan(S);
+  if (P) P.notes.forEach((n, i) => { if (!S.slots[i]) openNow[n]++; });
+  for (const [k, i] of S.flats) openNow[E.PLANS[k].notes[i]]++;
+  g.strokeStyle = '#ffecd6aa'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(GX, G0 + 6); g.lineTo(GX, gy(11.5)); g.stroke();
+  for (let n = 0; n < 12; n++) {
+    const y = gy(n), honk = E.isHonk(n), hot = openNow[n] > 0 && !done;
+    if (!honk) {
+      g.fillStyle = hot ? '#ffaa5e33' : '#ffecd612'; g.fillRect(GX - 40, y - st.noteTol * GPX, 52, st.noteTol * GPX * 2);
+      g.strokeStyle = hot ? C.orange : '#ffecd6bb'; g.lineWidth = hot ? 2 : 1.2; g.beginPath(); g.moveTo(GX - 40, y); g.lineTo(GX + 12, y); g.stroke(); g.lineWidth = 1;
+      g.fillStyle = hot ? C.orange : C.cream; g.font = `12px ${MONO}`; g.fillText(NOTE[n], GX + 15, y + 4);
+    } else if (S.honk) {
+      g.fillStyle = hot ? '#d0815944' : '#d0815918'; g.fillRect(GX - 30, y - st.honkTol * GPX, 36, st.honkTol * GPX * 2);
+      g.strokeStyle = hot ? C.rust : '#d0815988'; g.setLineDash([2, 2]); g.beginPath(); g.moveTo(GX - 30, y); g.lineTo(GX + 6, y); g.stroke(); g.setLineDash([]);
+      g.fillStyle = hot ? C.rust : '#d08159aa'; g.font = `10px ${MONO}`; g.fillText(NOTE[n], GX + 15, y + 3);
+    } else if (hot) {
+      g.fillStyle = C.orange; g.font = `13px ${HAND}`; g.fillText('?', GX - 16, y + 4);
+    }
+  }
+  // Slingshot.
+  const [fx0, fy0] = FORK;
+  g.strokeStyle = C.cream; g.lineWidth = 2; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(fx0, fy0 + 60); g.lineTo(fx0, fy0 + 22); g.lineTo(fx0 - 16, fy0 - 4); g.moveTo(fx0, fy0 + 22); g.lineTo(fx0 + 16, fy0 - 4); g.stroke();
+  g.lineWidth = 1; g.fillStyle = C.peach; g.font = `10px ${MONO}`; g.fillText('TONGUE DEPRESSOR', fx0 + 8, fy0 + 56);
+  const p = aimPitch();
+  let dx = 0, dy = 0;
+  if (pull && pull.pitch >= 0) { const d = Math.max(1, pull.d), m = Math.min(70, 8 + p * 5.5); dx = pull.dx / d * m; dy = pull.dy / d * m; }
+  else if (kbPitch != null) { dy = Math.min(70, 8 + kbPitch * 5.5); }
+  const bx = fx0 + dx, by = fy0 + dy;
+  g.strokeStyle = C.rust; g.lineWidth = 2; g.beginPath(); g.moveTo(fx0 - 16, fy0 - 4); g.lineTo(bx - 6, by + 4); g.moveTo(fx0 + 16, fy0 - 4); g.lineTo(bx + 6, by + 4); g.stroke(); g.lineWidth = 1; g.lineCap = 'butt';
+  if (!done && S.raw > 0 && S.matron <= 0) drawDuck(g, bx, by - 4, C.slate, 1.15);
+  // The crate of untuned ducks.
+  g.strokeStyle = '#ffecd6aa'; g.strokeRect(326, 300, 64, 40);
+  for (let i = 0; i < Math.min(6, done ? 0 : S.raw); i++) drawDuck(g, 340 + (i % 3) * 18, 312 + Math.floor(i / 3) * 4 - (i >= 3 ? 10 : 0), C.slate, 0.55);
+  g.fillStyle = C.peach; g.font = `11px ${MONO}`; g.fillText(done ? 'EMPTY' : `UNTUNED ×${S.raw}`, 326, 354);
+  // The pitch marker.
+  if (p != null && p >= 0) {
+    const r = E.judge(S, p), y = gy(p);
+    g.fillStyle = r.kind === 'note' ? C.orange : r.kind === 'honk' ? C.rust : C.cream;
+    g.beginPath(); g.moveTo(GX - 52, y - 6); g.lineTo(GX - 42, y); g.lineTo(GX - 52, y + 6); g.closePath(); g.fill();
+    g.strokeStyle = g.fillStyle; g.setLineDash([2, 3]); g.beginPath(); g.moveTo(bx + 14, by - 6); g.lineTo(GX - 54, y); g.stroke(); g.setLineDash([]);
+  }
+  if (S.matron > 0 && !done) {
+    g.fillStyle = '#0d2b45dd'; g.fillRect(310, 214, 280, 150);
+    g.fillStyle = C.orange; g.font = `16px ${HAND}`; g.textAlign = 'center';
+    g.fillText('MATRON ON THE WARD', 450, 270); g.font = `13px ${HAND}`; g.fillStyle = C.peach; g.fillText('look busy · back in a moment', 450, 292);
+    g.textAlign = 'left';
+  } else if (!done && S.raw < 1) {
+    g.fillStyle = C.peach; g.font = `13px ${HAND}`; g.textAlign = 'center';
+    g.fillText(S.plan === 0 || S.plan >= E.PLANS.length ? '' : S.review ? 'no ducks: ask a porter, or Scrounge' : 'no ducks: buy one (3p)', 452, 252); g.textAlign = 'left';
+  }
+  if (S.t < 25 && S.plan === 0 && !pull && S.raw > 0) {
+    g.fillStyle = C.orange; g.font = `14px ${HAND}`; g.textAlign = 'center';
+    g.fillText('drag back from the duck ↓', fx0, fy0 - 26); g.textAlign = 'left';
+  }
+}
+function drawTabs(done) {
+  for (let k = 0; k < E.PLANS.length; k++) {
+    const [cx, cy] = tabPos(k), P = E.PLANS[k];
+    const fitted = done || k < S.plan, cur = k === S.plan && !done, flat = S.flats.some(f => f[0] === k);
+    g.strokeStyle = flat ? C.rust : fitted ? C.cream : cur ? C.orange : '#ffecd644'; g.setLineDash(cur ? [3, 2] : []);
+    g.strokeRect(cx - 26, cy - 9, 52, 16); g.setLineDash([]);
+    if (fitted) { g.fillStyle = flat ? '#d0815933' : '#ffecd61a'; g.fillRect(cx - 26, cy - 9, 52, 16); }
+    g.fillStyle = flat ? C.orange : fitted ? C.cream : cur ? C.orange : '#ffecd666'; g.font = `9px ${MONO}`; g.textAlign = 'center';
+    const short = P.name.replace(/^(The|Matron's) /, '').replace("Porters' ", '').replace('Pharmacy ', '').replace('Car Park ', '').replace('Linen ', '').replace('Fire ', '').replace('Dawn ', '').toUpperCase();
+    g.fillText((flat ? '♭ ' : '') + short.slice(0, 8), cx, cy + 3); g.textAlign = 'left';
+  }
+}
+
+// ---------- Loop ----------
+let last = performance.now(), hudT = 0, saveT = 0;
+function frame(now) {
+  const dt = Math.min(0.25, (now - last) / 1000); last = now; T += dt;
+  if (!S.ended) {
+    const out = []; E.step(S, dt, out); if (out.length) handle(out);
+  }
+  for (const f of fx) f.t += dt;
+  for (let k = fx.length - 1; k >= 0; k--) if (fx[k].t > fx[k].life) fx.splice(k, 1);
+  const mk = musicKey(); if (mk !== lastKey) { lastKey = mk; if (music) music.update(); }
+  logT += dt; ambT += dt;
+  if (pending && T >= holdT) { const m = pending; pending = null; say(m); }
+  if (logT > 26 && ambT > 26 && !S.ended) {
+    ambT = 0;
+    const pool = S.review && Math.random() < 0.3 ? MATRON_LINES : AMBIENT;
+    say(pick(pool));
+  }
+  hudT += dt; if (hudT > 0.2) { hudT = 0; hud(); renderShop(); renderDesk(); deskStatus(); }
+  saveT += dt; if (saveT > 4) { saveT = 0; save(); }
+  fit(); draw();
+  requestAnimationFrame(frame);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+addEventListener('pagehide', save);
+
+function end(resumed) {
+  S.ended = true; save();
+  $('ending').hidden = false; $('desk').hidden = true; document.querySelector('.stats').hidden = true; $('shopHead').hidden = true; $('shop').hidden = true;
+  const g0 = S.given || { ducks: E.TOTAL_DUCKS, favours: 0, pence: 0 };
+  const h = Math.floor(S.t / 3600), m = Math.floor(S.t / 60) % 60;
+  const time = h ? `${h}h${String(m).padStart(2, '0')}m` : `${m}m`;
+  $('endText').textContent = `At seven o’clock on discharge morning, Nurse Hoo went round the whole hospital with a screwdriver. The ward door, the tea trolley, the lift, the stairs, Matron’s office: every duck came out. Each one got a name tag, a square of gift wrap and a curl of ribbon, and went home in somebody’s coat pocket, tuned to their favourite note. Pip got the first one, an E. The hospital went quiet again, all at once. Matron Bramble stood in the empty ward for a while, humming the polka.`;
+  $('endStats').textContent = S.t > 1 ? `${time} · ${S.night} nights · ${g0.ducks} ducks, ${g0.favours} favours and ${g0.pence}p: everything, given away` : '';
+  hud(); renderShop();
+  if (music) music.update();
+  if (!resumed) {
+    sfx.finale();
+    say('Somewhere across town, at bath time, a duck squeaks an E. Then another one, a G♯. Then the whole town, very slightly in tune.');
+    if (window.DailyGame) DailyGame.finish({ lines: [`🦆 ${g0.ducks} ducks tuned, then given away`, `⏱ ${time} · 🌙 ${S.night} nights`, '🪗 a polka on 3p a night'] });
+  }
+  setTimeout(() => $('ending').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' }), resumed ? 0 : 1500);
+}
+$('shareBtn').addEventListener('click', () => window.DailyGame && DailyGame.share());
+
+// ---------- Start ----------
+try { await Promise.all([document.fonts.load(`14px ${HAND}`), document.fonts.load(`12px ${MONO}`)]); } catch (e) {}
+await makeSprites();
+bgCache = background();
+if (Sprites.sheetRequested()) Sprites.showSheet();
+fit();
+if (S.ended) { end(true); say('The ward is empty and tidy, every bed made. Matron Bramble is humming something with a tuba in it.'); }
+else {
+  // While you were away: the clipboard and the staff kept going, gently, and the ward slept through.
+  const away = S.lastSeen ? (Date.now() - S.lastSeen) / 1000 : 0;
+  const got = S.t > 5 ? E.offline(S, away) : null;
+  if (got && (got.pence || got.favours || got.installed || got.raw)) {
+    const hrs = away / 3600, t = hrs >= 1 ? `${hrs.toFixed(1)} hours` : `${Math.round(away / 60)} minutes`;
+    const bits = [got.pence > 0 && `${got.pence}p`, got.favours > 0 && `${got.favours} favours`, got.installed > 0 && `${got.installed} ducks fitted`, got.raw > 0 && `${got.raw} ducks to tune`, got.pranks > 0 && `${got.pranks} prank${got.pranks > 1 ? 's' : ''} finished`].filter(Boolean);
+    say(`You were away ${t}${away > E.OFFLINE_CAP ? ' (Hoo only counts the first three)' : ''}. The ward slept through. Hoo kept to her clipboard${S.review ? ' and the night staff kept at it' : ''}: ${bits.join(', ')}.`);
+  } else say(S.t > 5 ? 'Bramble Ward, still night. Hoo straightens her cap.' : 'Bramble Ward, 2am. Nurse Hoo has two ducks and a plan. Drag back from the duck on the bench, listen to it squeak higher, and let go on a glowing line.');
+}
+if (DEBUG) Object.assign(window.__game, { hud, renderShop });
+hud(); renderShop(); renderDesk();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
